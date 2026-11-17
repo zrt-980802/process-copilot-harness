@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C19.schema.json",
+  "title": "C19 pc.materialization-request/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "materialization_id",
+    "workspace_view_snapshot_id",
+    "resource_refs",
+    "purpose",
+    "target_runtime_id",
+    "target_runtime_epoch",
+    "pc_session_id",
+    "ttl",
+    "allowed_actions",
+    "requested_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.materialization-request/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "materialization_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_view_snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource_id",
+          "resource_version_id"
+        ],
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "pattern": "^res_[a-zA-Z0-9_-]+$"
+          },
+          "resource_version_id": {
+            "type": "string",
+            "pattern": "^rv_[a-zA-Z0-9_-]+$"
+          }
+        }
+      }
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "RUNTIME_INPUT",
+        "TOOL_INPUT",
+        "DERIVATION",
+        "DOWNLOAD",
+        "EVIDENCE"
+      ]
+    },
+    "target_runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "allowed_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "READ",
+          "WRITE",
+          "DERIVE"
+        ]
+      }
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C19; source=architecture/stable-contract-catalog-v1.md"
+}

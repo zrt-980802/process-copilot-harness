@@ -1,0 +1,28 @@
+{
+  "contract_name": "eeclaw.authorization-decision/1",
+  "contract_version": 1,
+  "subject_account_id": "account-1",
+  "actor_service_id": "process-copilot",
+  "permission_key": "page:architecture",
+  "scope": {
+    "type": "project",
+    "id": "project-1"
+  },
+  "decision": "ALLOW",
+  "reason_codes": [
+    "exact_role_allow"
+  ],
+  "source": "role",
+  "role_refs": [
+    "eeclaw-role:fo"
+  ],
+  "authorization_revision": 1,
+  "authorization_version_digest": "34f600a288dabbce2ffbee3bad783dfd1556a38b837fcbf0c88a9ab4478c8a85",
+  "policy_model_revision": 1,
+  "policy_artifact_release_refs": [
+    "policy-release:fo-modules:1"
+  ],
+  "decided_at": "2026-11-09T00:00:00.000Z",
+  "observed_at": "2026-11-09T00:00:00.000Z",
+  "expires_at": "2026-11-09T00:00:00.000Z"
+}

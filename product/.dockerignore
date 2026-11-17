@@ -1,0 +1,14 @@
+.git
+.github
+**/node_modules
+node_modules
+coverage
+reports
+*.log
+**/__pycache__
+**/*.py[cod]
+**/.docker/*/src
+**/.docker/*/tests
+**/.docker/*/tsconfig.json
+!.docker/**/node_modules
+!.docker/**/node_modules/**

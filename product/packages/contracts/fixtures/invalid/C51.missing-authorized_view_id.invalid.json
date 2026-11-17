@@ -1,0 +1,37 @@
+{
+  "contract_name": "pc.authorized-memory-view/1",
+  "contract_version": 1,
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "purpose": "PERSONALIZATION",
+  "authorization_revision": 1,
+  "policy_revision": 1,
+  "projection_release": "memory-projection-contract",
+  "authority_snapshot_revision": 1,
+  "items": [
+    {
+      "memory_id": "mem_contract_43",
+      "revision_id": "mrev_contract_44",
+      "memory_kind": "EXPLICIT_PREFERENCE",
+      "content": {
+        "preference": "lead with the conclusion"
+      },
+      "source_summary": "user-confirmed conversation message",
+      "valid_time": {
+        "valid_from": "2026-11-17T00:00:00.000Z",
+        "valid_to": null
+      },
+      "confidence": 1,
+      "usage_constraints": [
+        "FACTUAL_CONTEXT_ONLY"
+      ],
+      "retrieval_reason": "relevant preference",
+      "source_revalidation_result": "ALLOWED",
+      "temporal_role": "CURRENT"
+    }
+  ],
+  "denied_reason_summary": {},
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "expires_at": "2026-11-17T00:05:00.000Z",
+  "view_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+}

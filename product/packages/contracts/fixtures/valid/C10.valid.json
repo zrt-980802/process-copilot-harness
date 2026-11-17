@@ -1,0 +1,12 @@
+{
+  "contract_name": "pc.runtime-command-result/1",
+  "contract_version": 1,
+  "command_id": "command_id-value",
+  "accepted": true,
+  "committed": true,
+  "outcome_state": "KNOWN_SUCCESS",
+  "runtime_observation": {},
+  "adapter_error": {},
+  "event_cursor": "event_cursor-value",
+  "completed_at": "2026-11-09T00:00:00.000Z"
+}

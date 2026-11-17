@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C41.schema.json",
+  "title": "C41 eeclaw.authorization-decision/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "subject_account_id",
+    "permission_key",
+    "scope",
+    "decision",
+    "reason_codes",
+    "source",
+    "role_refs",
+    "authorization_version_digest",
+    "policy_model_revision",
+    "policy_artifact_release_refs",
+    "decided_at",
+    "observed_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "eeclaw.authorization-decision/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "subject_account_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_service_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "permission_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "ALLOW",
+        "DENY"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "baseline",
+        "role",
+        "deny",
+        "system_admin"
+      ]
+    },
+    "role_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authorization_version_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "policy_model_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy_artifact_release_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C41; source=architecture/stable-contract-catalog-v1.md"
+}

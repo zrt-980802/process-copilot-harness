@@ -1,0 +1,30 @@
+name: product-ci
+
+on:
+  push:
+    paths:
+      - "product/**"
+      - "architecture/**"
+  pull_request:
+    paths:
+      - "product/**"
+      - "architecture/**"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: product
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: product/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check

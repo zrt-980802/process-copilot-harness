@@ -1,0 +1,18 @@
+{
+  "contract_name": "pc.memory-object/1",
+  "contract_version": 1,
+  "memory_id": "mem_contract_43",
+  "tenant_id": "tenant-contract",
+  "owner_principal_id": "principal-contract",
+  "subject_principal_id": "principal-contract",
+  "scope_type": "PERSONAL",
+  "scope_id": "principal-contract",
+  "memory_kind": "EXPLICIT_PREFERENCE",
+  "sensitivity": "INTERNAL",
+  "object_state": "CONFIRMED",
+  "current_revision_id": "mrev_contract_44",
+  "policy_revision": 1,
+  "created_at": "2026-11-17T00:00:00.000Z",
+  "updated_at": "2026-11-17T00:00:00.000Z",
+  "version": 1
+}

@@ -1,0 +1,27 @@
+{
+  "contract_name": "pc.principal-envelope/1",
+  "contract_version": 1,
+  "issuer": "process-copilot",
+  "audience": "gateway:connector-contract",
+  "tenant_id": "tenant-contract",
+  "subject_principal_id": "principal-contract",
+  "actor_principal_id": "process-copilot",
+  "pc_session_id": "session-contract",
+  "business_task_id": "task-contract",
+  "runtime_id": "runtime-contract",
+  "runtime_epoch": 1,
+  "assignment_generation": 1,
+  "fencing_token": "fence-contract",
+  "authorization_revision": 1,
+  "credential_generation": 1,
+  "allowed_actions": [
+    "tool.execute"
+  ],
+  "resource_scope_refs": [
+    "project:project-contract"
+  ],
+  "issued_at": "2026-11-10T00:00:00.000Z",
+  "expires_at": "2026-11-10T00:01:00.000Z",
+  "nonce": "nonce-contract",
+  "signature": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+}

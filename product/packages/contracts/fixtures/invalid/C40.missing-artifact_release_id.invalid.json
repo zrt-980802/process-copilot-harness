@@ -1,0 +1,28 @@
+{
+  "contract_name": "eeclaw.policy-artifact-release/1",
+  "contract_version": 1,
+  "artifact_definition_id": "policy-definition:fo-modules",
+  "artifact_kind": "workbench_projection",
+  "release_version": 1,
+  "schema_version": 1,
+  "payload": {
+    "entries": [
+      {
+        "key": "module.navigation",
+        "value": "architecture"
+      }
+    ]
+  },
+  "payload_checksum": "0ec49875e76d9ec1d7c3bea1c4b5b39c6803b4e99a462e0382c87911e59fb9f0",
+  "code_registry_revision": "registry-1",
+  "compatibility_declaration_ref": "compatibility:eeclaw-v1",
+  "approval_evidence_refs": [
+    "approval:business-owner:1",
+    "approval:publisher:1"
+  ],
+  "lifecycle_state": "PUBLISHED",
+  "published_environment": "test",
+  "supersedes_release_id": "supersedes_release_id-value",
+  "created_at": "2026-11-09T00:00:00.000Z",
+  "published_at": "2026-11-09T00:00:00.000Z"
+}

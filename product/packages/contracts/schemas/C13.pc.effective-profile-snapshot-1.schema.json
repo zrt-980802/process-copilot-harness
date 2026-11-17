@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C13.schema.json",
+  "title": "C13 pc.effective-profile-snapshot/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "effective_profile_snapshot_id",
+    "pc_session_id",
+    "profile_release_id",
+    "profile_assignment_ids",
+    "authorization_revision",
+    "tool_release_ids",
+    "plugin_release_ids",
+    "model_selection",
+    "knowledge_view_refs",
+    "dsh_preset_ref",
+    "runtime_requirements",
+    "resolution_report_id",
+    "created_at",
+    "snapshot_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.effective-profile-snapshot/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "effective_profile_snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_assignment_ids": {
+      "type": "array",
+      "items": {}
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tool_release_ids": {
+      "type": "array",
+      "items": {}
+    },
+    "plugin_release_ids": {
+      "type": "array",
+      "items": {}
+    },
+    "model_selection": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "knowledge_view_refs": {
+      "type": "array",
+      "items": {}
+    },
+    "dsh_preset_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_requirements": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "resolution_report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "snapshot_digest": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C13; source=architecture/stable-contract-catalog-v1.md"
+}

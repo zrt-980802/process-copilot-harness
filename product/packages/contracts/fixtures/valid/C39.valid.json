@@ -1,0 +1,31 @@
+{
+  "contract_name": "eeclaw.role-configuration-release/1",
+  "contract_version": 1,
+  "role_configuration_release_id": "role-config-release:fo:1",
+  "role_package_id": "role-package:fo:1",
+  "release_version": 1,
+  "schema_version": 1,
+  "configuration_keys": [
+    "module.navigation"
+  ],
+  "defaults": [
+    {
+      "key": "module.navigation",
+      "value": "architecture"
+    }
+  ],
+  "lock_levels": [
+    "role_default"
+  ],
+  "scope_rules": [
+    {
+      "scope_type": "project"
+    }
+  ],
+  "component_refs": [
+    "ModuleNavigation"
+  ],
+  "payload_checksum": "d11d79c3979cba486b2fc46cbb658350046dcd9066c4f3a4ee9f315229ab4b8e",
+  "policy_model_revision": 1,
+  "status": "PUBLISHED"
+}

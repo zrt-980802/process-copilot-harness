@@ -1,0 +1,16 @@
+{
+  "contract_name": "pc.runtime-health-report/1",
+  "contract_version": 1,
+  "runtime_epoch": 1,
+  "report_seq": 1,
+  "liveness": "liveness-value",
+  "readiness": "readiness-value",
+  "capability_health": {},
+  "capacity_health": {},
+  "assignment_health": {},
+  "active_sessions": 1,
+  "active_turns": 1,
+  "inflight_tools": 1,
+  "pending_flushes": 1,
+  "observed_at": "2026-11-09T00:00:00.000Z"
+}

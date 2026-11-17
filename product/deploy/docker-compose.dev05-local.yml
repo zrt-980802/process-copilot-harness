@@ -1,0 +1,95 @@
+name: process-copilot-dev05-local
+
+services:
+  postgres:
+    image: ${PC_POSTGRES_IMAGE:-postgres:17-alpine}
+    environment:
+      POSTGRES_DB: process_copilot
+      POSTGRES_USER: process_copilot
+      POSTGRES_PASSWORD: process_copilot_local
+    volumes:
+      - authority-data:/var/lib/postgresql/data
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U process_copilot -d process_copilot
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  runtime-host:
+    build:
+      context: ..
+      dockerfile: deploy/runtime-host.Dockerfile
+      args:
+        DSH_RUNTIME_BASE_IMAGE: ${DSH_RUNTIME_BASE_IMAGE:-process-copilot-p1a-local-dsh-runtime-base:0.2.1-rc.3}
+        PNPM_REGISTRY: ${PNPM_REGISTRY:-https://registry.npmmirror.com}
+        PNPM_OFFLINE: ${PNPM_OFFLINE:-false}
+    image: process-copilot-dev05-local-runtime-host:${PC_BUILD_TAG:-dev}
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3100"
+      PC_RUNTIME_ID: pc-runtime-dev05-local
+      PC_RUNTIME_EPOCH: "1"
+      DSH_PROVIDER: ${DSH_PROVIDER:-deepseek-official}
+      DSH_MODEL: ${DSH_MODEL:-deepseek-v4-flash}
+    volumes:
+      - runtime-data:/var/lib/process-copilot
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3100/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 2s
+      start_period: 15s
+      retries: 30
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    image: process-copilot-dev05-local-api:${PC_BUILD_TAG:-dev}
+    env_file:
+      - path: ${PC_DEV05_ENV_FILE:-./dev05.env}
+        required: false
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3000"
+      PC_RUNTIME_REGISTRY_STORE: postgres
+      PC_IDENTITY_STORE: postgres
+      PC_PROFILE_STORE: postgres
+      DATABASE_URL: postgres://process_copilot:process_copilot_local@postgres:5432/process_copilot
+    depends_on:
+      postgres:
+        condition: service_healthy
+      runtime-host:
+        condition: service_healthy
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/ready').then(r=>r.json()).then(x=>{if(x.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 2s
+      start_period: 10s
+      retries: 30
+
+networks:
+  control:
+    internal: true
+
+volumes:
+  authority-data:
+  runtime-data:

@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C02.schema.json",
+  "title": "C02 pc.principal-envelope/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "envelope_id",
+    "issuer",
+    "audience",
+    "tenant_id",
+    "subject_principal_id",
+    "actor_principal_id",
+    "pc_session_id",
+    "runtime_id",
+    "runtime_epoch",
+    "assignment_generation",
+    "authorization_revision",
+    "allowed_actions",
+    "resource_scope_refs",
+    "issued_at",
+    "expires_at",
+    "nonce",
+    "signature"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.principal-envelope/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "envelope_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audience": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "business_task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "assignment_generation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fencing_token": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "credential_generation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "allowed_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "resource_scope_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$"
+    }
+  },
+  "$comment": "C02; source=architecture/stable-contract-catalog-v1.md"
+}

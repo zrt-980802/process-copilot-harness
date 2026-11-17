@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C43.schema.json",
+  "title": "C43 pc.memory-object/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "memory_id",
+    "tenant_id",
+    "owner_principal_id",
+    "scope_type",
+    "scope_id",
+    "memory_kind",
+    "sensitivity",
+    "object_state",
+    "policy_revision",
+    "created_at",
+    "updated_at",
+    "version"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-object/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "memory_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope_type": {
+      "type": "string",
+      "enum": [
+        "PERSONAL",
+        "PROJECT",
+        "SYSTEM"
+      ]
+    },
+    "scope_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "memory_kind": {
+      "type": "string",
+      "enum": [
+        "EXPLICIT_PREFERENCE",
+        "CONFIRMED_FACT",
+        "ONGOING_GOAL",
+        "DECISION_HISTORY",
+        "PROJECT_FACT",
+        "RUNBOOK",
+        "FAILURE_GOTCHA"
+      ]
+    },
+    "sensitivity": {
+      "type": "string",
+      "enum": [
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "RESTRICTED"
+      ]
+    },
+    "object_state": {
+      "type": "string",
+      "enum": [
+        "CANDIDATE",
+        "CONFIRMED",
+        "PUBLISHED",
+        "REVOKED",
+        "EXPIRED",
+        "REJECTED"
+      ]
+    },
+    "current_revision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "$comment": "C43; source=architecture/memory-contract-catalog-v1.md"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@pc/runtime-host",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pc/dsh-bridge": "workspace:*",
+    "@pc/runtime-adapter": "workspace:*",
+    "fastify": "5.12.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
+  }
+}

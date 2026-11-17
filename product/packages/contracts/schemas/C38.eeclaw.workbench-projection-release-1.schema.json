@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C38.schema.json",
+  "title": "C38 eeclaw.workbench-projection-release/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "workbench_projection_release_id",
+    "role_package_id",
+    "release_version",
+    "module_relations",
+    "navigation",
+    "metrics",
+    "work_items",
+    "workflow_views",
+    "artifact_views",
+    "component_refs",
+    "payload_checksum",
+    "policy_model_revision",
+    "status"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "eeclaw.workbench-projection-release/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workbench_projection_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role_package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "release_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "module_relations": {
+      "type": "array",
+      "items": {}
+    },
+    "navigation": {
+      "type": "array",
+      "items": {}
+    },
+    "metrics": {
+      "type": "array",
+      "items": {}
+    },
+    "work_items": {
+      "type": "array",
+      "items": {}
+    },
+    "workflow_views": {
+      "type": "array",
+      "items": {}
+    },
+    "artifact_views": {
+      "type": "array",
+      "items": {}
+    },
+    "component_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "payload_checksum": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_model_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "VALIDATED",
+        "APPROVED",
+        "PUBLISHED",
+        "SUPERSEDED"
+      ]
+    }
+  },
+  "$comment": "C38; source=architecture/stable-contract-catalog-v1.md"
+}

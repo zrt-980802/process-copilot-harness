@@ -1,0 +1,20 @@
+{
+  "contract_name": "pc.runtime-capability-manifest/1",
+  "contract_version": 1,
+  "runtime_id": "runtime_id-value",
+  "runtime_epoch": 1,
+  "dsh_version": "dsh_version-value",
+  "bridge_protocol_versions": [],
+  "profile_digest": "profile_digest-value",
+  "bundle_lock_digest": "bundle_lock_digest-value",
+  "plugin_releases": [],
+  "agent_presets": [],
+  "tool_provider_capabilities": [],
+  "persistence_capabilities": [],
+  "event_export_capabilities": [],
+  "approval_capabilities": [],
+  "resource_capabilities": [],
+  "limits": {},
+  "generated_at": "2026-11-09T00:00:00.000Z",
+  "manifest_digest": "manifest_digest-value"
+}

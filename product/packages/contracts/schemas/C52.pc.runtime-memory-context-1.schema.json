@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C52.schema.json",
+  "title": "C52 pc.runtime-memory-context/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "context_id",
+    "authorized_view_id",
+    "pc_session_id",
+    "turn_id",
+    "principal_id",
+    "purpose",
+    "items",
+    "context_policy_revision",
+    "token_budget",
+    "context_digest",
+    "issued_at",
+    "expires_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.runtime-memory-context/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "context_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorized_view_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "turn_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "memory_id",
+          "revision_id",
+          "memory_kind",
+          "content",
+          "temporal_role",
+          "usage_constraints"
+        ],
+        "properties": {
+          "memory_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "memory_kind": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT_PREFERENCE",
+              "CONFIRMED_FACT",
+              "ONGOING_GOAL",
+              "DECISION_HISTORY",
+              "PROJECT_FACT",
+              "RUNBOOK",
+              "FAILURE_GOTCHA"
+            ]
+          },
+          "content": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": true
+          },
+          "temporal_role": {
+            "type": "string",
+            "enum": [
+              "CURRENT",
+              "HISTORICAL"
+            ]
+          },
+          "usage_constraints": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "context_policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "token_budget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "context_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C52; source=architecture/memory-contract-catalog-v1.md"
+}

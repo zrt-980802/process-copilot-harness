@@ -1,0 +1,22 @@
+{
+  "contract_name": "pc.authorization-snapshot/1",
+  "contract_version": 1,
+  "policy_model_revision": 1,
+  "principal_id": "principal-contract",
+  "project_id": "project-contract",
+  "profile_release_id": "profile-contract",
+  "allowed_actions": [
+    "tool.execute"
+  ],
+  "resource_scope_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "tool_set_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "decision": "ALLOW",
+  "reason_codes": [
+    "authorization_intersection_allowed"
+  ],
+  "issued_at": "2026-11-10T00:00:00.000Z",
+  "expires_at": "2026-11-10T00:01:00.000Z",
+  "decision_evidence_refs": [
+    "grant:contract"
+  ]
+}

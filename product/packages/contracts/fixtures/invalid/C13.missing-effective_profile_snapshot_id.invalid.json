@@ -1,0 +1,17 @@
+{
+  "contract_name": "pc.effective-profile-snapshot/1",
+  "contract_version": 1,
+  "pc_session_id": "pc_session_id-value",
+  "profile_release_id": "profile_release_id-value",
+  "profile_assignment_ids": [],
+  "authorization_revision": 1,
+  "tool_release_ids": [],
+  "plugin_release_ids": [],
+  "model_selection": {},
+  "knowledge_view_refs": [],
+  "dsh_preset_ref": "dsh_preset_ref-value",
+  "runtime_requirements": {},
+  "resolution_report_id": "resolution_report_id-value",
+  "created_at": "2026-11-09T00:00:00.000Z",
+  "snapshot_digest": "snapshot_digest-value"
+}

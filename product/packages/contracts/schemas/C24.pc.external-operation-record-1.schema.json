@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C24.schema.json",
+  "title": "C24 pc.external-operation-record/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "operation_id",
+    "operation_kind",
+    "idempotency_key",
+    "fencing_token",
+    "request_digest",
+    "dispatch_state",
+    "outcome_state",
+    "recovery_class",
+    "evidence_refs",
+    "version"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.external-operation-record/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation_kind": {
+      "type": "string",
+      "enum": [
+        "READ",
+        "WRITE",
+        "DESTRUCTIVE",
+        "EXTERNAL_SIDE_EFFECT"
+      ]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fencing_token": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "provider_operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dispatch_state": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "DISPATCHED",
+        "COMPLETED",
+        "UNKNOWN",
+        "RECONCILING"
+      ]
+    },
+    "outcome_state": {
+      "type": "string",
+      "enum": [
+        "KNOWN_SUCCESS",
+        "KNOWN_FAILURE",
+        "NOT_STARTED",
+        "OUTCOME_UNKNOWN"
+      ]
+    },
+    "recovery_class": {
+      "type": "string",
+      "enum": [
+        "REPLAY_SAFE",
+        "IDEMPOTENT_RETRY",
+        "RECONCILE_BEFORE_RETRY",
+        "NON_RECOVERABLE",
+        "EXTERNAL_DURABLE_JOB"
+      ]
+    },
+    "last_reconciled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$comment": "C24; source=architecture/stable-contract-catalog-v1.md"
+}

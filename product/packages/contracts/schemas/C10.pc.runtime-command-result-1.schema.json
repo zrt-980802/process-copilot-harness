@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C10.schema.json",
+  "title": "C10 pc.runtime-command-result/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "command_id",
+    "accepted",
+    "committed",
+    "outcome_state",
+    "runtime_observation",
+    "completed_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.runtime-command-result/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "committed": {
+      "type": "boolean"
+    },
+    "outcome_state": {
+      "type": "string",
+      "enum": [
+        "KNOWN_SUCCESS",
+        "KNOWN_FAILURE",
+        "NOT_STARTED",
+        "OUTCOME_UNKNOWN"
+      ]
+    },
+    "runtime_observation": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "adapter_error": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "event_cursor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C10; source=architecture/stable-contract-catalog-v1.md"
+}

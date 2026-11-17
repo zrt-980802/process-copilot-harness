@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C56.schema.json",
+  "title": "C56 pc.memory-projection-receipt/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "projection_operation_id",
+    "provider_operation_ref",
+    "provider_release",
+    "acceptance_status",
+    "readback_status",
+    "observed_revision_refs",
+    "retryability",
+    "receipt_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-projection-receipt/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "projection_operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_operation_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_release": {
+      "type": "string",
+      "minLength": 1
+    },
+    "acceptance_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ACCEPTED",
+        "REJECTED",
+        "UNKNOWN"
+      ]
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "readback_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "VERIFIED",
+        "FAILED",
+        "UNKNOWN"
+      ]
+    },
+    "readback_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observed_revision_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "residual_match_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "error_code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retryability": {
+      "type": "string",
+      "enum": [
+        "RETRYABLE",
+        "NON_RETRYABLE",
+        "RECONCILE"
+      ]
+    },
+    "receipt_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C56; source=architecture/memory-contract-catalog-v1.md"
+}

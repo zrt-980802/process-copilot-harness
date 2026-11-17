@@ -1,0 +1,21 @@
+{
+  "contract_name": "pc.business-operation/1",
+  "contract_version": 1,
+  "business_task_id": "task-contract",
+  "tenant_id": "tenant-contract",
+  "owner_principal_id": "principal-contract",
+  "operation_kind": "WRITE",
+  "state": "OUTCOME_UNKNOWN",
+  "recovery_class": "RECONCILE_BEFORE_RETRY",
+  "approval_id": "approval-contract-05",
+  "external_operation_record_id": "operation-contract-21",
+  "input_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+  "result_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+  "evidence_refs": [
+    "gateway:operation-contract-21"
+  ],
+  "projection_complete": true,
+  "last_event_id": "event-operation-contract",
+  "updated_at": "2026-11-10T00:00:02.000Z",
+  "version": 4
+}

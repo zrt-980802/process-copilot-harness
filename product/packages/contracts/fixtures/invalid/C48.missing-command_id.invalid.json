@@ -1,0 +1,31 @@
+{
+  "contract_name": "pc.memory-revise-command/1",
+  "contract_version": 1,
+  "idempotency_key": "idem-contract-48",
+  "memory_id": "mem_contract_43",
+  "expected_object_version": 1,
+  "expected_current_revision_id": "mrev_contract_44",
+  "revision_reason": "CORRECTION",
+  "new_content": {
+    "preference": "conclusion then evidence"
+  },
+  "new_source_evidence_inputs": [
+    {
+      "source_kind": "CONVERSATION_MESSAGE",
+      "source_object_id": "message-contract-2"
+    }
+  ],
+  "new_valid_time": {
+    "valid_from": "2026-11-17T00:00:00.000Z",
+    "valid_to": null
+  },
+  "scope_adjustment": {
+    "scope_type": "PERSONAL"
+  },
+  "sensitivity_adjustment": "INTERNAL",
+  "principal_id": "principal-contract",
+  "authorization_revision": 1,
+  "policy_revision": 1,
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:01:00.000Z"
+}

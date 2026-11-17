@@ -1,0 +1,29 @@
+{
+  "contract_name": "eeclaw.workbench-projection-release/1",
+  "contract_version": 1,
+  "role_package_id": "role-package:fo:1",
+  "release_version": 1,
+  "module_relations": [
+    "role-module-release:fo:1"
+  ],
+  "navigation": [
+    {
+      "key": "architecture",
+      "focus": "primary"
+    }
+  ],
+  "metrics": [],
+  "work_items": [],
+  "workflow_views": [
+    "ssts-draft"
+  ],
+  "artifact_views": [
+    "ssts-draft"
+  ],
+  "component_refs": [
+    "ModuleNavigation"
+  ],
+  "payload_checksum": "f1c152daab1a8bc881d8566f7c2d7b13bf2f95b255285b1953c0b50040760bc1",
+  "policy_model_revision": 1,
+  "status": "PUBLISHED"
+}

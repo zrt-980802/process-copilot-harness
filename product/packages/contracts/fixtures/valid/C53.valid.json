@@ -1,0 +1,22 @@
+{
+  "contract_name": "pc.memory-usage-record/1",
+  "contract_version": 1,
+  "usage_id": "musage_contract_53",
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "conversation_id": "conversation-contract",
+  "turn_id": "turn-contract",
+  "purpose": "PERSONALIZATION",
+  "authorized_view_id": "mview_contract_51",
+  "memory_revision_refs": [
+    "mem_contract_43:mrev_contract_44"
+  ],
+  "source_revalidation_refs": [
+    "mev_contract_45:allowed"
+  ],
+  "context_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "provided_to_runtime_at": "2026-11-17T00:00:00.000Z",
+  "answer_reference_status": "REFERENCED",
+  "recorded_at": "2026-11-17T00:00:00.000Z",
+  "trace_id": "trace-contract"
+}

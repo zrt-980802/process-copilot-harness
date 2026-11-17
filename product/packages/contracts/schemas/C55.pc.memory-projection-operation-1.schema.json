@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C55.schema.json",
+  "title": "C55 pc.memory-projection-operation/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "projection_operation_id",
+    "idempotency_key",
+    "projection_release",
+    "provider_namespace",
+    "authority_change_event_id",
+    "authority_snapshot_revision",
+    "scope_manifest",
+    "action",
+    "revision_refs",
+    "source_evidence_refs",
+    "issued_at",
+    "deadline"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-projection-operation/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "projection_operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projection_release": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_namespace": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_change_event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_snapshot_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "scope_manifest": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "UPSERT",
+        "HIDE",
+        "DELETE",
+        "REBUILD_SCOPE"
+      ]
+    },
+    "revision_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "source_evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "content_payload": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C55; source=architecture/memory-contract-catalog-v1.md"
+}

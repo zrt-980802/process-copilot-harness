@@ -1,0 +1,11 @@
+{
+  "contract_name": "pc.request-context/1",
+  "contract_version": 1,
+  "principal_id": "principal_id-value",
+  "actor_id": "actor_id-value",
+  "authentication_context_id": "authentication_context_id-value",
+  "authorization_revision": 1,
+  "request_id": "request_id-value",
+  "trace_id": "trace_id-value",
+  "client_context": {}
+}

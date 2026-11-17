@@ -1,0 +1,29 @@
+{
+  "contract_name": "pc.audit-entry/1",
+  "contract_version": 1,
+  "event_type": "RESOURCE_MATERIALIZED",
+  "tenant_id": "tenant-contract",
+  "subject_principal_id": "principal-contract",
+  "actor_principal_id": "process-copilot",
+  "resource_refs": [
+    {
+      "resource_id": "res_contract_17",
+      "resource_version_id": "rv_contract_17_1"
+    }
+  ],
+  "operation_id": "operation-contract-32",
+  "authorization_revision": 1,
+  "decision": {
+    "outcome": "SUCCESS",
+    "reason_codes": [
+      "materialization_ready"
+    ]
+  },
+  "evidence_refs": [
+    "materialization:mat_contract_19"
+  ],
+  "occurred_at": "2026-11-10T00:00:00.000Z",
+  "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "entry_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "retention_class": "RESOURCE_LIFECYCLE"
+}

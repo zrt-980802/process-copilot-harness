@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C42.schema.json",
+  "title": "C42 eeclaw.legacy-auth-compatibility/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "source_commit",
+    "schema_fingerprint",
+    "api_fingerprint",
+    "auth_me_fingerprint",
+    "audit_fingerprint",
+    "baseline_page_keys_version",
+    "baseline_page_keys_digest",
+    "revocation_mode",
+    "data_migration_required",
+    "declared_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "eeclaw.legacy-auth-compatibility/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "source_commit": {
+      "const": "cefa7432f966e17b41c1638e128de652b934fd20"
+    },
+    "schema_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "api_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "auth_me_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "audit_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "baseline_page_keys_version": {
+      "const": "BASELINE_PAGE_KEYS_V1"
+    },
+    "baseline_page_keys_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "revocation_mode": {
+      "type": "string",
+      "enum": [
+        "request_time"
+      ]
+    },
+    "data_migration_required": {
+      "const": false
+    },
+    "declared_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C42; source=architecture/stable-contract-catalog-v1.md"
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C34.schema.json",
+  "title": "C34 pc.traceability-entry/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "requirement_id",
+    "adr_ids",
+    "module_ids",
+    "contract_ids",
+    "implementation_refs",
+    "test_refs",
+    "evidence_refs",
+    "status",
+    "owner"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.traceability-entry/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "requirement_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adr_ids": {
+      "type": "array",
+      "items": {}
+    },
+    "module_ids": {
+      "type": "array",
+      "items": {}
+    },
+    "contract_ids": {
+      "type": "array",
+      "items": {}
+    },
+    "implementation_refs": {
+      "type": "array",
+      "items": {}
+    },
+    "test_refs": {
+      "type": "array",
+      "items": {}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {}
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C34; source=architecture/stable-contract-catalog-v1.md"
+}

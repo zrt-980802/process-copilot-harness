@@ -1,0 +1,26 @@
+{
+  "contract_name": "pc.plugin-release/1",
+  "contract_version": 1,
+  "plugin_release_id": "plugin-contract-16",
+  "plugin_definition_id": "plugin-contract",
+  "version": 1,
+  "source": {
+    "type": "repository",
+    "ref": "packages/gateway"
+  },
+  "artifact_digest": "9999999999999999999999999999999999999999999999999999999999999999",
+  "signature_refs": [
+    "signature:contract"
+  ],
+  "sbom_ref": "sbom:contract",
+  "dsh_compatibility": "0.2.1-rc.3",
+  "dependencies": [],
+  "declared_capabilities": [
+    "gateway-tool-provider"
+  ],
+  "risk_manifest": {
+    "modifies_dsh_core": false
+  },
+  "status": "PUBLISHED",
+  "release_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

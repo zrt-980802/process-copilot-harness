@@ -1,0 +1,485 @@
+{
+  "generated_at": "2026-11-17",
+  "contracts": [
+    {
+      "id": "C01",
+      "contract_name": "pc.request-context/1",
+      "contract_version": 1,
+      "schema": "schemas/C01.pc.request-context-1.schema.json",
+      "valid_fixture": "fixtures/valid/C01.valid.json",
+      "invalid_fixture": "fixtures/invalid/C01.missing-tenant_id.invalid.json"
+    },
+    {
+      "id": "C02",
+      "contract_name": "pc.principal-envelope/1",
+      "contract_version": 1,
+      "schema": "schemas/C02.pc.principal-envelope-1.schema.json",
+      "valid_fixture": "fixtures/valid/C02.valid.json",
+      "invalid_fixture": "fixtures/invalid/C02.missing-envelope_id.invalid.json"
+    },
+    {
+      "id": "C03",
+      "contract_name": "pc.authorization-snapshot/1",
+      "contract_version": 1,
+      "schema": "schemas/C03.pc.authorization-snapshot-1.schema.json",
+      "valid_fixture": "fixtures/valid/C03.valid.json",
+      "invalid_fixture": "fixtures/invalid/C03.missing-authorization_revision.invalid.json"
+    },
+    {
+      "id": "C04",
+      "contract_name": "pc.credential-lease-ref/1",
+      "contract_version": 1,
+      "schema": "schemas/C04.pc.credential-lease-ref-1.schema.json",
+      "valid_fixture": "fixtures/valid/C04.valid.json",
+      "invalid_fixture": "fixtures/invalid/C04.missing-credential_lease_id.invalid.json"
+    },
+    {
+      "id": "C05",
+      "contract_name": "pc.business-approval-snapshot/1",
+      "contract_version": 1,
+      "schema": "schemas/C05.pc.business-approval-snapshot-1.schema.json",
+      "valid_fixture": "fixtures/valid/C05.valid.json",
+      "invalid_fixture": "fixtures/invalid/C05.missing-approval_id.invalid.json"
+    },
+    {
+      "id": "C06",
+      "contract_name": "pc.runtime-record/1",
+      "contract_version": 1,
+      "schema": "schemas/C06.pc.runtime-record-1.schema.json",
+      "valid_fixture": "fixtures/valid/C06.valid.json",
+      "invalid_fixture": "fixtures/invalid/C06.missing-runtime_id.invalid.json"
+    },
+    {
+      "id": "C07",
+      "contract_name": "pc.runtime-capability-manifest/1",
+      "contract_version": 1,
+      "schema": "schemas/C07.pc.runtime-capability-manifest-1.schema.json",
+      "valid_fixture": "fixtures/valid/C07.valid.json",
+      "invalid_fixture": "fixtures/invalid/C07.missing-runtime_id.invalid.json"
+    },
+    {
+      "id": "C08",
+      "contract_name": "pc.session-assignment-snapshot/1",
+      "contract_version": 1,
+      "schema": "schemas/C08.pc.session-assignment-snapshot-1.schema.json",
+      "valid_fixture": "fixtures/valid/C08.valid.json",
+      "invalid_fixture": "fixtures/invalid/C08.missing-assignment_id.invalid.json"
+    },
+    {
+      "id": "C09",
+      "contract_name": "pc.runtime-command/1",
+      "contract_version": 1,
+      "schema": "schemas/C09.pc.runtime-command-1.schema.json",
+      "valid_fixture": "fixtures/valid/C09.valid.json",
+      "invalid_fixture": "fixtures/invalid/C09.missing-command_id.invalid.json"
+    },
+    {
+      "id": "C10",
+      "contract_name": "pc.runtime-command-result/1",
+      "contract_version": 1,
+      "schema": "schemas/C10.pc.runtime-command-result-1.schema.json",
+      "valid_fixture": "fixtures/valid/C10.valid.json",
+      "invalid_fixture": "fixtures/invalid/C10.missing-command_id.invalid.json"
+    },
+    {
+      "id": "C11",
+      "contract_name": "pc.runtime-health-report/1",
+      "contract_version": 1,
+      "schema": "schemas/C11.pc.runtime-health-report-1.schema.json",
+      "valid_fixture": "fixtures/valid/C11.valid.json",
+      "invalid_fixture": "fixtures/invalid/C11.missing-runtime_id.invalid.json"
+    },
+    {
+      "id": "C12",
+      "contract_name": "pc.expert-profile-release/1",
+      "contract_version": 1,
+      "schema": "schemas/C12.pc.expert-profile-release-1.schema.json",
+      "valid_fixture": "fixtures/valid/C12.valid.json",
+      "invalid_fixture": "fixtures/invalid/C12.missing-profile_release_id.invalid.json"
+    },
+    {
+      "id": "C13",
+      "contract_name": "pc.effective-profile-snapshot/1",
+      "contract_version": 1,
+      "schema": "schemas/C13.pc.effective-profile-snapshot-1.schema.json",
+      "valid_fixture": "fixtures/valid/C13.valid.json",
+      "invalid_fixture": "fixtures/invalid/C13.missing-effective_profile_snapshot_id.invalid.json"
+    },
+    {
+      "id": "C14",
+      "contract_name": "pc.profile-resolution-report/1",
+      "contract_version": 1,
+      "schema": "schemas/C14.pc.profile-resolution-report-1.schema.json",
+      "valid_fixture": "fixtures/valid/C14.valid.json",
+      "invalid_fixture": "fixtures/invalid/C14.missing-resolution_report_id.invalid.json"
+    },
+    {
+      "id": "C15",
+      "contract_name": "pc.tool-release/1",
+      "contract_version": 1,
+      "schema": "schemas/C15.pc.tool-release-1.schema.json",
+      "valid_fixture": "fixtures/valid/C15.valid.json",
+      "invalid_fixture": "fixtures/invalid/C15.missing-tool_release_id.invalid.json"
+    },
+    {
+      "id": "C16",
+      "contract_name": "pc.plugin-release/1",
+      "contract_version": 1,
+      "schema": "schemas/C16.pc.plugin-release-1.schema.json",
+      "valid_fixture": "fixtures/valid/C16.valid.json",
+      "invalid_fixture": "fixtures/invalid/C16.missing-plugin_release_id.invalid.json"
+    },
+    {
+      "id": "C17",
+      "contract_name": "pc.resource-ref/1",
+      "contract_version": 1,
+      "schema": "schemas/C17.pc.resource-ref-1.schema.json",
+      "valid_fixture": "fixtures/valid/C17.valid.json",
+      "invalid_fixture": "fixtures/invalid/C17.missing-resource_id.invalid.json"
+    },
+    {
+      "id": "C18",
+      "contract_name": "pc.workspace-view-snapshot/1",
+      "contract_version": 1,
+      "schema": "schemas/C18.pc.workspace-view-snapshot-1.schema.json",
+      "valid_fixture": "fixtures/valid/C18.valid.json",
+      "invalid_fixture": "fixtures/invalid/C18.missing-workspace_view_snapshot_id.invalid.json"
+    },
+    {
+      "id": "C19",
+      "contract_name": "pc.materialization-request/1",
+      "contract_version": 1,
+      "schema": "schemas/C19.pc.materialization-request-1.schema.json",
+      "valid_fixture": "fixtures/valid/C19.valid.json",
+      "invalid_fixture": "fixtures/invalid/C19.missing-materialization_id.invalid.json"
+    },
+    {
+      "id": "C20",
+      "contract_name": "pc.materialization-result/1",
+      "contract_version": 1,
+      "schema": "schemas/C20.pc.materialization-result-1.schema.json",
+      "valid_fixture": "fixtures/valid/C20.valid.json",
+      "invalid_fixture": "fixtures/invalid/C20.missing-materialization_id.invalid.json"
+    },
+    {
+      "id": "C21",
+      "contract_name": "pc.tool-execution-envelope/1",
+      "contract_version": 1,
+      "schema": "schemas/C21.pc.tool-execution-envelope-1.schema.json",
+      "valid_fixture": "fixtures/valid/C21.valid.json",
+      "invalid_fixture": "fixtures/invalid/C21.missing-operation_id.invalid.json"
+    },
+    {
+      "id": "C22",
+      "contract_name": "pc.tool-execution-result/1",
+      "contract_version": 1,
+      "schema": "schemas/C22.pc.tool-execution-result-1.schema.json",
+      "valid_fixture": "fixtures/valid/C22.valid.json",
+      "invalid_fixture": "fixtures/invalid/C22.missing-operation_id.invalid.json"
+    },
+    {
+      "id": "C23",
+      "contract_name": "pc.mcp-session-binding/1",
+      "contract_version": 1,
+      "schema": "schemas/C23.pc.mcp-session-binding-1.schema.json",
+      "valid_fixture": "fixtures/valid/C23.valid.json",
+      "invalid_fixture": "fixtures/invalid/C23.missing-binding_id.invalid.json"
+    },
+    {
+      "id": "C24",
+      "contract_name": "pc.external-operation-record/1",
+      "contract_version": 1,
+      "schema": "schemas/C24.pc.external-operation-record-1.schema.json",
+      "valid_fixture": "fixtures/valid/C24.valid.json",
+      "invalid_fixture": "fixtures/invalid/C24.missing-operation_id.invalid.json"
+    },
+    {
+      "id": "C25",
+      "contract_name": "pc.event-envelope/1",
+      "contract_version": 1,
+      "schema": "schemas/C25.pc.event-envelope-1.schema.json",
+      "valid_fixture": "fixtures/valid/C25.valid.json",
+      "invalid_fixture": "fixtures/invalid/C25.missing-event_id.invalid.json"
+    },
+    {
+      "id": "C26",
+      "contract_name": "pc.event-cursor/1",
+      "contract_version": 1,
+      "schema": "schemas/C26.pc.event-cursor-1.schema.json",
+      "valid_fixture": "fixtures/valid/C26.valid.json",
+      "invalid_fixture": "fixtures/invalid/C26.missing-producer.invalid.json"
+    },
+    {
+      "id": "C27",
+      "contract_name": "pc.business-task/1",
+      "contract_version": 1,
+      "schema": "schemas/C27.pc.business-task-1.schema.json",
+      "valid_fixture": "fixtures/valid/C27.valid.json",
+      "invalid_fixture": "fixtures/invalid/C27.missing-business_task_id.invalid.json"
+    },
+    {
+      "id": "C28",
+      "contract_name": "pc.business-operation/1",
+      "contract_version": 1,
+      "schema": "schemas/C28.pc.business-operation-1.schema.json",
+      "valid_fixture": "fixtures/valid/C28.valid.json",
+      "invalid_fixture": "fixtures/invalid/C28.missing-operation_id.invalid.json"
+    },
+    {
+      "id": "C29",
+      "contract_name": "pc.recovery-case/1",
+      "contract_version": 1,
+      "schema": "schemas/C29.pc.recovery-case-1.schema.json",
+      "valid_fixture": "fixtures/valid/C29.valid.json",
+      "invalid_fixture": "fixtures/invalid/C29.missing-recovery_case_id.invalid.json"
+    },
+    {
+      "id": "C30",
+      "contract_name": "pc.reconciliation-result/1",
+      "contract_version": 1,
+      "schema": "schemas/C30.pc.reconciliation-result-1.schema.json",
+      "valid_fixture": "fixtures/valid/C30.valid.json",
+      "invalid_fixture": "fixtures/invalid/C30.missing-operation_id.invalid.json"
+    },
+    {
+      "id": "C31",
+      "contract_name": "pc.adapter-error/1",
+      "contract_version": 1,
+      "schema": "schemas/C31.pc.adapter-error-1.schema.json",
+      "valid_fixture": "fixtures/valid/C31.valid.json",
+      "invalid_fixture": "fixtures/invalid/C31.missing-code.invalid.json"
+    },
+    {
+      "id": "C32",
+      "contract_name": "pc.audit-entry/1",
+      "contract_version": 1,
+      "schema": "schemas/C32.pc.audit-entry-1.schema.json",
+      "valid_fixture": "fixtures/valid/C32.valid.json",
+      "invalid_fixture": "fixtures/invalid/C32.missing-audit_id.invalid.json"
+    },
+    {
+      "id": "C33",
+      "contract_name": "pc.compatibility-declaration/1",
+      "contract_version": 1,
+      "schema": "schemas/C33.pc.compatibility-declaration-1.schema.json",
+      "valid_fixture": "fixtures/valid/C33.valid.json",
+      "invalid_fixture": "fixtures/invalid/C33.missing-component.invalid.json"
+    },
+    {
+      "id": "C34",
+      "contract_name": "pc.traceability-entry/1",
+      "contract_version": 1,
+      "schema": "schemas/C34.pc.traceability-entry-1.schema.json",
+      "valid_fixture": "fixtures/valid/C34.valid.json",
+      "invalid_fixture": "fixtures/invalid/C34.missing-requirement_id.invalid.json"
+    },
+    {
+      "id": "C35",
+      "contract_name": "eeclaw.enterprise-role-package/1",
+      "contract_version": 1,
+      "schema": "schemas/C35.eeclaw.enterprise-role-package-1.schema.json",
+      "valid_fixture": "fixtures/valid/C35.valid.json",
+      "invalid_fixture": "fixtures/invalid/C35.missing-role_package_id.invalid.json"
+    },
+    {
+      "id": "C36",
+      "contract_name": "eeclaw.responsibility-assignment/1",
+      "contract_version": 1,
+      "schema": "schemas/C36.eeclaw.responsibility-assignment-1.schema.json",
+      "valid_fixture": "fixtures/valid/C36.valid.json",
+      "invalid_fixture": "fixtures/invalid/C36.missing-responsibility_assignment_id.invalid.json"
+    },
+    {
+      "id": "C37",
+      "contract_name": "eeclaw.role-module-relation/1",
+      "contract_version": 1,
+      "schema": "schemas/C37.eeclaw.role-module-relation-1.schema.json",
+      "valid_fixture": "fixtures/valid/C37.valid.json",
+      "invalid_fixture": "fixtures/invalid/C37.missing-role_key.invalid.json"
+    },
+    {
+      "id": "C38",
+      "contract_name": "eeclaw.workbench-projection-release/1",
+      "contract_version": 1,
+      "schema": "schemas/C38.eeclaw.workbench-projection-release-1.schema.json",
+      "valid_fixture": "fixtures/valid/C38.valid.json",
+      "invalid_fixture": "fixtures/invalid/C38.missing-workbench_projection_release_id.invalid.json"
+    },
+    {
+      "id": "C39",
+      "contract_name": "eeclaw.role-configuration-release/1",
+      "contract_version": 1,
+      "schema": "schemas/C39.eeclaw.role-configuration-release-1.schema.json",
+      "valid_fixture": "fixtures/valid/C39.valid.json",
+      "invalid_fixture": "fixtures/invalid/C39.missing-role_configuration_release_id.invalid.json"
+    },
+    {
+      "id": "C40",
+      "contract_name": "eeclaw.policy-artifact-release/1",
+      "contract_version": 1,
+      "schema": "schemas/C40.eeclaw.policy-artifact-release-1.schema.json",
+      "valid_fixture": "fixtures/valid/C40.valid.json",
+      "invalid_fixture": "fixtures/invalid/C40.missing-artifact_release_id.invalid.json"
+    },
+    {
+      "id": "C41",
+      "contract_name": "eeclaw.authorization-decision/1",
+      "contract_version": 1,
+      "schema": "schemas/C41.eeclaw.authorization-decision-1.schema.json",
+      "valid_fixture": "fixtures/valid/C41.valid.json",
+      "invalid_fixture": "fixtures/invalid/C41.missing-subject_account_id.invalid.json"
+    },
+    {
+      "id": "C42",
+      "contract_name": "eeclaw.legacy-auth-compatibility/1",
+      "contract_version": 1,
+      "schema": "schemas/C42.eeclaw.legacy-auth-compatibility-1.schema.json",
+      "valid_fixture": "fixtures/valid/C42.valid.json",
+      "invalid_fixture": "fixtures/invalid/C42.missing-source_commit.invalid.json"
+    },
+    {
+      "id": "C43",
+      "contract_name": "pc.memory-object/1",
+      "contract_version": 1,
+      "schema": "schemas/C43.pc.memory-object-1.schema.json",
+      "valid_fixture": "fixtures/valid/C43.valid.json",
+      "invalid_fixture": "fixtures/invalid/C43.missing-memory_id.invalid.json"
+    },
+    {
+      "id": "C44",
+      "contract_name": "pc.memory-revision/1",
+      "contract_version": 1,
+      "schema": "schemas/C44.pc.memory-revision-1.schema.json",
+      "valid_fixture": "fixtures/valid/C44.valid.json",
+      "invalid_fixture": "fixtures/invalid/C44.missing-revision_id.invalid.json"
+    },
+    {
+      "id": "C45",
+      "contract_name": "pc.memory-source-evidence/1",
+      "contract_version": 1,
+      "schema": "schemas/C45.pc.memory-source-evidence-1.schema.json",
+      "valid_fixture": "fixtures/valid/C45.valid.json",
+      "invalid_fixture": "fixtures/invalid/C45.missing-source_evidence_id.invalid.json"
+    },
+    {
+      "id": "C46",
+      "contract_name": "pc.memory-capture-command/1",
+      "contract_version": 1,
+      "schema": "schemas/C46.pc.memory-capture-command-1.schema.json",
+      "valid_fixture": "fixtures/valid/C46.valid.json",
+      "invalid_fixture": "fixtures/invalid/C46.missing-command_id.invalid.json"
+    },
+    {
+      "id": "C47",
+      "contract_name": "pc.memory-candidate-decision-command/1",
+      "contract_version": 1,
+      "schema": "schemas/C47.pc.memory-candidate-decision-command-1.schema.json",
+      "valid_fixture": "fixtures/valid/C47.valid.json",
+      "invalid_fixture": "fixtures/invalid/C47.missing-command_id.invalid.json"
+    },
+    {
+      "id": "C48",
+      "contract_name": "pc.memory-revise-command/1",
+      "contract_version": 1,
+      "schema": "schemas/C48.pc.memory-revise-command-1.schema.json",
+      "valid_fixture": "fixtures/valid/C48.valid.json",
+      "invalid_fixture": "fixtures/invalid/C48.missing-command_id.invalid.json"
+    },
+    {
+      "id": "C49",
+      "contract_name": "pc.memory-revoke-command/1",
+      "contract_version": 1,
+      "schema": "schemas/C49.pc.memory-revoke-command-1.schema.json",
+      "valid_fixture": "fixtures/valid/C49.valid.json",
+      "invalid_fixture": "fixtures/invalid/C49.missing-command_id.invalid.json"
+    },
+    {
+      "id": "C50",
+      "contract_name": "pc.authorized-memory-query/1",
+      "contract_version": 1,
+      "schema": "schemas/C50.pc.authorized-memory-query-1.schema.json",
+      "valid_fixture": "fixtures/valid/C50.valid.json",
+      "invalid_fixture": "fixtures/invalid/C50.missing-query_id.invalid.json"
+    },
+    {
+      "id": "C51",
+      "contract_name": "pc.authorized-memory-view/1",
+      "contract_version": 1,
+      "schema": "schemas/C51.pc.authorized-memory-view-1.schema.json",
+      "valid_fixture": "fixtures/valid/C51.valid.json",
+      "invalid_fixture": "fixtures/invalid/C51.missing-authorized_view_id.invalid.json"
+    },
+    {
+      "id": "C52",
+      "contract_name": "pc.runtime-memory-context/1",
+      "contract_version": 1,
+      "schema": "schemas/C52.pc.runtime-memory-context-1.schema.json",
+      "valid_fixture": "fixtures/valid/C52.valid.json",
+      "invalid_fixture": "fixtures/invalid/C52.missing-context_id.invalid.json"
+    },
+    {
+      "id": "C53",
+      "contract_name": "pc.memory-usage-record/1",
+      "contract_version": 1,
+      "schema": "schemas/C53.pc.memory-usage-record-1.schema.json",
+      "valid_fixture": "fixtures/valid/C53.valid.json",
+      "invalid_fixture": "fixtures/invalid/C53.missing-usage_id.invalid.json"
+    },
+    {
+      "id": "C54",
+      "contract_name": "pc.memory-authority-change-event/1",
+      "contract_version": 1,
+      "schema": "schemas/C54.pc.memory-authority-change-event-1.schema.json",
+      "valid_fixture": "fixtures/valid/C54.valid.json",
+      "invalid_fixture": "fixtures/invalid/C54.missing-event_id.invalid.json"
+    },
+    {
+      "id": "C55",
+      "contract_name": "pc.memory-projection-operation/1",
+      "contract_version": 1,
+      "schema": "schemas/C55.pc.memory-projection-operation-1.schema.json",
+      "valid_fixture": "fixtures/valid/C55.valid.json",
+      "invalid_fixture": "fixtures/invalid/C55.missing-projection_operation_id.invalid.json"
+    },
+    {
+      "id": "C56",
+      "contract_name": "pc.memory-projection-receipt/1",
+      "contract_version": 1,
+      "schema": "schemas/C56.pc.memory-projection-receipt-1.schema.json",
+      "valid_fixture": "fixtures/valid/C56.valid.json",
+      "invalid_fixture": "fixtures/invalid/C56.missing-projection_operation_id.invalid.json"
+    },
+    {
+      "id": "C57",
+      "contract_name": "pc.memory-projection-rebuild-manifest/1",
+      "contract_version": 1,
+      "schema": "schemas/C57.pc.memory-projection-rebuild-manifest-1.schema.json",
+      "valid_fixture": "fixtures/valid/C57.valid.json",
+      "invalid_fixture": "fixtures/invalid/C57.missing-rebuild_id.invalid.json"
+    },
+    {
+      "id": "C58",
+      "contract_name": "pc.memory-policy-decision/1",
+      "contract_version": 1,
+      "schema": "schemas/C58.pc.memory-policy-decision-1.schema.json",
+      "valid_fixture": "fixtures/valid/C58.valid.json",
+      "invalid_fixture": "fixtures/invalid/C58.missing-decision_id.invalid.json"
+    },
+    {
+      "id": "C59",
+      "contract_name": "pc.memory-context-exposure/1",
+      "contract_version": 1,
+      "schema": "schemas/C59.pc.memory-context-exposure-1.schema.json",
+      "valid_fixture": "fixtures/valid/C59.valid.json",
+      "invalid_fixture": "fixtures/invalid/C59.missing-exposure_id.invalid.json"
+    },
+    {
+      "id": "C60",
+      "contract_name": "pc.memory-session-invalidation/1",
+      "contract_version": 1,
+      "schema": "schemas/C60.pc.memory-session-invalidation-1.schema.json",
+      "valid_fixture": "fixtures/valid/C60.valid.json",
+      "invalid_fixture": "fixtures/invalid/C60.missing-invalidation_id.invalid.json"
+    }
+  ]
+}

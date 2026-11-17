@@ -1,0 +1,30 @@
+{
+  "contract_name": "pc.memory-capture-command/1",
+  "contract_version": 1,
+  "idempotency_key": "idem-contract-46",
+  "request_context_ref": "request-context-contract",
+  "capture_mode": "EXPLICIT_USER_SAVE",
+  "owner_principal_id": "principal-contract",
+  "scope_request": {
+    "scope_type": "PERSONAL"
+  },
+  "memory_kind": "EXPLICIT_PREFERENCE",
+  "content": {
+    "preference": "lead with the conclusion"
+  },
+  "source_evidence_inputs": [
+    {
+      "source_kind": "CONVERSATION_MESSAGE",
+      "source_object_id": "message-contract"
+    }
+  ],
+  "valid_time": {
+    "valid_from": "2026-11-17T00:00:00.000Z",
+    "valid_to": null
+  },
+  "sensitivity_hint": "INTERNAL",
+  "capture_policy_revision": 1,
+  "expected_result_state": "CONFIRMED",
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:01:00.000Z"
+}

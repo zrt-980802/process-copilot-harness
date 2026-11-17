@@ -1,0 +1,102 @@
+{
+  "manifest_name": "process-copilot-memory-architecture-traceability",
+  "manifest_version": 1,
+  "status": "accepted-architecture-extension",
+  "generated_at": "2026-11-16",
+  "implementation_authorized": true,
+  "authorized_scope": "MEMORY-01A",
+  "implementation_status": "memory-01a-independent-review-pass-after-remediation",
+  "authority": {
+    "adr_index": "architecture/README.md",
+    "flow": "architecture/memory-end-to-end-flow-v1.md",
+    "acceptance_record": "architecture/memory-adr-acceptance-record-2026-11-16.md",
+    "contract_catalog": "architecture/memory-contract-catalog-v1.md",
+    "contract_review": "architecture/memory-contract-review-v1.md",
+    "module_matrix": "architecture/memory-module-responsibility-matrix-v1.md",
+    "threat_model": "architecture/memory-threat-model-v1.md",
+    "evaluation_baseline": "architecture/memory-evaluation-baseline-v1.md",
+    "dsh_review": "architecture/memory-dsh-non-invasive-review-v1.md",
+    "implementation_decision": "architecture/memory-implementation-decision-pack-v1.md",
+    "memory_01a_verification": "product/docs/memory-01a-verification.md",
+    "memory_01a_independent_review": "product/docs/memory-01a-independent-review.md"
+  },
+  "test_suites": {
+    "TS-MEM-AUTHORITY": "MemoryObject, immutable Revision, SourceEvidence, CAS, idempotency and lifecycle",
+    "TS-MEM-CAPTURE": "Explicit save, automatic Candidate, classification, secret filtering, deduplication and conflict proposals",
+    "TS-MEM-QUERY": "Purpose-bound authorization, source revalidation, retrieval, post-filter and AuthorizedMemoryView",
+    "TS-MEM-PROJECTION": "Projection operation, receipt/readback, rebuild, provider replacement and stale result rejection",
+    "TS-MEM-CONTEXT": "Context budget, rendering, prompt-injection isolation, usage record and Tool boundary",
+    "TS-MEM-REVOCATION": "Authority revoke, cache/projection propagation, context exposure, session invalidation and rotation",
+    "TS-MEM-GOVERNANCE": "User control, policy decisions, admin boundaries, retention references and audit",
+    "TS-MEM-SECURITY": "Cross-tenant/user/project isolation, direct-get, replay, side channel and poisoning",
+    "TS-MEM-EVAL": "PersonalMemoryEval B0-B3 quality, cost, temporal and abstention comparison"
+  },
+  "modules": {
+    "M23": "Memory Authority & Revision",
+    "M24": "Memory Capture & Consolidation",
+    "M25": "Authorized Memory Query",
+    "M26": "Memory Projection & Provider Adapter",
+    "M27": "Memory Context Assembly & Usage",
+    "M28": "Memory Exposure & Session Invalidation",
+    "M29": "Memory Governance & User Control"
+  },
+  "entries": [
+    {
+      "requirement_id": "ADR-0018",
+      "status": "accepted",
+      "modules": ["M23", "M24", "M25", "M26", "M27", "M29"],
+      "contracts": ["C43", "C44", "C45", "C46", "C50", "C51", "C52", "C54", "C55", "C58"],
+      "test_refs": ["SEC-MEM-001", "SEC-MEM-002", "SEC-MEM-003", "SEC-MEM-004", "SEC-MEM-009"],
+      "implementation_status": "partially-implemented-memory-01a"
+    },
+    {
+      "requirement_id": "ADR-0019",
+      "status": "accepted",
+      "modules": ["M23", "M24", "M26", "M29"],
+      "contracts": ["C43", "C44", "C45", "C46", "C47", "C48", "C49", "C54", "C55", "C56", "C57", "C58"],
+      "test_refs": ["SEC-MEM-008", "SEC-MEM-009", "SEC-MEM-010", "SEC-MEM-011", "SEC-MEM-012", "SEC-MEM-013", "SEC-MEM-014", "SEC-MEM-015", "SEC-MEM-016"],
+      "implementation_status": "partially-implemented-memory-01a"
+    },
+    {
+      "requirement_id": "ADR-0020",
+      "status": "accepted",
+      "modules": ["M03", "M09", "M23", "M25", "M26", "M27", "M29"],
+      "contracts": ["C45", "C50", "C51", "C52", "C53", "C58"],
+      "test_refs": ["SEC-MEM-001", "SEC-MEM-002", "SEC-MEM-003", "SEC-MEM-004", "SEC-MEM-005", "SEC-MEM-006", "SEC-MEM-007"],
+      "implementation_status": "authorization-port-only-memory-01a"
+    },
+    {
+      "requirement_id": "ADR-0021",
+      "status": "accepted",
+      "modules": ["M13", "M19", "M20", "M23", "M25", "M26"],
+      "contracts": ["C50", "C51", "C54", "C55", "C56", "C57"],
+      "test_refs": ["SEC-MEM-002", "SEC-MEM-013", "SEC-MEM-014", "SEC-MEM-015", "SEC-MEM-016"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0022",
+      "status": "accepted",
+      "scope_status": "future-boundary-only",
+      "modules": ["M23", "M29"],
+      "contracts": ["C43", "C44", "C45", "C58"],
+      "future_contracts_required": ["DigitalImpression", "DelegationGrant", "DelegationDecision", "DelegateResponse"],
+      "test_refs": ["SEC-MEM-017", "SEC-MEM-018", "SEC-MEM-019", "SEC-MEM-020"],
+      "implementation_status": "deferred"
+    },
+    {
+      "requirement_id": "ADR-0023",
+      "status": "accepted",
+      "modules": ["M05", "M15", "M19", "M21", "M23", "M27", "M28"],
+      "contracts": ["C08", "C09", "C10", "C11", "C29", "C52", "C53", "C54", "C59", "C60"],
+      "test_refs": ["SEC-MEM-013", "SEC-MEM-014", "SEC-MEM-015", "SEC-MEM-021"],
+      "implementation_status": "planned"
+    }
+  ],
+  "coverage": {
+    "accepted_memory_adrs": 6,
+    "memory_modules": 7,
+    "memory_contracts": 18,
+    "security_tests": 21,
+    "dsh_core_required_changes": 0
+  }
+}

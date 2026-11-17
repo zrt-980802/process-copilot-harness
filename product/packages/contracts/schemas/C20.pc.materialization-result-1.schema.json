@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C20.schema.json",
+  "title": "C20 pc.materialization-result/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "materialization_id",
+    "state",
+    "mount_ref",
+    "materialized_entries",
+    "failed_entries",
+    "expires_at",
+    "cleanup_state",
+    "result_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.materialization-result/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "materialization_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "READY",
+        "PARTIAL",
+        "FAILED",
+        "EXPIRED",
+        "CLEANED"
+      ]
+    },
+    "mount_ref": {
+      "type": "string",
+      "pattern": "^materialization:[a-zA-Z0-9_-]+$"
+    },
+    "materialized_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource_id",
+          "resource_version_id",
+          "relative_path",
+          "content_digest",
+          "bytes",
+          "mode"
+        ],
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "pattern": "^res_[a-zA-Z0-9_-]+$"
+          },
+          "resource_version_id": {
+            "type": "string",
+            "pattern": "^rv_[a-zA-Z0-9_-]+$"
+          },
+          "relative_path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          },
+          "content_digest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "READ_ONLY",
+              "READ_WRITE"
+            ]
+          }
+        }
+      }
+    },
+    "failed_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource_id",
+          "resource_version_id",
+          "code"
+        ],
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "pattern": "^res_[a-zA-Z0-9_-]+$"
+          },
+          "resource_version_id": {
+            "type": "string",
+            "pattern": "^rv_[a-zA-Z0-9_-]+$"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cleanup_state": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ACTIVE",
+        "CLEANED",
+        "FAILED"
+      ]
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C20; source=architecture/stable-contract-catalog-v1.md"
+}

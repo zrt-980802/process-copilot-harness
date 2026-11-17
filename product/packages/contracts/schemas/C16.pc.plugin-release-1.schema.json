@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C16.schema.json",
+  "title": "C16 pc.plugin-release/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "plugin_release_id",
+    "plugin_definition_id",
+    "version",
+    "source",
+    "artifact_digest",
+    "signature_refs",
+    "sbom_ref",
+    "dsh_compatibility",
+    "dependencies",
+    "declared_capabilities",
+    "risk_manifest",
+    "status",
+    "release_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.plugin-release/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "plugin_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plugin_definition_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "artifact_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signature_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sbom_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dsh_compatibility": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dependencies": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "declared_capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "risk_manifest": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PUBLISHED",
+        "REVOKED",
+        "SUPERSEDED"
+      ]
+    },
+    "release_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C16; source=architecture/stable-contract-catalog-v1.md"
+}

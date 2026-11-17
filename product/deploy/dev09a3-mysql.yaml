@@ -1,0 +1,8 @@
+mysql:
+  host: mysql
+  port: 3306
+  user: root
+  password: local-dev09a3-mysql-only
+  mode: isolated
+  database_prefix: ee_agent_test_
+  connect_timeout_seconds: 15

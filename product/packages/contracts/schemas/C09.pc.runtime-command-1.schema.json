@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C09.schema.json",
+  "title": "C09 pc.runtime-command/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "command_id",
+    "command_type",
+    "deadline",
+    "runtime_id",
+    "runtime_epoch",
+    "payload"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.runtime-command/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command_type": {
+      "type": "string",
+      "enum": [
+        "ASSIGN_SESSION",
+        "REVOKE_SESSION",
+        "START_TURN",
+        "CANCEL_TURN",
+        "RESUME_SESSION",
+        "FLUSH_SESSION",
+        "DRAIN_RUNTIME",
+        "TERMINATE_RUNTIME",
+        "QUERY_HEALTH",
+        "QUERY_CAPABILITIES",
+        "CATCH_UP_EVENTS"
+      ]
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assignment_generation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fencing_token": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_state_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$comment": "C09; source=architecture/stable-contract-catalog-v1.md"
+}

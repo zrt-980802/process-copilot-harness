@@ -1,0 +1,14 @@
+{
+  "contract_name": "pc.profile-resolution-report/1",
+  "contract_version": 1,
+  "resolution_report_id": "resolution_report_id-value",
+  "requested_profile_release_id": "requested_profile_release_id-value",
+  "inputs": {},
+  "selected": {},
+  "omitted": {},
+  "conflicts": [],
+  "warnings": [],
+  "hard_failures": [],
+  "runtime_compatibility": {},
+  "created_at": "2026-11-09T00:00:00.000Z"
+}

@@ -1,0 +1,13 @@
+{
+  "contract_name": "pc.runtime-command/1",
+  "contract_version": 1,
+  "command_type": "ASSIGN_SESSION",
+  "deadline": "2026-11-09T00:00:00.000Z",
+  "runtime_id": "runtime_id-value",
+  "runtime_epoch": 1,
+  "pc_session_id": "pc_session_id-value",
+  "assignment_generation": 1,
+  "fencing_token": "fencing_token-value",
+  "expected_state_version": "expected_state_version-value",
+  "payload": {}
+}

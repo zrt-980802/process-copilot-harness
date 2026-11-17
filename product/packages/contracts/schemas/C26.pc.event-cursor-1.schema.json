@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C26.schema.json",
+  "title": "C26 pc.event-cursor/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "producer",
+    "stream_kind",
+    "stream_id",
+    "cursor",
+    "last_event_id",
+    "last_sequence",
+    "state",
+    "expected_next_sequence",
+    "captured_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.event-cursor/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stream_kind": {
+      "type": "string",
+      "enum": [
+        "RUNTIME",
+        "SESSION",
+        "TASK",
+        "OPERATION",
+        "APPROVAL",
+        "RECOVERY"
+      ]
+    },
+    "stream_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "last_event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "last_sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "COMPLETE",
+        "GAP",
+        "QUARANTINED"
+      ]
+    },
+    "expected_next_sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "gap_detected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C26; source=architecture/stable-contract-catalog-v1.md"
+}

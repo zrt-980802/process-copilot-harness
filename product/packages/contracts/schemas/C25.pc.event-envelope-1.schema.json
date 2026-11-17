@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C25.schema.json",
+  "title": "C25 pc.event-envelope/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "event_id",
+    "event_type",
+    "event_schema_version",
+    "producer",
+    "producer_version",
+    "tenant_id",
+    "principal_id",
+    "stream_kind",
+    "stream_id",
+    "stream_sequence",
+    "durability",
+    "occurred_at",
+    "observed_at",
+    "payload",
+    "payload_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.event-envelope/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stream_kind": {
+      "type": "string",
+      "enum": [
+        "RUNTIME",
+        "SESSION",
+        "TASK",
+        "OPERATION",
+        "APPROVAL",
+        "RECOVERY"
+      ]
+    },
+    "stream_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stream_sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "aggregate_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "business_task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "causation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dsh_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dsh_session_seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "runtime_event_seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "assignment_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "fencing_token": {
+      "type": "string",
+      "minLength": 1
+    },
+    "durability": {
+      "type": "string",
+      "enum": [
+        "EPHEMERAL",
+        "OBSERVED",
+        "DURABLE_DSH",
+        "DURABLE_PC"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "payload_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C25; source=architecture/stable-contract-catalog-v1.md"
+}

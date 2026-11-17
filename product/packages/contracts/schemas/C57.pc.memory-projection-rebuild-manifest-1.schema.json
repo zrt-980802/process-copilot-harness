@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C57.schema.json",
+  "title": "C57 pc.memory-projection-rebuild-manifest/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "rebuild_id",
+    "projection_release",
+    "authority_snapshot_revision",
+    "tenant_id",
+    "scope_manifest",
+    "memory_revision_manifest_ref",
+    "source_evidence_manifest_ref",
+    "expected_counts",
+    "expected_digest",
+    "started_at",
+    "activation_status"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-projection-rebuild-manifest/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "rebuild_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projection_release": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_snapshot_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope_manifest": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "memory_revision_manifest_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_evidence_manifest_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "expected_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "activation_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ACTIVE",
+        "FAILED",
+        "SUPERSEDED"
+      ]
+    },
+    "verification_result": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    }
+  },
+  "$comment": "C57; source=architecture/memory-contract-catalog-v1.md"
+}

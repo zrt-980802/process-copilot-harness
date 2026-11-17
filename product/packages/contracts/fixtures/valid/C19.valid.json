@@ -1,0 +1,21 @@
+{
+  "contract_name": "pc.materialization-request/1",
+  "contract_version": 1,
+  "materialization_id": "mat_contract_19",
+  "workspace_view_snapshot_id": "wvs_contract_18",
+  "resource_refs": [
+    {
+      "resource_id": "res_contract_17",
+      "resource_version_id": "rv_contract_17_1"
+    }
+  ],
+  "purpose": "RUNTIME_INPUT",
+  "target_runtime_id": "runtime-contract",
+  "target_runtime_epoch": 1,
+  "pc_session_id": "session-contract",
+  "ttl": 3600,
+  "allowed_actions": [
+    "READ"
+  ],
+  "requested_at": "2026-11-10T00:00:00.000Z"
+}

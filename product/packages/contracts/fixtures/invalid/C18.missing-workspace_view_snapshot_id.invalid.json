@@ -1,0 +1,27 @@
+{
+  "contract_name": "pc.workspace-view-snapshot/1",
+  "contract_version": 1,
+  "pc_session_id": "session-contract",
+  "principal_id": "principal-contract",
+  "authorization_revision": 1,
+  "bindings": [
+    {
+      "binding_id": "binding-contract",
+      "resource_ref": {
+        "resource_id": "res_contract_17",
+        "resource_version_id": "rv_contract_17_1"
+      },
+      "scope_type": "SESSION",
+      "scope_id": "session-contract",
+      "allowed_actions": [
+        "READ"
+      ]
+    }
+  ],
+  "allowed_actions": [
+    "READ"
+  ],
+  "created_at": "2026-11-10T00:00:00.000Z",
+  "expires_at": "2026-11-10T01:00:00.000Z",
+  "snapshot_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+}

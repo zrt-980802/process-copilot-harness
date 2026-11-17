@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+cd /opt/dsh
+exec tsx /opt/dsh/apps/cli/src/bin.ts "$@"

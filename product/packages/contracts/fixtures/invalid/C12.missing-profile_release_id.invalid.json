@@ -1,0 +1,18 @@
+{
+  "contract_name": "pc.expert-profile-release/1",
+  "contract_version": 1,
+  "profile_definition_id": "profile_definition_id-value",
+  "release_version": 1,
+  "status": "status-value",
+  "instructions_ref": "instructions_ref-value",
+  "rules_ref": "rules_ref-value",
+  "tool_requirements": [],
+  "plugin_requirements": [],
+  "model_policy": {},
+  "knowledge_policy": {},
+  "output_contract": {},
+  "completion_contract": {},
+  "dependency_lock_digest": "dependency_lock_digest-value",
+  "published_at": "2026-11-09T00:00:00.000Z",
+  "release_digest": "release_digest-value"
+}

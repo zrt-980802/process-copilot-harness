@@ -1,0 +1,13 @@
+{
+  "contract_name": "eeclaw.legacy-auth-compatibility/1",
+  "contract_version": 1,
+  "schema_fingerprint": "c3e3d3334d52767ce509a8154ccee65a3b21d6dfe3a8dd248310078f8135b9cb",
+  "api_fingerprint": "a9601410f22aac796ddd084486e1285471afa66326afd53b199ee9a980662c92",
+  "auth_me_fingerprint": "ffc292b0184e2799f2e7569f73776103949c98fff9e73001821b83307fb43eb1",
+  "audit_fingerprint": "f06db3b705a9b883014a83b87a55cb800e265ef6a4ec47907777d408bc2539a9",
+  "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1",
+  "baseline_page_keys_digest": "8bb3b23398a0a1378de5e5411ed62991ee41d7212ab0659efeea47ede14222c4",
+  "revocation_mode": "request_time",
+  "data_migration_required": false,
+  "declared_at": "2026-11-09T00:00:00.000Z"
+}

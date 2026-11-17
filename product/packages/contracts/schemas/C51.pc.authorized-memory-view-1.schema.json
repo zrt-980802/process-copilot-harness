@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C51.schema.json",
+  "title": "C51 pc.authorized-memory-view/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "authorized_view_id",
+    "tenant_id",
+    "principal_id",
+    "purpose",
+    "authorization_revision",
+    "policy_revision",
+    "projection_release",
+    "authority_snapshot_revision",
+    "items",
+    "denied_reason_summary",
+    "issued_at",
+    "expires_at",
+    "view_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.authorized-memory-view/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "authorized_view_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "projection_release": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_snapshot_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "memory_id",
+          "revision_id",
+          "memory_kind",
+          "content",
+          "source_summary",
+          "valid_time",
+          "confidence",
+          "usage_constraints",
+          "retrieval_reason",
+          "source_revalidation_result",
+          "temporal_role"
+        ],
+        "properties": {
+          "memory_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "memory_kind": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT_PREFERENCE",
+              "CONFIRMED_FACT",
+              "ONGOING_GOAL",
+              "DECISION_HISTORY",
+              "PROJECT_FACT",
+              "RUNBOOK",
+              "FAILURE_GOTCHA"
+            ]
+          },
+          "content": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": true
+          },
+          "source_summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "valid_time": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "valid_from"
+            ],
+            "properties": {
+              "valid_from": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "valid_to": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "usage_constraints": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "retrieval_reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_revalidation_result": {
+            "type": "string",
+            "enum": [
+              "ALLOWED",
+              "DENIED",
+              "STALE"
+            ]
+          },
+          "temporal_role": {
+            "type": "string",
+            "enum": [
+              "CURRENT",
+              "HISTORICAL"
+            ]
+          }
+        }
+      }
+    },
+    "denied_reason_summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "view_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C51; source=architecture/memory-contract-catalog-v1.md"
+}

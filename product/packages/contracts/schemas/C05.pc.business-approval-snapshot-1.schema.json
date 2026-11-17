@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C05.schema.json",
+  "title": "C05 pc.business-approval-snapshot/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "approval_id",
+    "approval_version",
+    "status",
+    "subject_principal_id",
+    "actor_principal_id",
+    "operation_kind",
+    "target_digest",
+    "argument_digest",
+    "risk_class",
+    "authorization_revision",
+    "requested_at",
+    "decision",
+    "decision_evidence_refs",
+    "snapshot_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.business-approval-snapshot/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "approval_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "CONSUMED",
+        "REVOKED",
+        "EXPIRED",
+        "CANCELLED"
+      ]
+    },
+    "subject_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation_kind": {
+      "type": "string",
+      "enum": [
+        "READ",
+        "WRITE",
+        "DESTRUCTIVE",
+        "EXTERNAL_SIDE_EFFECT"
+      ]
+    },
+    "target_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "argument_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "reason_codes"
+      ],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "APPROVE",
+            "REJECT",
+            "REVOKE",
+            "EXPIRE",
+            "CONSUME"
+          ]
+        },
+        "decided_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "decision_evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "snapshot_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C05; source=architecture/stable-contract-catalog-v1.md"
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C17.schema.json",
+  "title": "C17 pc.resource-ref/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "resource_id",
+    "resource_version_id",
+    "resource_type",
+    "tenant_id",
+    "owner_scope",
+    "content_digest",
+    "classification",
+    "provenance_ref"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.resource-ref/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "resource_id": {
+      "type": "string",
+      "pattern": "^res_[a-zA-Z0-9_-]+$"
+    },
+    "resource_version_id": {
+      "type": "string",
+      "pattern": "^rv_[a-zA-Z0-9_-]+$"
+    },
+    "resource_type": {
+      "type": "string",
+      "enum": [
+        "UPLOAD",
+        "ATTACHMENT",
+        "WORKSPACE_FILE",
+        "ARTIFACT",
+        "EXTERNAL_REFERENCE",
+        "EVIDENCE_SNAPSHOT",
+        "DERIVED"
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_type",
+        "scope_id"
+      ],
+      "properties": {
+        "scope_type": {
+          "type": "string",
+          "enum": [
+            "USER_ROOT",
+            "USER_SHARED",
+            "SESSION",
+            "PROJECT",
+            "TASK",
+            "BUSINESS_OBJECT"
+          ]
+        },
+        "scope_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "content_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "PUBLIC",
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "RESTRICTED"
+      ]
+    },
+    "provenance_ref": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C17; source=architecture/stable-contract-catalog-v1.md"
+}

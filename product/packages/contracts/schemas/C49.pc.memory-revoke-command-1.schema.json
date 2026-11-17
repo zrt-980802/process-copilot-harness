@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C49.schema.json",
+  "title": "C49 pc.memory-revoke-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "command_id",
+    "idempotency_key",
+    "memory_id",
+    "expected_object_version",
+    "principal_id",
+    "authorization_revision",
+    "revoke_reason",
+    "propagation_targets",
+    "retention_policy_ref",
+    "issued_at",
+    "deadline"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-revoke-command/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "memory_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_object_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "expected_current_revision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "revoke_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "propagation_targets": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "retention_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C49; source=architecture/memory-contract-catalog-v1.md"
+}

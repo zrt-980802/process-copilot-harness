@@ -1,0 +1,21 @@
+{
+  "contract_name": "pc.memory-context-exposure/1",
+  "contract_version": 1,
+  "exposure_id": "mexposure_contract_59",
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "pc_session_id": "session-contract",
+  "dsh_session_id": "dsh-session-contract",
+  "assignment_generation": 1,
+  "turn_id": "turn-contract",
+  "authorized_view_id": "mview_contract_51",
+  "context_id": "mctx_contract_52",
+  "context_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "memory_revision_refs": [
+    "mrev_contract_44"
+  ],
+  "authorization_revision": 1,
+  "policy_revision": 1,
+  "exposed_at": "2026-11-17T00:00:00.000Z",
+  "session_memory_state_after_exposure": "EXPOSED"
+}

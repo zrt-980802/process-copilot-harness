@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C47.schema.json",
+  "title": "C47 pc.memory-candidate-decision-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "command_id",
+    "idempotency_key",
+    "candidate_memory_id",
+    "expected_object_version",
+    "decision",
+    "decided_by_principal_id",
+    "authorization_revision",
+    "policy_revision",
+    "decision_reason_codes",
+    "issued_at",
+    "deadline"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-candidate-decision-command/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_memory_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_object_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "CONFIRM",
+        "PUBLISH",
+        "REJECT"
+      ]
+    },
+    "decided_by_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decision_reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "content_adjustment": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "scope_adjustment": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "sensitivity_adjustment": {
+      "type": "string",
+      "enum": [
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "RESTRICTED"
+      ]
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C47; source=architecture/memory-contract-catalog-v1.md"
+}

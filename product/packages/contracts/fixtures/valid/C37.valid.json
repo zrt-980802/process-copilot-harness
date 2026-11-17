@@ -1,0 +1,15 @@
+{
+  "contract_name": "eeclaw.role-module-relation/1",
+  "contract_version": 1,
+  "role_key": "fo",
+  "module_key": "architecture",
+  "visibility": "visible",
+  "capabilities": [
+    "read",
+    "edit"
+  ],
+  "focus": "primary",
+  "requestable": false,
+  "policy_artifact_release_id": "policy-release:fo-modules:1",
+  "policy_model_revision": 1
+}

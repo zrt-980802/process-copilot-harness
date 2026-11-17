@@ -1,0 +1,77 @@
+name: process-copilot-mvp
+
+services:
+  pc-api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    image: process-copilot-mvp-api:${PC_BUILD_TAG:-test}
+    container_name: process-copilot-mvp-api
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "18011:3000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://127.0.0.1:3000/health
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 6
+
+  pc-runtime-host:
+    build:
+      context: ..
+      dockerfile: deploy/runtime-host.Dockerfile
+      args:
+        DSH_RUNTIME_BASE_IMAGE: ${DSH_RUNTIME_BASE_IMAGE:-process-copilot-dsh-runtime-base:0.2.1-rc.3-gate2}
+    image: process-copilot-mvp-runtime-host:${PC_BUILD_TAG:-test}
+    container_name: process-copilot-mvp-runtime-host
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3100
+      PC_RUNTIME_ID: ${PC_RUNTIME_ID:-pc-runtime-p1a-1}
+      PC_RUNTIME_EPOCH: ${PC_RUNTIME_EPOCH:-1}
+      DSH_PROVIDER: ${DSH_PROVIDER:-deepseek-official}
+      DSH_MODEL: ${DSH_MODEL:-deepseek-v4-flash}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-}
+    ports:
+      - "18012:3100"
+    volumes:
+      - pc-runtime-data:/var/lib/process-copilot
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3100/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 6
+
+  pc-web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    image: process-copilot-mvp-web:${PC_BUILD_TAG:-test}
+    container_name: process-copilot-mvp-web
+    depends_on:
+      pc-api:
+        condition: service_healthy
+      pc-runtime-host:
+        condition: service_healthy
+    ports:
+      - "18080:80"
+    restart: unless-stopped
+
+volumes:
+  pc-runtime-data:
+    name: process-copilot-mvp-runtime-data

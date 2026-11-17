@@ -1,0 +1,17 @@
+{
+  "contract_name": "pc.external-operation-record/1",
+  "contract_version": 1,
+  "operation_kind": "WRITE",
+  "idempotency_key": "idempotency-contract-21",
+  "fencing_token": "fence-contract",
+  "request_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "provider_operation_id": "provider-operation-contract",
+  "dispatch_state": "COMPLETED",
+  "outcome_state": "KNOWN_SUCCESS",
+  "recovery_class": "RECONCILE_BEFORE_RETRY",
+  "last_reconciled_at": "2026-11-10T00:00:45.000Z",
+  "evidence_refs": [
+    "external:evidence:contract"
+  ],
+  "version": 2
+}

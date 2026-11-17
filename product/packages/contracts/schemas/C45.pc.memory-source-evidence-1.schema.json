@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C45.schema.json",
+  "title": "C45 pc.memory-source-evidence/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "source_evidence_id",
+    "tenant_id",
+    "source_kind",
+    "source_authority",
+    "source_object_id",
+    "captured_by_principal_id",
+    "captured_at",
+    "observed_at",
+    "sensitivity",
+    "displayability",
+    "evidence_digest",
+    "access_revalidation_policy"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-source-evidence/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "source_evidence_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_kind": {
+      "type": "string",
+      "enum": [
+        "CONVERSATION_MESSAGE",
+        "RESOURCE_VERSION",
+        "BUSINESS_EVENT",
+        "TOOL_RESULT"
+      ]
+    },
+    "source_authority": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_object_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_version_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_fragment_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_subject_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "captured_by_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sensitivity": {
+      "type": "string",
+      "enum": [
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "RESTRICTED"
+      ]
+    },
+    "displayability": {
+      "type": "string",
+      "enum": [
+        "DISPLAYABLE",
+        "SUMMARY_ONLY",
+        "HIDDEN"
+      ]
+    },
+    "evidence_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "access_revalidation_policy": {
+      "type": "string",
+      "enum": [
+        "OWNER_ONLY",
+        "CURRENT_SOURCE_ACCESS",
+        "CURRENT_PROJECT_MEMBERSHIP"
+      ]
+    }
+  },
+  "$comment": "C45; source=architecture/memory-contract-catalog-v1.md"
+}

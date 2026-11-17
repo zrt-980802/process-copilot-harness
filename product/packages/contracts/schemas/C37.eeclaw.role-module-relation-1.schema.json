@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C37.schema.json",
+  "title": "C37 eeclaw.role-module-relation/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "role_key",
+    "module_key",
+    "visibility",
+    "capabilities",
+    "focus",
+    "requestable",
+    "policy_artifact_release_id",
+    "policy_model_revision"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "eeclaw.role-module-relation/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "role_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "module_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "none",
+        "visible"
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "read",
+          "edit",
+          "approve",
+          "publish"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "focus": {
+      "type": "string",
+      "enum": [
+        "none",
+        "secondary",
+        "primary"
+      ]
+    },
+    "requestable": {
+      "type": "boolean"
+    },
+    "policy_artifact_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_model_revision": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$comment": "C37; source=architecture/stable-contract-catalog-v1.md"
+}

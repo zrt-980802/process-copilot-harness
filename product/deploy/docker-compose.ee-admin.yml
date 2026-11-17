@@ -1,0 +1,13 @@
+services:
+  ee-admin-web:
+    image: process-copilot-ee-admin-web:local
+    build:
+      context: ${PC_DEMO_EE_ROOT}/frontend
+      dockerfile: ${PC_DEMO_PRODUCT_ROOT:?Set Product root}/deploy/ee-admin-web.Dockerfile
+      args:
+        VITE_PROCESS_COPILOT_URL: ${VITE_PROCESS_COPILOT_URL:-http://127.0.0.1:18091/}
+    ports: [127.0.0.1:18092:80]
+    networks: [control, browser]
+    depends_on:
+      ee-api: {condition: service_healthy}
+    restart: unless-stopped

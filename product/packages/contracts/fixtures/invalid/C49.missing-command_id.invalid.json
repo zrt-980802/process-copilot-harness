@@ -1,0 +1,18 @@
+{
+  "contract_name": "pc.memory-revoke-command/1",
+  "contract_version": 1,
+  "idempotency_key": "idem-contract-49",
+  "memory_id": "mem_contract_43",
+  "expected_object_version": 2,
+  "expected_current_revision_id": "mrev_contract_48",
+  "principal_id": "principal-contract",
+  "authorization_revision": 1,
+  "revoke_reason": "OWNER_REQUEST",
+  "propagation_targets": [
+    "POSTGRES_PROJECTION",
+    "RUNTIME_CONTEXT"
+  ],
+  "retention_policy_ref": "retention-policy-contract",
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:01:00.000Z"
+}

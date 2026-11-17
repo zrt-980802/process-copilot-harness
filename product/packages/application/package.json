@@ -1,0 +1,16 @@
+{
+  "name": "@pc/application",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pc/domain": "workspace:*",
+    "@pc/resource": "workspace:*",
+    "@pc/runtime-adapter": "workspace:*"
+  }
+}

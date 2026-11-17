@@ -1,0 +1,24 @@
+{
+  "contract_name": "pc.memory-session-invalidation/1",
+  "contract_version": 1,
+  "idempotency_key": "idem-contract-60",
+  "tenant_id": "tenant-contract",
+  "pc_session_id": "session-contract",
+  "dsh_session_id": "dsh-session-contract",
+  "current_assignment_generation": 1,
+  "affected_memory_revision_refs": [
+    "mrev_contract_44"
+  ],
+  "trigger_kind": "REVOKED",
+  "authority_change_event_ids": [
+    "mevent-contract-revoked"
+  ],
+  "target_memory_state": "INVALIDATED",
+  "fencing_action": "REVOKE_ASSIGNMENT",
+  "rotation_policy": "FRESH_SESSION_NO_REPLAY",
+  "invalidation_status": "PENDING",
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:01:00.000Z",
+  "completed_at": "2026-11-17T00:00:00.000Z",
+  "recovery_case_id": "recovery-contract"
+}

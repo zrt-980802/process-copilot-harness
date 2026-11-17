@@ -1,0 +1,14 @@
+{
+  "contract_name": "pc.reconciliation-result/1",
+  "contract_version": 1,
+  "provider_facts": {
+    "provider_operation_id": "provider-contract"
+  },
+  "resolved_outcome_state": "KNOWN_SUCCESS",
+  "action": "RECORD_SUCCESS",
+  "compensation_ref": "compensation_ref-value",
+  "evidence_refs": [
+    "provider:readback-contract"
+  ],
+  "reconciled_at": "2026-11-10T00:00:05.000Z"
+}

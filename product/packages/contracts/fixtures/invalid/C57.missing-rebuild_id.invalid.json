@@ -1,0 +1,24 @@
+{
+  "contract_name": "pc.memory-projection-rebuild-manifest/1",
+  "contract_version": 1,
+  "projection_release": "memory-projection-contract",
+  "authority_snapshot_revision": 1,
+  "tenant_id": "tenant-contract",
+  "scope_manifest": {
+    "owner_principal_id": "principal-contract"
+  },
+  "memory_revision_manifest_ref": "manifest:memory:contract",
+  "source_evidence_manifest_ref": "manifest:evidence:contract",
+  "cursor": "cursor-contract",
+  "expected_counts": {
+    "memories": 1,
+    "revisions": 1
+  },
+  "expected_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+  "started_at": "2026-11-17T00:00:00.000Z",
+  "completed_at": "2026-11-17T00:00:00.000Z",
+  "activation_status": "ACTIVE",
+  "verification_result": {
+    "status": "VERIFIED"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "contract_name": "pc.business-task/1",
+  "contract_version": 1,
+  "tenant_id": "tenant-contract",
+  "owner_principal_id": "principal-contract",
+  "project_id": "project-contract",
+  "state": "RUNNING",
+  "current_subtask_id": "current_subtask_id-value",
+  "profile_release_id": "profile-contract",
+  "source_session_ids": [
+    "session-contract"
+  ],
+  "projection_complete": true,
+  "last_event_id": "event-contract-25",
+  "state_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+  "created_at": "2026-11-10T00:00:00.000Z",
+  "updated_at": "2026-11-10T00:00:01.000Z",
+  "version": 2
+}

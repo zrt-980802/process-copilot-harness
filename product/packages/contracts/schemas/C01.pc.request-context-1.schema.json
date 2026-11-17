@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C01.schema.json",
+  "title": "C01 pc.request-context/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "tenant_id",
+    "principal_id",
+    "actor_id",
+    "authentication_context_id",
+    "authorization_revision",
+    "request_id",
+    "trace_id",
+    "client_context"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.request-context/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authentication_context_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "client_context": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$comment": "C01; source=architecture/stable-contract-catalog-v1.md"
+}

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C40.schema.json",
+  "title": "C40 eeclaw.policy-artifact-release/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "artifact_release_id",
+    "artifact_definition_id",
+    "artifact_kind",
+    "release_version",
+    "schema_version",
+    "payload",
+    "payload_checksum",
+    "code_registry_revision",
+    "compatibility_declaration_ref",
+    "approval_evidence_refs",
+    "lifecycle_state",
+    "created_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "eeclaw.policy-artifact-release/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "artifact_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_definition_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "workbench_projection",
+        "role_configuration_schema",
+        "role_configuration_defaults",
+        "permission_bundle",
+        "capability_policy",
+        "workflow_contribution",
+        "artifact_contract"
+      ]
+    },
+    "release_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "schema_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "payload_checksum": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_registry_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "compatibility_declaration_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval_evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "VALIDATED",
+        "APPROVED",
+        "PUBLISHED",
+        "SUPERSEDED"
+      ]
+    },
+    "published_environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "test",
+        "prod"
+      ]
+    },
+    "supersedes_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C40; source=architecture/stable-contract-catalog-v1.md"
+}

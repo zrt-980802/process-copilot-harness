@@ -1,0 +1,184 @@
+{
+  "manifest_name": "process-copilot-architecture-traceability",
+  "manifest_version": 1,
+  "status": "accepted-blueprint",
+  "generated_at": "2026-11-09",
+  "authority": {
+    "adr_index": "architecture/README.md",
+    "module_matrix": "architecture/implementation-module-responsibility-matrix-v1.md",
+    "contract_catalog": "architecture/stable-contract-catalog-v1.md",
+    "dsh_review": "architecture/dsh-non-invasive-implementation-review-v1.md",
+    "compatibility_matrix": "architecture/compatibility-matrix-v1.md",
+    "authorization_constraints": "architecture/implementation-constraints-authorization.md",
+    "role_model_evidence": "architecture/reference-evidence-role-model.md"
+  },
+  "test_suites": {
+    "TS-RUNTIME": "Runtime ownership, lifecycle, assignment, lease, fencing, drain and recovery",
+    "TS-PROFILE": "Profile, Tool, Plugin, capability resolution and release compatibility",
+    "TS-RESOURCE": "Resource identity, workspace view, materialization, provenance and deletion",
+    "TS-SECURITY": "Identity, authorization, credential, approval, sandbox and audit",
+    "TS-GATEWAY": "Tool/MCP execution, idempotency, revocation, cancellation and reconciliation",
+    "TS-EVENT": "Event ingestion, ordering, gap repair, projection, replay and business state",
+    "TS-DEPLOY": "Isolation, capacity, health, telemetry, rollout and disaster recovery",
+    "TS-ARCH": "Contract compatibility, traceability, forbidden dependency and ADR consistency",
+    "TS-LEGACY": "EE Claw V1 contract freeze, baseline wildcard, no-migration rollback and immediate revocation"
+  },
+  "entries": [
+    {
+      "requirement_id": "ADR-0001",
+      "status": "accepted",
+      "modules": ["M04", "M05", "M06", "M08", "M15", "M16", "M17", "M18"],
+      "contracts": ["C06", "C07", "C08", "C11", "C12", "C13"],
+      "test_refs": ["TS-RUNTIME-001", "TS-RUNTIME-002", "TS-PROFILE-001", "TS-DEPLOY-001"],
+      "evidence_refs": ["REF-ADAPTER-001", "REF-ADAPTER-003", "REF-ADAPTER-004"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0002",
+      "status": "accepted",
+      "modules": ["M05", "M10", "M14", "M15", "M16", "M19", "M21"],
+      "contracts": ["C08", "C09", "C10", "C21", "C22", "C24", "C31", "C32"],
+      "test_refs": ["TS-RUNTIME-003", "TS-RUNTIME-004", "TS-GATEWAY-001", "TS-GATEWAY-002"],
+      "evidence_refs": ["REF-ADAPTER-004", "REF-RUNTIME-001"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0003",
+      "status": "accepted",
+      "modules": ["M05", "M10", "M13", "M14", "M15", "M16", "M19", "M21"],
+      "contracts": ["C10", "C22", "C24", "C25", "C26", "C28", "C29", "C30", "C31"],
+      "test_refs": ["TS-RUNTIME-005", "TS-RUNTIME-006", "TS-GATEWAY-003", "TS-EVENT-001"],
+      "evidence_refs": ["REF-RUNTIME-001", "REF-RUNTIME-002", "REF-RUNTIME-003"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0004",
+      "status": "accepted",
+      "modules": ["M04", "M09", "M15", "M18", "M19", "M20", "M21"],
+      "contracts": ["C06", "C09", "C10", "C11", "C17", "C18", "C19", "C20"],
+      "test_refs": ["TS-RUNTIME-007", "TS-RUNTIME-008", "TS-RESOURCE-001", "TS-DEPLOY-002"],
+      "evidence_refs": ["REF-RUNTIME-001", "REF-RUNTIME-004"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0005",
+      "status": "accepted",
+      "modules": ["M03", "M09", "M14", "M15", "M16", "M21"],
+      "contracts": ["C03", "C17", "C18", "C19", "C20", "C21", "C32"],
+      "test_refs": ["TS-RESOURCE-002", "TS-RESOURCE-003", "TS-RESOURCE-004", "TS-SECURITY-001"],
+      "evidence_refs": ["REF-WORKSPACE-001", "REF-WORKSPACE-002"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0006",
+      "status": "accepted",
+      "modules": ["M04", "M05", "M08", "M09", "M13", "M15", "M16", "M17", "M22"],
+      "contracts": ["C07", "C08", "C09", "C10", "C11", "C13", "C18", "C25", "C26", "C31", "C33"],
+      "test_refs": ["TS-RUNTIME-009", "TS-RUNTIME-010", "TS-EVENT-002", "TS-ARCH-001"],
+      "evidence_refs": ["REF-ADAPTER-001", "REF-ADAPTER-002", "REF-ADAPTER-003", "REF-ADAPTER-004", "REF-ADAPTER-005"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0007",
+      "status": "accepted",
+      "modules": ["M02", "M03", "M05", "M07", "M08", "M11", "M14", "M16", "M21"],
+      "contracts": ["C02", "C03", "C04", "C08", "C15", "C21", "C22", "C23", "C24", "C32"],
+      "test_refs": ["TS-SECURITY-002", "TS-SECURITY-003", "TS-GATEWAY-004", "TS-GATEWAY-005"],
+      "evidence_refs": ["REF-MCP-001", "REF-MCP-002", "REF-ADAPTER-004"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0008",
+      "status": "accepted",
+      "modules": ["M03", "M06", "M07", "M08", "M14", "M16", "M17", "M21", "M22"],
+      "contracts": ["C03", "C13", "C14", "C15", "C16", "C21", "C33", "C34"],
+      "test_refs": ["TS-PROFILE-002", "TS-PROFILE-003", "TS-GATEWAY-006", "TS-ARCH-002"],
+      "evidence_refs": ["REF-TP-001", "REF-TP-002", "REF-ADAPTER-004"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0009",
+      "status": "accepted",
+      "modules": ["M03", "M06", "M07", "M08", "M16", "M17", "M22"],
+      "contracts": ["C12", "C13", "C14", "C15", "C16", "C33", "C34"],
+      "test_refs": ["TS-PROFILE-004", "TS-PROFILE-005", "TS-PROFILE-006", "TS-ARCH-003"],
+      "evidence_refs": ["REF-EP-001", "REF-EP-002", "REF-EP-003", "REF-ADAPTER-003"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0010",
+      "status": "accepted",
+      "modules": ["M01", "M02", "M03", "M11", "M14", "M21"],
+      "contracts": ["C01", "C02", "C03", "C04", "C21", "C23", "C32"],
+      "test_refs": ["TS-SECURITY-004", "TS-SECURITY-005", "TS-SECURITY-006", "TS-GATEWAY-007"],
+      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-IAM-003"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0011",
+      "status": "accepted",
+      "modules": ["M10", "M13", "M16", "M19", "M20", "M21"],
+      "contracts": ["C24", "C25", "C26", "C27", "C28", "C29", "C30", "C32"],
+      "test_refs": ["TS-EVENT-003", "TS-EVENT-004", "TS-EVENT-005", "TS-EVENT-006"],
+      "evidence_refs": ["REF-RUNTIME-001", "REF-ADAPTER-005", "REF-FINAL-001", "REF-FINAL-002"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0012",
+      "status": "accepted",
+      "modules": ["M03", "M10", "M11", "M12", "M14", "M15", "M16", "M20", "M21"],
+      "contracts": ["C03", "C04", "C05", "C21", "C22", "C24", "C29", "C31", "C32"],
+      "test_refs": ["TS-SECURITY-007", "TS-SECURITY-008", "TS-SECURITY-009", "TS-GATEWAY-008"],
+      "evidence_refs": ["REF-ADAPTER-004", "REF-FINAL-001", "REF-FINAL-004"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0013",
+      "status": "accepted",
+      "modules": ["M01", "M04", "M15", "M18", "M19", "M20", "M21"],
+      "contracts": ["C06", "C07", "C09", "C10", "C11", "C29", "C32", "C33"],
+      "test_refs": ["TS-DEPLOY-003", "TS-DEPLOY-004", "TS-DEPLOY-005", "TS-DEPLOY-006"],
+      "evidence_refs": ["REF-RUNTIME-004", "REF-FINAL-003"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0014",
+      "status": "accepted",
+      "modules": ["M17", "M20", "M21", "M22"],
+      "contracts": ["C31", "C32", "C33", "C34"],
+      "test_refs": ["TS-ARCH-004", "TS-ARCH-005", "TS-ARCH-006", "TS-ARCH-007"],
+      "evidence_refs": ["REF-FINAL-001", "REF-FINAL-002"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0015",
+      "status": "accepted",
+      "modules": ["M01", "M03", "M06", "M08", "M21", "M22"],
+      "external_authorities": ["E01", "E02", "E03"],
+      "contracts": ["C03", "C12", "C13", "C32", "C35", "C36", "C37", "C38", "C39", "C40", "C41"],
+      "test_refs": ["TS-SECURITY-010", "TS-PROFILE-007", "TS-ARCH-008", "TS-LEGACY-001"],
+      "evidence_refs": ["REF-ROLE-001", "REF-ROLE-002", "REF-ROLE-003"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0016",
+      "status": "accepted",
+      "modules": ["M03", "M06", "M21", "M22"],
+      "external_authorities": ["E03"],
+      "contracts": ["C03", "C32", "C33", "C34", "C38", "C39", "C40", "C41"],
+      "test_refs": ["TS-ARCH-009", "TS-ARCH-010", "TS-SECURITY-011", "TS-LEGACY-002"],
+      "evidence_refs": ["REF-ROLE-001", "REF-ROLE-002", "REF-ROLE-003"],
+      "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0017",
+      "status": "accepted",
+      "modules": ["M03", "M21", "M22"],
+      "external_authorities": ["E01", "E04"],
+      "contracts": ["C03", "C31", "C32", "C33", "C34", "C41", "C42"],
+      "test_refs": ["TS-LEGACY-003", "TS-LEGACY-004", "TS-LEGACY-005", "TS-SECURITY-012"],
+      "evidence_refs": ["REF-ROLE-001", "REF-ROLE-003"],
+      "implementation_status": "planned"
+    }
+  ]
+}

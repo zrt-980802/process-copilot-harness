@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C22.schema.json",
+  "title": "C22 pc.tool-execution-result/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "operation_id",
+    "status",
+    "result",
+    "result_digest",
+    "external_evidence_refs",
+    "retryable",
+    "outcome_state",
+    "reconciliation_required",
+    "completed_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.tool-execution-result/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "SUCCEEDED",
+        "FAILED",
+        "OUTCOME_UNKNOWN",
+        "RECONCILIATION_REQUIRED"
+      ]
+    },
+    "provider_operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "external_evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "outcome_state": {
+      "type": "string",
+      "enum": [
+        "KNOWN_SUCCESS",
+        "KNOWN_FAILURE",
+        "NOT_STARTED",
+        "OUTCOME_UNKNOWN"
+      ]
+    },
+    "reconciliation_required": {
+      "type": "boolean"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C22; source=architecture/stable-contract-catalog-v1.md"
+}

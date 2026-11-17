@@ -1,0 +1,34 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local runtime, candidate and test evidence
+.docker/
+.docker-test/
+reports/
+runtime-state/
+*.log
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases and caches
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
+*.py[cod]
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

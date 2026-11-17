@@ -1,0 +1,22 @@
+{
+  "contract_name": "pc.memory-policy-decision/1",
+  "contract_version": 1,
+  "decision_kind": "CAPTURE",
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "memory_id": "mem_contract_43",
+  "revision_id": "mrev_contract_44",
+  "purpose": "PERSONALIZATION",
+  "authorization_revision": 1,
+  "policy_revision": 1,
+  "decision": "ALLOW",
+  "reason_codes": [
+    "explicit_owner_save"
+  ],
+  "evidence_refs": [
+    "mev_contract_45"
+  ],
+  "decided_at": "2026-11-17T00:00:00.000Z",
+  "expires_at": "2026-11-17T00:05:00.000Z",
+  "decision_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888"
+}

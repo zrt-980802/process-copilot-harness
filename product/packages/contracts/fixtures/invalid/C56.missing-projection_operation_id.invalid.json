@@ -1,0 +1,17 @@
+{
+  "contract_name": "pc.memory-projection-receipt/1",
+  "contract_version": 1,
+  "provider_operation_ref": "postgres-tx-contract",
+  "provider_release": "postgres-lexical-v1",
+  "acceptance_status": "ACCEPTED",
+  "accepted_at": "2026-11-17T00:00:00.000Z",
+  "readback_status": "VERIFIED",
+  "readback_at": "2026-11-17T00:00:00.000Z",
+  "observed_revision_refs": [
+    "mrev_contract_44"
+  ],
+  "residual_match_count": 0,
+  "error_code": "error_code-value",
+  "retryability": "NON_RETRYABLE",
+  "receipt_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+}

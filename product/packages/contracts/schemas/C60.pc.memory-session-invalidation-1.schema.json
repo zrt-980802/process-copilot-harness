@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C60.schema.json",
+  "title": "C60 pc.memory-session-invalidation/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "invalidation_id",
+    "idempotency_key",
+    "tenant_id",
+    "pc_session_id",
+    "dsh_session_id",
+    "current_assignment_generation",
+    "affected_memory_revision_refs",
+    "trigger_kind",
+    "authority_change_event_ids",
+    "target_memory_state",
+    "fencing_action",
+    "rotation_policy",
+    "invalidation_status",
+    "issued_at",
+    "deadline"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-session-invalidation/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "invalidation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dsh_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "current_assignment_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "affected_memory_revision_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "trigger_kind": {
+      "type": "string",
+      "enum": [
+        "SUPERSEDED",
+        "REVOKED",
+        "EXPIRED",
+        "SOURCE_ACCESS_LOST",
+        "SCOPE_CHANGED",
+        "POLICY_REVOKED",
+        "POISONING_DETECTED"
+      ]
+    },
+    "authority_change_event_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "target_memory_state": {
+      "type": "string",
+      "enum": [
+        "INVALIDATED"
+      ]
+    },
+    "fencing_action": {
+      "type": "string",
+      "enum": [
+        "REVOKE_ASSIGNMENT"
+      ]
+    },
+    "rotation_policy": {
+      "type": "string",
+      "enum": [
+        "FRESH_SESSION_NO_REPLAY"
+      ]
+    },
+    "invalidation_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "FENCED",
+        "RELEASING",
+        "ROTATED",
+        "RECOVERY_REQUIRED"
+      ]
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recovery_case_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C60; source=architecture/memory-contract-catalog-v1.md"
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C08.schema.json",
+  "title": "C08 pc.session-assignment-snapshot/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "assignment_id",
+    "pc_session_id",
+    "runtime_id",
+    "runtime_epoch",
+    "assignment_generation",
+    "fencing_token",
+    "lease_id",
+    "lease_expires_at",
+    "state",
+    "effective_profile_snapshot_id",
+    "workspace_view_snapshot_id",
+    "authorization_revision",
+    "version"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.session-assignment-snapshot/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "assignment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "assignment_generation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fencing_token": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lease_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lease_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effective_profile_snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_view_snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$comment": "C08; source=architecture/stable-contract-catalog-v1.md"
+}

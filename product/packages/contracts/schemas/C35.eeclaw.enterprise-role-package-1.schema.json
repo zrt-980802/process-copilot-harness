@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C35.schema.json",
+  "title": "C35 eeclaw.enterprise-role-package/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "role_package_id",
+    "role_key",
+    "display_name",
+    "authorization_role_ref",
+    "responsibility_keys",
+    "module_relation_release_ref",
+    "workbench_projection_release_ref",
+    "role_configuration_release_ref",
+    "workflow_contribution_refs",
+    "artifact_contract_refs",
+    "tool_profile_requirement_refs",
+    "release_version",
+    "release_digest",
+    "status"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "eeclaw.enterprise-role-package/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "role_package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_role_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "responsibility_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "module_relation_release_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workbench_projection_release_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role_configuration_release_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflow_contribution_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "artifact_contract_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "tool_profile_requirement_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "release_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "release_digest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "VALIDATED",
+        "APPROVED",
+        "PUBLISHED",
+        "SUPERSEDED"
+      ]
+    }
+  },
+  "$comment": "C35; source=architecture/stable-contract-catalog-v1.md"
+}

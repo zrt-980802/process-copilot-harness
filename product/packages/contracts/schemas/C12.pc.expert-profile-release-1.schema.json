@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C12.schema.json",
+  "title": "C12 pc.expert-profile-release/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "profile_release_id",
+    "profile_definition_id",
+    "release_version",
+    "status",
+    "instructions_ref",
+    "rules_ref",
+    "tool_requirements",
+    "plugin_requirements",
+    "model_policy",
+    "knowledge_policy",
+    "output_contract",
+    "completion_contract",
+    "dependency_lock_digest",
+    "published_at",
+    "release_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.expert-profile-release/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "profile_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_definition_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "release_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "instructions_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rules_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tool_requirements": {
+      "type": "array",
+      "items": {}
+    },
+    "plugin_requirements": {
+      "type": "array",
+      "items": {}
+    },
+    "model_policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "knowledge_policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "completion_contract": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "dependency_lock_digest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "release_digest": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C12; source=architecture/stable-contract-catalog-v1.md"
+}

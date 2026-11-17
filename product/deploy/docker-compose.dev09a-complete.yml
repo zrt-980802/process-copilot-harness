@@ -1,0 +1,63 @@
+name: pc-dev09a-complete
+services:
+  mysql:
+    image: mysql:8.0.39
+    environment:
+      MYSQL_ROOT_PASSWORD: local-dev09a3-mysql-only
+    volumes: [mysql-data:/var/lib/mysql]
+    networks: [control]
+    healthcheck:
+      test: [CMD-SHELL, 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pc_dev09a3
+      POSTGRES_USER: pc_dev09a3
+      POSTGRES_PASSWORD: local-dev09a3-postgres-only
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    networks: [control]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U pc_dev09a3 -d pc_dev09a3']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  verifier:
+    build:
+      context: ..
+      dockerfile: deploy/dev09a-complete.Dockerfile
+    image: process-copilot-dev09a-complete:local
+    environment:
+      DEV09A_MYSQL_TEST_CONFIG: /verification/dev09a3-mysql.yaml
+      DATABASE_URL: postgres://pc_dev09a3:local-dev09a3-postgres-only@postgres:5432/pc_dev09a3
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?Use start-dev09a-local.py to load the configured local model credential}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-}
+      PC_DEV09A_MODEL: ${PC_DEV09A_MODEL:-deepseek-v4-flash}
+    volumes:
+      - ${PC_DEV09A_EE_ROOT:?Set isolated EE worktree}:/ee:ro
+      - evidence:/evidence
+      - runtime-state:/runtime-state
+    networks: [control, model]
+    depends_on:
+      mysql: {condition: service_healthy}
+      postgres: {condition: service_healthy}
+    restart: "no"
+  web:
+    image: nginx:alpine
+    volumes:
+      - ../apps/web/dist:/usr/share/nginx/html:ro
+      - ./nginx.dev09a-complete.conf:/etc/nginx/conf.d/default.conf:ro
+    ports: [127.0.0.1:18090:80]
+    networks: [control, browser]
+    depends_on: [verifier]
+networks:
+  control: {internal: true}
+  model: {}
+  browser: {}
+volumes:
+  mysql-data:
+  postgres-data:
+  evidence:
+  runtime-state:

@@ -1,0 +1,23 @@
+{
+  "contract_name": "pc.memory-candidate-decision-command/1",
+  "contract_version": 1,
+  "idempotency_key": "idem-contract-47",
+  "candidate_memory_id": "mem_candidate_contract",
+  "expected_object_version": 1,
+  "decision": "CONFIRM",
+  "decided_by_principal_id": "principal-contract",
+  "authorization_revision": 1,
+  "policy_revision": 1,
+  "decision_reason_codes": [
+    "owner_confirmed"
+  ],
+  "content_adjustment": {
+    "preference": "concise"
+  },
+  "scope_adjustment": {
+    "scope_type": "PERSONAL"
+  },
+  "sensitivity_adjustment": "INTERNAL",
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:01:00.000Z"
+}

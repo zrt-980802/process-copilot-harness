@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C31.schema.json",
+  "title": "C31 pc.adapter-error/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "code",
+    "message",
+    "retryable",
+    "outcome_state",
+    "recovery_action",
+    "details"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.adapter-error/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "outcome_state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recovery_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assignment_generation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "diagnostic_cause": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C31; source=architecture/stable-contract-catalog-v1.md"
+}

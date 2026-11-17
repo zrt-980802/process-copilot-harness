@@ -1,0 +1,14 @@
+{
+  "contract_name": "pc.resource-ref/1",
+  "contract_version": 1,
+  "resource_version_id": "rv_contract_17_1",
+  "resource_type": "UPLOAD",
+  "tenant_id": "tenant-contract",
+  "owner_scope": {
+    "scope_type": "SESSION",
+    "scope_id": "session-contract"
+  },
+  "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "classification": "INTERNAL",
+  "provenance_ref": "provenance:upload:contract-17"
+}

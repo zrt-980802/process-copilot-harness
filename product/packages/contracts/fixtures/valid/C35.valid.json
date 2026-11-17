@@ -1,0 +1,26 @@
+{
+  "contract_name": "eeclaw.enterprise-role-package/1",
+  "contract_version": 1,
+  "role_package_id": "role-package:fo:1",
+  "role_key": "fo",
+  "display_name": "Function Owner",
+  "authorization_role_ref": "eeclaw-role:fo",
+  "responsibility_keys": [
+    "fo"
+  ],
+  "module_relation_release_ref": "role-module-release:fo:1",
+  "workbench_projection_release_ref": "workbench-release:fo:1",
+  "role_configuration_release_ref": "role-config-release:fo:1",
+  "workflow_contribution_refs": [
+    "workflow-contribution:ssts-draft:1"
+  ],
+  "artifact_contract_refs": [
+    "artifact-contract:ssts-draft:1"
+  ],
+  "tool_profile_requirement_refs": [
+    "profile-requirement:fo:1"
+  ],
+  "release_version": 1,
+  "release_digest": "436fff50c1c75f5c756f43abeaf8c14800b1ec3f13496d9c2c7584f47af2b060",
+  "status": "PUBLISHED"
+}

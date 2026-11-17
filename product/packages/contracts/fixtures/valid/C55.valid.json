@@ -1,0 +1,26 @@
+{
+  "contract_name": "pc.memory-projection-operation/1",
+  "contract_version": 1,
+  "projection_operation_id": "mprojop_contract_55",
+  "idempotency_key": "idem-contract-55",
+  "projection_release": "memory-projection-contract",
+  "provider_namespace": "postgres-lexical",
+  "authority_change_event_id": "mevent_contract_54",
+  "authority_snapshot_revision": 1,
+  "scope_manifest": {
+    "tenant_id": "tenant-contract",
+    "owner_principal_id": "principal-contract"
+  },
+  "action": "UPSERT",
+  "revision_refs": [
+    "mrev_contract_44"
+  ],
+  "source_evidence_refs": [
+    "mev_contract_45"
+  ],
+  "content_payload": {
+    "retrieval_summary": "response structure preference"
+  },
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:01:00.000Z"
+}

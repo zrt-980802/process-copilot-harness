@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C14.schema.json",
+  "title": "C14 pc.profile-resolution-report/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "resolution_report_id",
+    "requested_profile_release_id",
+    "inputs",
+    "selected",
+    "omitted",
+    "conflicts",
+    "warnings",
+    "hard_failures",
+    "runtime_compatibility",
+    "created_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.profile-resolution-report/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "resolution_report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requested_profile_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "selected": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "omitted": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {}
+    },
+    "warnings": {
+      "type": "array",
+      "items": {}
+    },
+    "hard_failures": {
+      "type": "array",
+      "items": {}
+    },
+    "runtime_compatibility": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C14; source=architecture/stable-contract-catalog-v1.md"
+}

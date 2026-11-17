@@ -1,0 +1,18 @@
+{
+  "contract_name": "pc.memory-authority-change-event/1",
+  "contract_version": 1,
+  "event_id": "mevent_contract_54",
+  "tenant_id": "tenant-contract",
+  "memory_id": "mem_contract_43",
+  "revision_id": "mrev_contract_44",
+  "object_version": 1,
+  "change_kind": "CONFIRMED",
+  "object_state": "CONFIRMED",
+  "revision_state": "CURRENT",
+  "scope_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "sensitivity": "INTERNAL",
+  "policy_revision": 1,
+  "occurred_at": "2026-11-17T00:00:00.000Z",
+  "producer_sequence": 1,
+  "causation_command_id": "mcmd_contract_46"
+}

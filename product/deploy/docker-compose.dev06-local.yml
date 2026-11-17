@@ -1,0 +1,129 @@
+name: process-copilot-dev06-local
+
+services:
+  postgres:
+    image: ${PC_POSTGRES_IMAGE:-postgres:17-alpine}
+    environment:
+      POSTGRES_DB: process_copilot
+      POSTGRES_USER: process_copilot
+      POSTGRES_PASSWORD: process_copilot_local
+    volumes:
+      - authority-data:/var/lib/postgresql/data
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U process_copilot -d process_copilot
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  runtime-host:
+    build:
+      context: ..
+      dockerfile: deploy/runtime-host.Dockerfile
+      args:
+        DSH_RUNTIME_BASE_IMAGE: ${DSH_RUNTIME_BASE_IMAGE:-process-copilot-p1a-local-dsh-runtime-base:0.2.1-rc.3}
+        PNPM_REGISTRY: ${PNPM_REGISTRY:-https://registry.npmmirror.com}
+        PNPM_OFFLINE: ${PNPM_OFFLINE:-false}
+    image: process-copilot-dev06-local-runtime-host:${PC_BUILD_TAG:-dev}
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3100"
+      PC_RUNTIME_ID: pc-runtime-dev06-local
+      PC_RUNTIME_EPOCH: ${PC_RUNTIME_EPOCH:-1}
+      PC_MATERIALIZATION_ROOT: /var/lib/process-copilot/materializations
+      DSH_PROVIDER: ${DSH_PROVIDER:-deepseek-official}
+      DSH_MODEL: ${DSH_MODEL:-deepseek-v4-flash}
+    volumes:
+      - runtime-data:/var/lib/process-copilot/runtime
+      - materialization-data:/var/lib/process-copilot/materializations
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3100/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 2s
+      start_period: 15s
+      retries: 30
+
+  resource-init:
+    image: process-copilot-dev06-local-api:${PC_BUILD_TAG:-dev}
+    user: "0:0"
+    command:
+      - sh
+      - -c
+      - >-
+        mkdir -p
+        /var/lib/process-copilot/blobs
+        /var/lib/process-copilot/materializations
+        /var/lib/process-copilot/verification
+        && chown -R node:node /var/lib/process-copilot
+    volumes:
+      - blob-data:/var/lib/process-copilot/blobs
+      - materialization-data:/var/lib/process-copilot/materializations
+      - verification-data:/var/lib/process-copilot/verification
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    image: process-copilot-dev06-local-api:${PC_BUILD_TAG:-dev}
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3000"
+      PC_RUNTIME_REGISTRY_STORE: postgres
+      PC_IDENTITY_STORE: postgres
+      PC_PROFILE_STORE: disabled
+      PC_RESOURCE_STORE: postgres
+      PC_BLOB_ROOT: /var/lib/process-copilot/blobs
+      PC_MATERIALIZATION_ROOT: /var/lib/process-copilot/materializations
+      PC_ENVELOPE_SIGNING_KEY: local-dev06-signing-key-00000000000000000000
+      PC_PILOT_TENANT_ID: tenant_dev06
+      PC_PILOT_ACCOUNT_KEY: pilot.dev06
+      PC_PILOT_ACCOUNT_SECRET: LocalDev06Secret123
+      DATABASE_URL: postgres://process_copilot:process_copilot_local@postgres:5432/process_copilot
+    volumes:
+      - blob-data:/var/lib/process-copilot/blobs
+      - materialization-data:/var/lib/process-copilot/materializations
+      - verification-data:/var/lib/process-copilot/verification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      runtime-host:
+        condition: service_healthy
+      resource-init:
+        condition: service_completed_successfully
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/ready').then(r=>r.json()).then(x=>{if(x.status!=='ready')process.exit(1)}).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 2s
+      start_period: 10s
+      retries: 30
+
+networks:
+  control:
+    internal: true
+
+volumes:
+  authority-data:
+  runtime-data:
+    name: process-copilot-dev06-local-runtime-epoch-${PC_RUNTIME_EPOCH:-1}
+  blob-data:
+  materialization-data:
+  verification-data:

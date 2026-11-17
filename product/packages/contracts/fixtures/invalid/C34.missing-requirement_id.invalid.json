@@ -1,0 +1,12 @@
+{
+  "contract_name": "pc.traceability-entry/1",
+  "contract_version": 1,
+  "adr_ids": [],
+  "module_ids": [],
+  "contract_ids": [],
+  "implementation_refs": [],
+  "test_refs": [],
+  "evidence_refs": [],
+  "status": "status-value",
+  "owner": "owner-value"
+}

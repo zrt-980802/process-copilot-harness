@@ -1,0 +1,27 @@
+{
+  "contract_name": "pc.authorized-memory-query/1",
+  "contract_version": 1,
+  "query_id": "mquery_contract_50",
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "actor_principal_id": "principal-contract",
+  "authorization_revision": 1,
+  "purpose": "PERSONALIZATION",
+  "conversation_id": "conversation-contract",
+  "task_id": "task-contract",
+  "project_id": "project-contract",
+  "profile_release_id": "profile-contract",
+  "query_text": "preferred response format",
+  "allowed_kinds": [
+    "EXPLICIT_PREFERENCE"
+  ],
+  "allowed_sensitivities": [
+    "INTERNAL"
+  ],
+  "valid_at": "2026-11-17T00:00:00.000Z",
+  "max_items": 5,
+  "max_context_tokens": 800,
+  "projection_release_constraint": "memory-projection-contract",
+  "issued_at": "2026-11-17T00:00:00.000Z",
+  "deadline": "2026-11-17T00:00:05.000Z"
+}

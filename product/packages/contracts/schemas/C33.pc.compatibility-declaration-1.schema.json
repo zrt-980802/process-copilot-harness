@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C33.schema.json",
+  "title": "C33 pc.compatibility-declaration/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "component",
+    "component_version",
+    "contract_versions",
+    "required_capabilities",
+    "known_incompatibilities",
+    "tested_combinations",
+    "generated_at",
+    "declaration_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.compatibility-declaration/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "component": {
+      "type": "string",
+      "minLength": 1
+    },
+    "component_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contract_versions": {
+      "type": "array",
+      "items": {}
+    },
+    "dsh_version_range": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bridge_protocol_versions": {
+      "type": "array",
+      "items": {}
+    },
+    "profile_schema_versions": {
+      "type": "array",
+      "items": {}
+    },
+    "plugin_api_versions": {
+      "type": "array",
+      "items": {}
+    },
+    "required_capabilities": {
+      "type": "array",
+      "items": {}
+    },
+    "known_incompatibilities": {
+      "type": "array",
+      "items": {}
+    },
+    "tested_combinations": {
+      "type": "array",
+      "items": {}
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "declaration_digest": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C33; source=architecture/stable-contract-catalog-v1.md"
+}

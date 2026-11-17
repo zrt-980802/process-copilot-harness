@@ -1,0 +1,39 @@
+# DEV-04 fixed profile release. It layers over sdk-minimal and removes every
+# general-purpose tool while retaining SDK transport, the model route, JSONL
+# persistence, and semantic durability checkpoints.
+
+- id: tool-fs
+  disabled: true
+
+- id: tool-working-directory
+  disabled: true
+
+- id: persistent-bash
+  disabled: true
+
+- id: persistent-pwsh
+  disabled: true
+
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    includeRuntimeContext: false
+    personaPrefix: >-
+      You are the fixed FO SSTS drafting expert for Process Copilot.
+      Use only the supplied conversation and materialized workspace context.
+      Do not claim that a draft is published, approved, or written back to an
+      enterprise system. Return concise engineering output with explicit
+      assumptions and source references.
+
+- insert:
+    - id: pc-agent-presets
+      name: '@deepseek-ai/dsh-agent-preset-registry'
+      config:
+        default: pc-runtime
+
+    - id: session-checkpoints
+      name: '@deepseek-ai/dsh-session-checkpoint-policy'
+
+    - id: pc-runtime-bridge
+      name: /app/bridge/pc-runtime-bridge.mjs
+      inject: [agents, sessions, tools, agentPresets]

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C03.schema.json",
+  "title": "C03 pc.authorization-snapshot/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "authorization_revision",
+    "policy_model_revision",
+    "principal_id",
+    "allowed_actions",
+    "resource_scope_digest",
+    "tool_set_digest",
+    "decision",
+    "reason_codes",
+    "issued_at",
+    "expires_at",
+    "decision_evidence_refs"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.authorization-snapshot/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy_model_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowed_actions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "resource_scope_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "tool_set_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "ALLOW",
+        "DENY"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision_evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$comment": "C03; source=architecture/stable-contract-catalog-v1.md"
+}

@@ -1,0 +1,16 @@
+{
+  "contract_name": "pc.adapter-error/1",
+  "contract_version": 1,
+  "code": "code-value",
+  "message": "message-value",
+  "retryable": true,
+  "outcome_state": "outcome_state-value",
+  "recovery_action": "recovery_action-value",
+  "runtime_id": "runtime_id-value",
+  "runtime_epoch": 1,
+  "pc_session_id": "pc_session_id-value",
+  "assignment_generation": 1,
+  "command_id": "command_id-value",
+  "details": {},
+  "diagnostic_cause": "diagnostic_cause-value"
+}

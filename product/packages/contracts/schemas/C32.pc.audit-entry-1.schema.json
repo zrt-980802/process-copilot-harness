@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C32.schema.json",
+  "title": "C32 pc.audit-entry/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "audit_id",
+    "event_type",
+    "tenant_id",
+    "resource_refs",
+    "decision",
+    "evidence_refs",
+    "occurred_at",
+    "entry_hash",
+    "retention_class"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.audit-entry/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "audit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource_id",
+          "resource_version_id"
+        ],
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "pattern": "^res_[a-zA-Z0-9_-]+$"
+          },
+          "resource_version_id": {
+            "type": "string",
+            "pattern": "^rv_[a-zA-Z0-9_-]+$"
+          }
+        }
+      }
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "reason_codes"
+      ],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "ALLOW",
+            "DENY",
+            "SUCCESS",
+            "FAILURE"
+          ]
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "entry_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "retention_class": {
+      "type": "string",
+      "enum": [
+        "SECURITY",
+        "BUSINESS",
+        "RESOURCE_LIFECYCLE"
+      ]
+    }
+  },
+  "$comment": "C32; source=architecture/stable-contract-catalog-v1.md"
+}

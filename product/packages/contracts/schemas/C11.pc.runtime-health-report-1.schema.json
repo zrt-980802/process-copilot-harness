@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C11.schema.json",
+  "title": "C11 pc.runtime-health-report/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "runtime_id",
+    "runtime_epoch",
+    "report_seq",
+    "liveness",
+    "readiness",
+    "capability_health",
+    "capacity_health",
+    "assignment_health",
+    "active_sessions",
+    "active_turns",
+    "inflight_tools",
+    "pending_flushes",
+    "observed_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.runtime-health-report/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "report_seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "liveness": {
+      "type": "string",
+      "minLength": 1
+    },
+    "readiness": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability_health": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "capacity_health": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "assignment_health": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "active_sessions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_turns": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "inflight_tools": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pending_flushes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C11; source=architecture/stable-contract-catalog-v1.md"
+}

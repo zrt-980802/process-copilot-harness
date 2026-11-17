@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.docker/
+.docker-test/
+.idea/
+coverage/
+reports/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.log

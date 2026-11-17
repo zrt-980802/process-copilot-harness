@@ -1,0 +1,16 @@
+{
+  "contract_name": "pc.mcp-session-binding/1",
+  "contract_version": 1,
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "pc_session_id": "session-contract",
+  "connector_id": "connector-contract",
+  "mcp_server_id": "mcp-server-contract",
+  "protocol_session_id": "protocol-session-contract",
+  "authorization_revision": 1,
+  "credential_generation": 1,
+  "tool_catalog_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "created_at": "2026-11-10T00:00:00.000Z",
+  "expires_at": "2026-11-10T00:05:00.000Z",
+  "state": "ACTIVE"
+}

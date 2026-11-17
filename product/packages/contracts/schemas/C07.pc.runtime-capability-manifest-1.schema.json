@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C07.schema.json",
+  "title": "C07 pc.runtime-capability-manifest/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "runtime_id",
+    "runtime_epoch",
+    "dsh_version",
+    "bridge_protocol_versions",
+    "profile_digest",
+    "bundle_lock_digest",
+    "plugin_releases",
+    "agent_presets",
+    "tool_provider_capabilities",
+    "persistence_capabilities",
+    "event_export_capabilities",
+    "approval_capabilities",
+    "resource_capabilities",
+    "limits",
+    "generated_at",
+    "manifest_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.runtime-capability-manifest/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "dsh_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bridge_protocol_versions": {
+      "type": "array",
+      "items": {}
+    },
+    "profile_digest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_lock_digest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plugin_releases": {
+      "type": "array",
+      "items": {}
+    },
+    "agent_presets": {
+      "type": "array",
+      "items": {}
+    },
+    "tool_provider_capabilities": {
+      "type": "array",
+      "items": {}
+    },
+    "persistence_capabilities": {
+      "type": "array",
+      "items": {}
+    },
+    "event_export_capabilities": {
+      "type": "array",
+      "items": {}
+    },
+    "approval_capabilities": {
+      "type": "array",
+      "items": {}
+    },
+    "resource_capabilities": {
+      "type": "array",
+      "items": {}
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C07; source=architecture/stable-contract-catalog-v1.md"
+}

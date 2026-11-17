@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C27.schema.json",
+  "title": "C27 pc.business-task/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "business_task_id",
+    "tenant_id",
+    "owner_principal_id",
+    "state",
+    "profile_release_id",
+    "source_session_ids",
+    "projection_complete",
+    "last_event_id",
+    "state_digest",
+    "created_at",
+    "updated_at",
+    "version"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.business-task/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "business_task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "READY",
+        "RUNNING",
+        "WAITING_USER",
+        "WAITING_APPROVAL",
+        "PAUSED",
+        "RECOVERING",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLED"
+      ]
+    },
+    "current_subtask_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_session_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "projection_complete": {
+      "type": "boolean"
+    },
+    "last_event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "$comment": "C27; source=architecture/stable-contract-catalog-v1.md"
+}

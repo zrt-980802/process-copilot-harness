@@ -1,0 +1,20 @@
+{
+  "contract_name": "pc.materialization-result/1",
+  "contract_version": 1,
+  "state": "READY",
+  "mount_ref": "materialization:mat_contract_19",
+  "materialized_entries": [
+    {
+      "resource_id": "res_contract_17",
+      "resource_version_id": "rv_contract_17_1",
+      "relative_path": "input/document.txt",
+      "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "bytes": 12,
+      "mode": "READ_ONLY"
+    }
+  ],
+  "failed_entries": [],
+  "expires_at": "2026-11-10T01:00:00.000Z",
+  "cleanup_state": "ACTIVE",
+  "result_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+}

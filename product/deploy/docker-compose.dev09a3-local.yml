@@ -1,0 +1,63 @@
+name: pc-dev09a3-local
+services:
+  mysql:
+    image: mysql:8.0.39
+    environment:
+      MYSQL_ROOT_PASSWORD: local-dev09a3-mysql-only
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks: [control]
+    labels:
+      pc.phase: dev09a3
+    healthcheck:
+      test: [CMD-SHELL, 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pc_dev09a3
+      POSTGRES_USER: pc_dev09a3
+      POSTGRES_PASSWORD: local-dev09a3-postgres-only
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [control]
+    labels:
+      pc.phase: dev09a3
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U pc_dev09a3 -d pc_dev09a3']
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  verifier:
+    build:
+      context: ..
+      dockerfile: deploy/dev09a3.Dockerfile
+      additional_contexts:
+        ee: ${PC_DEV09A3_EE_ROOT:?Set PC_DEV09A3_EE_ROOT to the isolated EE worktree}
+    image: process-copilot-dev09a3-verifier:local
+    environment:
+      DEV09A_MYSQL_TEST_CONFIG: /verification/dev09a3-mysql.yaml
+      DATABASE_URL: postgres://pc_dev09a3:local-dev09a3-postgres-only@postgres:5432/pc_dev09a3
+    volumes:
+      - ${PC_DEV09A3_EE_ROOT}:/ee:ro
+      - evidence:/evidence
+    networks: [control]
+    labels:
+      pc.phase: dev09a3
+    depends_on:
+      mysql:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: "no"
+networks:
+  control:
+    internal: true
+    labels:
+      pc.phase: dev09a3
+volumes:
+  mysql-data:
+  postgres-data:
+  evidence:

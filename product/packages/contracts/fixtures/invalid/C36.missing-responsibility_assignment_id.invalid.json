@@ -1,0 +1,14 @@
+{
+  "contract_name": "eeclaw.responsibility-assignment/1",
+  "contract_version": 1,
+  "account_id": "account-1",
+  "responsibility_key": "fo",
+  "scope_type": "project",
+  "scope_id": "project-1",
+  "valid_from": "2026-11-09T00:00:00.000Z",
+  "valid_to": "2026-11-09T00:00:00.000Z",
+  "status": "active",
+  "assigned_by": "account-admin",
+  "assigned_at": "2026-11-09T00:00:00.000Z",
+  "revision": 1
+}

@@ -1,0 +1,19 @@
+{
+  "contract_name": "pc.memory-source-evidence/1",
+  "contract_version": 1,
+  "source_evidence_id": "mev_contract_45",
+  "tenant_id": "tenant-contract",
+  "source_kind": "CONVERSATION_MESSAGE",
+  "source_authority": "process-copilot",
+  "source_object_id": "message-contract",
+  "source_version_id": "message-version-contract",
+  "source_fragment_ref": "message:body",
+  "source_subject_principal_id": "principal-contract",
+  "captured_by_principal_id": "principal-contract",
+  "captured_at": "2026-11-17T00:00:00.000Z",
+  "observed_at": "2026-11-17T00:00:00.000Z",
+  "sensitivity": "INTERNAL",
+  "displayability": "DISPLAYABLE",
+  "evidence_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+  "access_revalidation_policy": "OWNER_ONLY"
+}

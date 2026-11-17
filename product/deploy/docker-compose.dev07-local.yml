@@ -1,0 +1,120 @@
+name: process-copilot-dev07-local
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: process_copilot
+      POSTGRES_USER: process_copilot
+      POSTGRES_PASSWORD: process_copilot_local
+    volumes:
+      - authority-data:/var/lib/postgresql/data
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U process_copilot -d process_copilot
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  runtime-host:
+    image: process-copilot-dev06-local-runtime-host:dev06-20261110
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3100"
+      PC_RUNTIME_ID: pc-runtime-dev07-local
+      PC_RUNTIME_EPOCH: "1"
+      PC_MATERIALIZATION_ROOT: /var/lib/process-copilot/materializations
+      DSH_PROVIDER: ${DSH_PROVIDER:-deepseek-official}
+      DSH_MODEL: ${DSH_MODEL:-deepseek-v4-flash}
+    volumes:
+      - runtime-data:/var/lib/process-copilot/runtime
+      - materialization-data:/var/lib/process-copilot/materializations
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3100/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 2s
+      start_period: 15s
+      retries: 30
+
+  resource-init:
+    image: process-copilot-dev07-local-api:${PC_BUILD_TAG:-dev}
+    user: "0:0"
+    command:
+      - sh
+      - -c
+      - >-
+        mkdir -p
+        /var/lib/process-copilot/blobs
+        /var/lib/process-copilot/materializations
+        && chown -R node:node /var/lib/process-copilot
+    volumes:
+      - blob-data:/var/lib/process-copilot/blobs
+      - materialization-data:/var/lib/process-copilot/materializations
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    image: process-copilot-dev07-local-api:${PC_BUILD_TAG:-dev}
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3000"
+      PC_RUNTIME_REGISTRY_STORE: postgres
+      PC_IDENTITY_STORE: postgres
+      PC_PROFILE_STORE: postgres
+      PC_RESOURCE_STORE: postgres
+      PC_GATEWAY_STORE: postgres
+      PC_GATEWAY_PROVIDER: deterministic
+      PC_BLOB_ROOT: /var/lib/process-copilot/blobs
+      PC_MATERIALIZATION_ROOT: /var/lib/process-copilot/materializations
+      PC_ENVELOPE_SIGNING_KEY: local-dev07-signing-key-00000000000000000000
+      PC_PILOT_TENANT_ID: tenant_dev07
+      PC_PILOT_ACCOUNT_KEY: pilot.dev07
+      PC_PILOT_ACCOUNT_SECRET: LocalDev07Secret123
+      DATABASE_URL: postgres://process_copilot:process_copilot_local@postgres:5432/process_copilot
+    volumes:
+      - blob-data:/var/lib/process-copilot/blobs
+      - materialization-data:/var/lib/process-copilot/materializations
+    depends_on:
+      postgres:
+        condition: service_healthy
+      runtime-host:
+        condition: service_healthy
+      resource-init:
+        condition: service_completed_successfully
+    networks:
+      - control
+    restart: "no"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/ready').then(r=>r.json()).then(x=>{if(x.status!=='ready'||x.dependencies.controlled_gateway!=='ready')process.exit(1)}).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 2s
+      start_period: 10s
+      retries: 30
+
+networks:
+  control:
+    internal: true
+
+volumes:
+  authority-data:
+  runtime-data:
+    name: process-copilot-dev07-local-runtime-epoch-1
+  blob-data:
+  materialization-data:

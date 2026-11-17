@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C53.schema.json",
+  "title": "C53 pc.memory-usage-record/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "usage_id",
+    "tenant_id",
+    "principal_id",
+    "conversation_id",
+    "turn_id",
+    "purpose",
+    "authorized_view_id",
+    "memory_revision_refs",
+    "source_revalidation_refs",
+    "context_digest",
+    "provided_to_runtime_at",
+    "answer_reference_status",
+    "recorded_at",
+    "trace_id"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.memory-usage-record/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "usage_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "turn_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorized_view_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "memory_revision_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "source_revalidation_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "context_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "provided_to_runtime_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "answer_reference_status": {
+      "type": "string",
+      "enum": [
+        "PROVIDED",
+        "REFERENCED",
+        "NOT_USED",
+        "REFUSED_DUE_TO_CONFLICT"
+      ]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C53; source=architecture/memory-contract-catalog-v1.md"
+}

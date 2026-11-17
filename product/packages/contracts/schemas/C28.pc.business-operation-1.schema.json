@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C28.schema.json",
+  "title": "C28 pc.business-operation/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "operation_id",
+    "business_task_id",
+    "tenant_id",
+    "owner_principal_id",
+    "operation_kind",
+    "state",
+    "recovery_class",
+    "input_digest",
+    "evidence_refs",
+    "projection_complete",
+    "last_event_id",
+    "updated_at",
+    "version"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.business-operation/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "business_task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation_kind": {
+      "type": "string",
+      "enum": [
+        "READ",
+        "WRITE",
+        "DESTRUCTIVE",
+        "EXTERNAL_SIDE_EFFECT"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PLANNED",
+        "AWAITING_APPROVAL",
+        "APPROVED",
+        "DISPATCHING",
+        "DISPATCHED",
+        "VERIFYING",
+        "SUCCEEDED",
+        "FAILED",
+        "OUTCOME_UNKNOWN",
+        "RECONCILING",
+        "COMPENSATION_REQUIRED"
+      ]
+    },
+    "recovery_class": {
+      "type": "string",
+      "enum": [
+        "REPLAY_SAFE",
+        "IDEMPOTENT_RETRY",
+        "RECONCILE_BEFORE_RETRY",
+        "NON_RECOVERABLE",
+        "EXTERNAL_DURABLE_JOB"
+      ]
+    },
+    "approval_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "external_operation_record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "projection_complete": {
+      "type": "boolean"
+    },
+    "last_event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "$comment": "C28; source=architecture/stable-contract-catalog-v1.md"
+}

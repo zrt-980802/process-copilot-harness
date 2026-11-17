@@ -1,0 +1,36 @@
+{
+  "name": "process-copilot-product",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "generate:contracts": "node packages/contracts/scripts/generate-contracts.mjs",
+    "check:generated": "node packages/contracts/scripts/check-generated.mjs",
+    "check:architecture": "node scripts/check-boundaries.mjs && node scripts/check-traceability.mjs && node scripts/check-compatibility.mjs",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "build": "pnpm -r --if-present build",
+    "check": "pnpm check:generated && pnpm check:architecture && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "dev": "pnpm --parallel --filter @pc/web --filter @pc/api --filter @pc/runtime-host dev"
+  },
+  "devDependencies": {
+    "@esbuild/win32-x64": "0.28.2",
+    "@eslint/js": "^9.39.1",
+    "@rollup/rollup-win32-x64-msvc": "4.68.0",
+    "@types/node": "^24.10.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "0.28.2",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "puppeteer-core": "^24.43.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^4.0.8"
+  }
+}

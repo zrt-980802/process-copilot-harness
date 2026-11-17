@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C29.schema.json",
+  "title": "C29 pc.recovery-case/1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "recovery_case_id",
+    "tenant_id",
+    "owner_principal_id",
+    "trigger",
+    "affected_operation_ids",
+    "current_assignment",
+    "persistent_facts",
+    "authorization_checkpoint",
+    "decision",
+    "state",
+    "created_at",
+    "updated_at",
+    "version"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.recovery-case/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "recovery_case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "business_task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "RUNTIME_LOST",
+        "ASSIGNMENT_EXPIRED",
+        "EVENT_GAP",
+        "OUTCOME_UNKNOWN",
+        "APPROVAL_WAIT",
+        "MANUAL"
+      ]
+    },
+    "affected_runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "affected_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "affected_operation_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "current_assignment": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "persistent_facts": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "authorization_checkpoint": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "RECOVERY_PENDING",
+        "RECOVERING",
+        "RECONCILING",
+        "WAITING_APPROVAL",
+        "MANUAL_REQUIRED",
+        "RECOVERED",
+        "RECOVERY_FAILED"
+      ]
+    },
+    "manual_action": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "$comment": "C29; source=architecture/stable-contract-catalog-v1.md"
+}

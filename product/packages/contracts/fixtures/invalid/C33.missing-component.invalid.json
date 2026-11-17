@@ -1,0 +1,15 @@
+{
+  "contract_name": "pc.compatibility-declaration/1",
+  "contract_version": 1,
+  "component_version": "component_version-value",
+  "contract_versions": [],
+  "dsh_version_range": "dsh_version_range-value",
+  "bridge_protocol_versions": [],
+  "profile_schema_versions": [],
+  "plugin_api_versions": [],
+  "required_capabilities": [],
+  "known_incompatibilities": [],
+  "tested_combinations": [],
+  "generated_at": "2026-11-09T00:00:00.000Z",
+  "declaration_digest": "declaration_digest-value"
+}

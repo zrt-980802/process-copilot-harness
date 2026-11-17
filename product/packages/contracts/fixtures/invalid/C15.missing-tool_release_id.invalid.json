@@ -1,0 +1,34 @@
+{
+  "contract_name": "pc.tool-release/1",
+  "contract_version": 1,
+  "tool_definition_id": "tool-contract",
+  "version": 1,
+  "provider_kind": "mcp-gateway",
+  "input_schema": {
+    "type": "object"
+  },
+  "output_schema": {
+    "type": "object"
+  },
+  "schema_digest": "7777777777777777777777777777777777777777777777777777777777777777",
+  "risk_manifest": {
+    "action_class": "WRITE",
+    "external_side_effect": true,
+    "sensitivity": "HIGH",
+    "requires_readback": true
+  },
+  "required_permissions": [
+    "tool.execute"
+  ],
+  "approval_policy": "ALWAYS",
+  "idempotency_class": "NON_IDEMPOTENT",
+  "recovery_class": "RECONCILE_BEFORE_RETRY",
+  "compatibility": {
+    "gateway_contract": 1
+  },
+  "status": "PUBLISHED",
+  "artifact_refs": [
+    "artifact:tool-contract"
+  ],
+  "release_digest": "8888888888888888888888888888888888888888888888888888888888888888"
+}

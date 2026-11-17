@@ -1,0 +1,25 @@
+{
+  "name": "@pc/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pc/application": "workspace:*",
+    "@pc/domain": "workspace:*",
+    "@pc/event-projection": "workspace:*",
+    "@pc/gateway": "workspace:*",
+    "@pc/persistence": "workspace:*",
+    "@pc/resource": "workspace:*",
+    "@pc/runtime-adapter": "workspace:*",
+    "@pc/ssts-draft": "workspace:*",
+    "fastify": "^5.6.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
+  }
+}

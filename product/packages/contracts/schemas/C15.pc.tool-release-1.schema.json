@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C15.schema.json",
+  "title": "C15 pc.tool-release/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "tool_release_id",
+    "tool_definition_id",
+    "version",
+    "provider_kind",
+    "input_schema",
+    "output_schema",
+    "schema_digest",
+    "risk_manifest",
+    "required_permissions",
+    "approval_policy",
+    "idempotency_class",
+    "recovery_class",
+    "compatibility",
+    "status",
+    "artifact_refs",
+    "release_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.tool-release/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "tool_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tool_definition_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "provider_kind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_schema": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "output_schema": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "schema_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "risk_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_class",
+        "external_side_effect",
+        "sensitivity",
+        "requires_readback"
+      ],
+      "properties": {
+        "action_class": {
+          "type": "string",
+          "enum": [
+            "READ",
+            "WRITE",
+            "DESTRUCTIVE",
+            "EXTERNAL_SIDE_EFFECT"
+          ]
+        },
+        "external_side_effect": {
+          "type": "boolean"
+        },
+        "sensitivity": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ]
+        },
+        "requires_readback": {
+          "type": "boolean"
+        }
+      }
+    },
+    "required_permissions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "approval_policy": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "ALWAYS"
+      ]
+    },
+    "idempotency_class": {
+      "type": "string",
+      "enum": [
+        "IDEMPOTENT",
+        "NON_IDEMPOTENT"
+      ]
+    },
+    "recovery_class": {
+      "type": "string",
+      "enum": [
+        "REPLAY_SAFE",
+        "IDEMPOTENT_RETRY",
+        "RECONCILE_BEFORE_RETRY",
+        "NON_RECOVERABLE",
+        "EXTERNAL_DURABLE_JOB"
+      ]
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PUBLISHED",
+        "REVOKED",
+        "SUPERSEDED"
+      ]
+    },
+    "artifact_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "release_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C15; source=architecture/stable-contract-catalog-v1.md"
+}

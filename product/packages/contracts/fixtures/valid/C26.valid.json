@@ -1,0 +1,14 @@
+{
+  "contract_name": "pc.event-cursor/1",
+  "contract_version": 1,
+  "producer": "pc-control-plane",
+  "stream_kind": "TASK",
+  "stream_id": "task-contract",
+  "cursor": "pc-control-plane:TASK:task-contract:2",
+  "last_event_id": "event-contract-25",
+  "last_sequence": 2,
+  "state": "COMPLETE",
+  "expected_next_sequence": 3,
+  "gap_detected_at": "2026-11-09T00:00:00.000Z",
+  "captured_at": "2026-11-10T00:00:01.000Z"
+}
