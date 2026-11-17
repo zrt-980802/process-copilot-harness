@@ -3,7 +3,9 @@ import type {
   IdentityAuthorizationService,
   ProfileCapabilityService,
   ProjectDirectoryPort,
+  ProviderAttempt,
   RuntimeRegistryService,
+  ProviderHealthObservation,
   WorkbenchProjectionPort
 } from "@pc/application";
 import type { PCPrincipal, PrincipalEnvelope, RuntimeCapabilityManifest, SessionAssignment, ToolRelease } from "@pc/domain";
@@ -44,6 +46,11 @@ export interface WorkbenchOptions {
   runtimeSecret?: string;
   projectDirectory?: ProjectDirectoryPort;
   workbenchProjection?: WorkbenchProjectionPort;
+  providerAvailability?: {
+    isUsable(providerRegistrationId: string): boolean;
+    observation(providerRegistrationId: string): ProviderHealthObservation;
+    beginAttempt?(providerRegistrationId: string): ProviderAttempt;
+  };
   workspace(id: string, tenantId: string, principalId: string): Promise<SstsTaskWorkspace>;
 }
 
@@ -69,7 +76,7 @@ export class RuntimeWorkbench {
   private readonly activeTurns = new Set<string>();
   constructor(readonly options: WorkbenchOptions) {}
 
-  hasProjectProvider(): boolean {
+  projectProviderConfigured(): boolean {
     return this.options.gateway !== undefined
       && this.options.gatewayRepository !== undefined
       && this.options.connector !== undefined
@@ -79,12 +86,34 @@ export class RuntimeWorkbench {
       && this.options.reviewProfileReleaseId !== undefined;
   }
 
+  hasProjectProvider(): boolean {
+    return this.projectProviderConfigured()
+      && (this.options.providerAvailability?.isUsable("provider:eeclaw") ?? true);
+  }
+
   private projectProvider() {
     const { gateway, gatewayRepository, connector, projectDirectory,
       workbenchProjection, profileReleaseId, reviewProfileReleaseId } = this.options;
     if (!gateway || !gatewayRepository || !connector || !projectDirectory
       || !workbenchProjection || !profileReleaseId || !reviewProfileReleaseId) {
       denied("PC_WORKBENCH_PROJECT_PROVIDER_UNAVAILABLE");
+    }
+    if (this.options.providerAvailability?.isUsable(
+      projectDirectory.provider_registration_id
+    ) === false) {
+      const observation = this.options.providerAvailability.observation(
+        projectDirectory.provider_registration_id
+      );
+      throw new IdentityAuthorizationError(
+        "PC_WORKBENCH_PROVIDER_UNAVAILABLE",
+        "The external project provider is temporarily unavailable",
+        true,
+        {
+          provider_registration_id: projectDirectory.provider_registration_id,
+          provider_state: observation.provider_state,
+          reason_codes: observation.reason_codes
+        }
+      );
     }
     return { gateway, gatewayRepository, connector, projectDirectory,
       workbenchProjection, profileReleaseId, reviewProfileReleaseId };
@@ -93,7 +122,90 @@ export class RuntimeWorkbench {
   async projects(accessToken: string) {
     const { principal } = await this.options.identity.authenticate(accessToken);
     if (this.options.projectDirectory === undefined) return [];
-    return this.options.projectDirectory.listProjects({ principal });
+    const providerId = this.options.projectDirectory.provider_registration_id;
+    const availability = this.options.providerAvailability;
+    const attempt = availability?.beginAttempt?.(providerId);
+    if (attempt?.allowed === false) {
+      const observation = availability!.observation(providerId);
+      throw new IdentityAuthorizationError(
+        "PC_WORKBENCH_PROVIDER_UNAVAILABLE",
+        "The external project provider is temporarily unavailable",
+        true,
+        {
+          provider_registration_id: providerId,
+          provider_state: observation.provider_state,
+          reason_codes: observation.reason_codes
+        }
+      );
+    }
+    try {
+      const projects = await this.options.projectDirectory.listProjects({ principal });
+      attempt?.success("provider_project_directory_responded");
+      return projects;
+    } catch (error) {
+      const code = error instanceof Error && "code" in error
+        && typeof error.code === "string" ? error.code : "";
+      if (["PC_WORKBENCH_PROJECT_DENIED", "PC_WORKBENCH_EXTERNAL_ACCOUNT_DENIED"].includes(code)) {
+        attempt?.success("provider_project_directory_business_deny");
+      } else {
+        attempt?.failure(
+          code.includes("INCOMPATIBLE") ? "INCOMPATIBLE" : "UNAVAILABLE",
+          code.includes("INCOMPATIBLE")
+            ? "provider_project_directory_incompatible"
+            : "provider_project_directory_unavailable"
+        );
+      }
+      throw error;
+    }
+  }
+
+  async capabilityAvailability(accessToken: string) {
+    const { principal } = await this.options.identity.authenticate(accessToken);
+    const providerId = this.options.projectDirectory?.provider_registration_id
+      ?? "provider:eeclaw";
+    const observation = this.options.providerAvailability?.observation(providerId);
+    const usable = observation !== undefined
+      && ["HEALTHY", "DEGRADED"].includes(observation.provider_state);
+    const availabilityState = observation?.provider_state === "DEGRADED"
+      ? "DEGRADED"
+      : usable ? "AVAILABLE" : "UNAVAILABLE";
+    const capabilities = this.options.tools.length === 0
+      ? [{
+          capability_ref: "capability:eeclaw.project-workbench",
+          action_namespace: "ee.*",
+          resource_authority: "eeclaw",
+          operation_class: "READ" as const,
+          approval_requirement: "NONE" as const,
+          availability_state: availabilityState
+        }]
+      : this.options.tools.map((tool) => ({
+          capability_ref: `capability:${tool.tool_definition_id}`,
+          tool_release_id: tool.tool_release_id,
+          action_namespace: tool.required_permissions[0] ?? "ee.*",
+          resource_authority: "eeclaw",
+          operation_class: tool.risk_manifest.action_class,
+          approval_requirement: tool.risk_manifest.approval_requirement,
+          availability_state: availabilityState
+        }));
+    const observedAt = new Date();
+    return {
+      contract_name: "pc.capability-availability/1" as const,
+      contract_version: 1 as const,
+      availability_id: `capability-availability:${providerId.replace(/^provider:/u, "")}`,
+      provider_registration_id: providerId,
+      tenant_id: principal.tenant_id,
+      principal_id: principal.principal_id,
+      health_observation_id: observation?.health_observation_id
+        ?? `provider-health:${providerId.replace(/^provider:/u, "")}`,
+      catalog_revision: this.options.connector?.capability_digest ?? "catalog-unavailable",
+      capabilities,
+      reason_codes: observation?.reason_codes ?? ["provider_unconfigured"],
+      evidence_refs: observation?.evidence_refs.length
+        ? observation.evidence_refs
+        : [observation?.health_observation_id ?? "provider-health:eeclaw"],
+      observed_at: observedAt.toISOString(),
+      expires_at: new Date(observedAt.getTime() + 30_000).toISOString()
+    };
   }
 
   async catalog(accessToken: string, project: string) {

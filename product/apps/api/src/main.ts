@@ -35,7 +35,11 @@ import {
   ResourceWorkspaceService
 } from "@pc/resource";
 import { SstsDraftService } from "@pc/ssts-draft";
-import { RuntimeWorkbench, RuntimeSstsDraftEngine } from "./workbench.js";
+import {
+  RuntimeWorkbench,
+  RuntimeSstsDraftEngine,
+  type WorkbenchOptions
+} from "./workbench.js";
 import { mcpDigest } from "@pc/gateway";
 import { buildApiServer } from "./server.js";
 import { EeLogin } from "./ee-login.js";
@@ -69,6 +73,10 @@ let sstsDraft: SstsDraftService | undefined;
 let pilotPrincipalId: string | undefined;
 let workbench: RuntimeWorkbench | undefined;
 let fixedProfileReleaseId: string | undefined;
+let eeProviderCompatibilityReady = false;
+let eeAuthorizationAdapter: HttpEeClawAuthorizationAdapter | undefined;
+let retryEeProvider: (() => Promise<void>) | undefined;
+let eeRetryInFlight: Promise<void> | undefined;
 
 if (identityStoreKind !== "disabled") {
   const signingKey = process.env.PC_ENVELOPE_SIGNING_KEY;
@@ -178,8 +186,32 @@ if (
       || action === "draft.generate" || action === "draft.read" ? "read"
         : action === "ee.ssts.review.request" ? "edit" : action === "approval.decide" ? "review" : undefined
   });
-  await eeClawAdapter.fetchCompatibility();
+  eeAuthorizationAdapter = eeClawAdapter;
   identityAuthorization.registerExternalAuthorizationPort(eeClawAdapter);
+  identityAuthorization.registerProviderHealthPorts("provider:eeclaw", [
+    "identity",
+    "project_directory",
+    "business_capability",
+    "workbench_projection"
+  ]);
+  try {
+    const compatibility = await eeClawAdapter.fetchCompatibility();
+    identityAuthorization.markProviderCompatible(
+      "provider:eeclaw",
+      `compatibility:eeclaw:${compatibility.source_commit}`
+    );
+    eeProviderCompatibilityReady = true;
+  } catch (error) {
+    const incompatible = error instanceof Error
+      && error.message.includes("unsupported");
+    identityAuthorization.markProviderFailure(
+      "provider:eeclaw",
+      incompatible ? "INCOMPATIBLE" : "UNAVAILABLE",
+      incompatible
+        ? "provider_compatibility_incompatible"
+        : "provider_compatibility_unavailable"
+    );
+  }
 }
 
 if (profileStoreKind !== "disabled") {
@@ -444,9 +476,9 @@ if (gatewayStoreKind !== "disabled") {
         }
   );
   await controlledGateway.initialize();
-  const catalog = await synchronizeEeMcpCatalog({ provider: mcpProvider,
-    access_token: mcpSecret, tenant_id: mcpTenant, endpoint: mcpEndpoint,
-    profiles: profileCapability, gateway: controlledGateway });
+  const assembleEeCapabilities = async (
+    catalog: Awaited<ReturnType<typeof synchronizeEeMcpCatalog>>
+  ) => {
   const runtimeUrl = process.env.PC_WORKBENCH_RUNTIME_URL;
   if (runtimeUrl !== undefined) {
     const readTools = catalog.tools.filter((tool) => tool.risk_manifest.action_class === "READ");
@@ -470,21 +502,31 @@ if (gatewayStoreKind !== "disabled") {
       output_contract: { kind: "AI_DRAFT", enterprise_write: false, controlled_command: "explicit-approved-review-only" },
       dependency_lock_digest: mcpDigest(catalog.tools.map((tool) => tool.release_digest)) });
     const identity = identityAuthorization;
-    const conversationProfile = await profileCapability.publishExpertProfile({ ...readProfile,
+    const conversationProfile = await profileCapability.getProfileRelease(
+      "profile:conversation:personal:1"
+    ) ?? await profileCapability.publishExpertProfile({ ...readProfile,
       profile_release_id: "profile:conversation:personal:1", profile_definition_id: "profile:conversation:personal",
       tool_requirements: [], knowledge_policy: { source: "session-materialized-only", enterprise_access: false },
       output_contract: { kind: "AI_CONVERSATION", enterprise_write: false }, completion_contract: { requires_ee_trace: false },
       dependency_lock_digest: mcpDigest([]) });
     const runtimeResolver = process.env.PC_USER_RUNTIME_MANAGER_URL
       ? new UserRuntimeResolver(process.env.PC_USER_RUNTIME_MANAGER_URL, process.env.PC_RUNTIME_SERVICE_SECRET ?? "") : undefined;
-    workbench = new RuntimeWorkbench({ identity, profiles: profileCapability, registry,
-      resources: resourceWorkspace, gateway: controlledGateway, gatewayRepository: repository,
+    const eeWorkbenchOptions: WorkbenchOptions = { identity, profiles: profileCapability, registry,
+      resources: resourceWorkspace, gateway: controlledGateway!, gatewayRepository: repository,
       events: eventProjection!, connector: catalog.connector, tools: catalog.tools,
       runtimeUrl: new URL(runtimeUrl).origin, profileReleaseId: profileId,
       reviewProfileReleaseId: reviewProfileId,
       conversationProfileReleaseId: conversationProfile.profile_release_id,
       projectDirectory,
       workbenchProjection,
+      providerAvailability: {
+        isUsable: (providerId) => identity.isProviderUsable(providerId),
+        observation: (providerId) => identity.providerHealth(providerId),
+        beginAttempt: (providerId) => identity.beginProviderAttempt(
+          providerId,
+          "project_directory"
+        )
+      },
       ...(runtimeResolver ? { resolveRuntime: async (principal) => {
         if (principal.principal_id === pilotPrincipalId) return new URL(runtimeUrl).origin;
         return runtimeResolver.resolve(principal);
@@ -507,18 +549,91 @@ if (gatewayStoreKind !== "disabled") {
         }
         return binding;
       },
-      workspace: async (workspace_id, tenant_id, principal_id) => (await sstsDraft!.getWorkspace({ workspace_id, tenant_id, principal_id })).workspace,
-      ...(process.env.PC_RUNTIME_SERVICE_SECRET ? { runtimeSecret: process.env.PC_RUNTIME_SERVICE_SECRET } : {}) });
+      workspace: async (workspace_id: string, tenant_id: string, principal_id: string) => (await sstsDraft!.getWorkspace({ workspace_id, tenant_id, principal_id })).workspace,
+      ...(process.env.PC_RUNTIME_SERVICE_SECRET ? { runtimeSecret: process.env.PC_RUNTIME_SERVICE_SECRET } : {}) };
+    if (workbench === undefined) workbench = new RuntimeWorkbench(eeWorkbenchOptions);
+    else Object.assign(workbench.options, eeWorkbenchOptions);
   }
   if (pilotPrincipalId !== undefined) {
     const externalAccountId = await identityAuthorization.resolveExternalSubject(pilotPrincipalId, "eeclaw");
     if (externalAccountId === undefined) throw new Error("Verified pilot EE identity is required");
     const existing = await repository.findExternalAccountBinding(mcpTenant, catalog.connector.connector_id, pilotPrincipalId, true);
     if (existing === undefined) {
-      await controlledGateway.bindExternalAccount({ tenant_id: mcpTenant,
+      await controlledGateway!.bindExternalAccount({ tenant_id: mcpTenant,
         connector_id: catalog.connector.connector_id, principal_id: pilotPrincipalId,
         external_account_id: externalAccountId, credential_subject: "service:ee-mcp-adapter",
         secret_ref: "config:EE_MCP_ADAPTER_SECRET" });
+    }
+  }
+  };
+  const performEeProviderRetry = async () => {
+    const attempt = identityAuthorization.beginProviderAttempt(
+      "provider:eeclaw",
+      "business_capability"
+    );
+    if (!attempt.allowed) {
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_UNAVAILABLE",
+        "EE provider retry is waiting for the bounded backoff window",
+        true
+      );
+    }
+    try {
+      const compatibility = await eeAuthorizationAdapter!.fetchCompatibility();
+      identityAuthorization.markProviderCompatible(
+        "provider:eeclaw",
+        `compatibility:eeclaw:${compatibility.source_commit}`
+      );
+      const catalog = await synchronizeEeMcpCatalog({ provider: mcpProvider,
+        access_token: mcpSecret, tenant_id: mcpTenant, endpoint: mcpEndpoint,
+        profiles: profileCapability, gateway: controlledGateway! });
+      await assembleEeCapabilities(catalog);
+      identityAuthorization.markProviderCompatible(
+        "provider:eeclaw",
+        `catalog:eeclaw:${catalog.connector.capability_digest}`
+      );
+      attempt.success(
+        "provider_capability_recovered",
+        `catalog:eeclaw:${catalog.connector.capability_digest}`
+      );
+      eeProviderCompatibilityReady = true;
+    } catch (error) {
+      const incompatible = error instanceof Error
+        && error.message.includes("unsupported");
+      attempt.failure(
+        incompatible ? "INCOMPATIBLE" : "UNAVAILABLE",
+        incompatible
+          ? "provider_compatibility_incompatible"
+          : "provider_catalog_unavailable"
+      );
+      throw new IdentityAuthorizationError(
+        incompatible ? "PC_PROVIDER_INCOMPATIBLE" : "PC_PROVIDER_UNAVAILABLE",
+        incompatible
+          ? "EE provider compatibility is unsupported"
+          : "EE provider is temporarily unavailable",
+        !incompatible
+      );
+    }
+  };
+  retryEeProvider = () => {
+    const state = identityAuthorization.providerHealth(
+      "provider:eeclaw"
+    ).provider_state;
+    if (!["UNAVAILABLE", "DEGRADED"].includes(state)) {
+      return Promise.resolve();
+    }
+    if (eeRetryInFlight !== undefined) return eeRetryInFlight;
+    const running = performEeProviderRetry().finally(() => {
+      if (eeRetryInFlight === running) eeRetryInFlight = undefined;
+    });
+    eeRetryInFlight = running;
+    return running;
+  };
+  if (eeProviderCompatibilityReady) {
+    try {
+      await performEeProviderRetry();
+    } catch {
+      // Provider-local bootstrap failure is reflected by C62 and does not stop PC Core.
     }
   }
   if (eventProjection !== undefined) {
@@ -557,7 +672,7 @@ if (gatewayStoreKind !== "disabled") {
 
 const standaloneRuntimeUrl = process.env.PC_WORKBENCH_RUNTIME_URL;
 if (
-  providerConfiguration.mode === "standalone"
+  workbench === undefined
   && standaloneRuntimeUrl !== undefined
   && sstsStoreKind !== "disabled"
   && identityAuthorization !== undefined
@@ -604,6 +719,14 @@ if (
     tools: [],
     runtimeUrl: new URL(standaloneRuntimeUrl).origin,
     conversationProfileReleaseId: conversationProfile.profile_release_id,
+    providerAvailability: {
+      isUsable: (providerId) => identityAuthorization!.isProviderUsable(providerId),
+      observation: (providerId) => identityAuthorization!.providerHealth(providerId),
+      beginAttempt: (providerId) => identityAuthorization!.beginProviderAttempt(
+        providerId,
+        "project_directory"
+      )
+    },
     ...(runtimeResolver === undefined
       ? {}
       : { resolveRuntime: (principal) => runtimeResolver.resolve(principal) }),
@@ -707,6 +830,7 @@ const server = buildApiServer({
   ...(controlledGateway === undefined ? {} : { controlledGateway }),
   ...(eventProjection === undefined ? {} : { eventProjection }),
   ...(sstsDraft === undefined ? {} : { sstsDraft }),
+  ...(retryEeProvider === undefined ? {} : { retryEeProvider }),
   ...(process.env.PC_EVENT_INGEST_SECRET === undefined
     ? {}
     : { eventIngestSecret: process.env.PC_EVENT_INGEST_SECRET }),

@@ -29,8 +29,14 @@ export interface SystemCapabilities {
   capabilities: {
     core: "configured" | "not-configured";
     personal_workbench: "available" | "unavailable";
-    ee_provider: "configured" | "unconfigured";
-    project_workbench: "available" | "unavailable";
+    ee_provider: "unconfigured" | "starting" | "healthy" | "degraded" | "unavailable" | "disabled";
+    project_workbench: "available" | "degraded" | "unavailable";
+  };
+  provider_health?: {
+    provider_registration_id: string;
+    provider_state: "UNCONFIGURED" | "STARTING" | "HEALTHY" | "DEGRADED" | "UNAVAILABLE" | "DISABLED";
+    reason_codes: string[];
+    checked_at: string;
   };
 }
 

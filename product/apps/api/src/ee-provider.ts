@@ -5,6 +5,7 @@ import type {
   ProviderWorkbenchProjection,
   WorkbenchProjectionPort
 } from "@pc/application";
+import { IdentityAuthorizationError } from "@pc/domain";
 
 export interface EeClawProjectDirectoryAdapterOptions {
   readonly identity: IdentityAuthorizationService;
@@ -32,25 +33,51 @@ export class EeClawProjectDirectoryAdapter implements ProjectDirectoryPort {
       input.principal.principal_id,
       "eeclaw"
     );
-    if (accountId === undefined) throw new Error("Verified EE identity required");
-    const response = await this.fetchImpl(
-      `${this.baseUrl}/api/internal/process-copilot/v1/projects/accessible`,
-      {
-        method: "POST",
-        redirect: "error",
-        headers: {
-          "content-type": "application/json",
-          "x-pc-adapter-secret": this.options.sharedSecret
-        },
-        body: JSON.stringify({
-          account_id: accountId,
-          permission_key: "page:projects",
-          operation: "read"
-        }),
-        signal: AbortSignal.timeout(5_000)
-      }
-    );
-    if (!response.ok) throw new Error("EE project authorization unavailable");
+    if (accountId === undefined) {
+      throw new IdentityAuthorizationError(
+        "PC_WORKBENCH_EXTERNAL_ACCOUNT_DENIED",
+        "Verified EE identity required"
+      );
+    }
+    let response: Response;
+    try {
+      response = await this.fetchImpl(
+        `${this.baseUrl}/api/internal/process-copilot/v1/projects/accessible`,
+        {
+          method: "POST",
+          redirect: "error",
+          headers: {
+            "content-type": "application/json",
+            "x-pc-adapter-secret": this.options.sharedSecret
+          },
+          body: JSON.stringify({
+            account_id: accountId,
+            permission_key: "page:projects",
+            operation: "read"
+          }),
+          signal: AbortSignal.timeout(5_000)
+        }
+      );
+    } catch {
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_UNAVAILABLE",
+        "EE project directory is temporarily unavailable",
+        true
+      );
+    }
+    if ([401, 403].includes(response.status)) {
+      throw new IdentityAuthorizationError(
+        "PC_WORKBENCH_PROJECT_DENIED",
+        "EE project directory denied the request"
+      );
+    }
+    if (!response.ok) {
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_UNAVAILABLE",
+        "EE project directory is temporarily unavailable",
+        true
+      );
+    }
     const body = await response.json() as {
       ok: boolean;
       data?: {
@@ -65,7 +92,10 @@ export class EeClawProjectDirectoryAdapter implements ProjectDirectoryPort {
       || !Array.isArray(body.data.items)
       || !/^[a-f0-9]{64}$/u.test(body.data.authorization_version_digest ?? "")
     ) {
-      throw new Error("Invalid EE project directory contract");
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_INCOMPATIBLE",
+        "EE project directory returned an incompatible contract"
+      );
     }
     return body.data.items;
   }

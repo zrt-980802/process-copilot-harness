@@ -53,6 +53,7 @@ export interface ApiServerDependencies {
   controlledGateway?: ControlledExecutionGatewayService;
   eventProjection?: EventProjectionService;
   sstsDraft?: SstsDraftService;
+  retryEeProvider?: () => Promise<void>;
   eventIngestSecret?: string;
   databaseConfigured?: boolean;
 }
@@ -396,7 +397,16 @@ export function buildApiServer(
     return reply.send(error);
   });
 
-  server.get("/health", async () => ({
+  server.get("/health", async () => {
+    const providerHealth = dependencies.providerMode === "ee-connected"
+      ? dependencies.identityAuthorization?.providerHealth("provider:eeclaw")
+      : undefined;
+    const eeProviderState = providerHealth?.provider_state.toLowerCase()
+      ?? "unconfigured";
+    const projectWorkbench = dependencies.workbench?.hasProjectProvider() === true
+      ? providerHealth?.provider_state === "DEGRADED" ? "degraded" : "available"
+      : "unavailable";
+    return {
     service: "process-copilot-api",
     status: "ok",
     contract_baseline: "v1",
@@ -432,14 +442,23 @@ export function buildApiServer(
       personal_workbench: dependencies.workbench === undefined
         ? "unavailable"
         : "available",
-      ee_provider: dependencies.eeIdentityProvider === undefined
-        ? "unconfigured"
-        : "configured",
-      project_workbench: dependencies.workbench?.hasProjectProvider() === true
-        ? "available"
-        : "unavailable"
-    }
-  }));
+      ee_provider: eeProviderState,
+      project_workbench: projectWorkbench
+    },
+    ...(providerHealth === undefined ? {} : { provider_health: providerHealth })
+  };
+  });
+
+  if (dependencies.retryEeProvider !== undefined) {
+    server.post("/v1/providers/eeclaw/retry", async () => {
+      await dependencies.retryEeProvider!();
+      return {
+        provider_health: dependencies.identityAuthorization?.providerHealth(
+          "provider:eeclaw"
+        )
+      };
+    });
+  }
 
   if (dependencies.workbench !== undefined) {
     const workbench = dependencies.workbench;
@@ -448,6 +467,8 @@ export function buildApiServer(
     }));
     server.get<{ Querystring: { project_code: string } }>("/v1/workbench/catalog", async (request) =>
       workbench.catalog(bearerToken(request.headers.authorization), request.query.project_code));
+    server.get("/v1/workbench/capability-availability", async (request) =>
+      workbench.capabilityAvailability(bearerToken(request.headers.authorization)));
     server.get<{ Querystring: { project_code: string; workspace_id?: string } }>("/v1/workbench/capability-chain", async (request) => {
       const token = bearerToken(request.headers.authorization);
       const workspace = request.query.workspace_id
@@ -1139,6 +1160,9 @@ export function buildApiServer(
         authenticated.principal.principal_id
       );
     if (!dependencies.workbench) return { tasks };
+    if (!dependencies.workbench.hasProjectProvider()) {
+      return { tasks: tasks.filter((task) => task.project_code === undefined) };
+    }
     const projects = new Set((await dependencies.workbench.projects(bearerToken(request.headers.authorization))).map(item => item.project_code));
     return { tasks: tasks.filter(task => !task.project_code || projects.has(task.project_code)) };
   });

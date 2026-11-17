@@ -17,6 +17,13 @@ import type {
   PrincipalEnvelope
 } from "@pc/domain";
 import { IdentityAuthorizationError } from "@pc/domain";
+import { AuthorityRouter } from "./authority-router.js";
+import type {
+  ProviderAttempt,
+  ProviderFailureKind,
+  ProviderHealthObservation,
+  ProviderPortKind
+} from "./provider-health.js";
 
 export interface ProvisionPilotAccountInput {
   readonly tenant_id: string;
@@ -237,33 +244,28 @@ function scopeMatches(
   return resourceScopeRefs.includes(`${grant.scope_type}:${grant.scope_id}`);
 }
 
-type CoreAuthorityClass = "PC_ONLY" | "EXTERNAL_INTERSECTION";
-
-function classifyCoreAuthority(
+function isPersonalConversation(
   principal: PCPrincipal,
   action: string,
   scopeRefs: readonly string[],
   toolReleaseIds: readonly string[]
-): CoreAuthorityClass {
-  if (action === "conversation.run"
+): boolean {
+  return action === "conversation.run"
     && scopeRefs.length === 1
     && scopeRefs[0] === `user:${principal.principal_id}`
-    && toolReleaseIds.length === 0) {
-    return "PC_ONLY";
-  }
-  return "EXTERNAL_INTERSECTION";
+    && toolReleaseIds.length === 0;
 }
 
 export class IdentityAuthorizationService {
   private sessionValidator?: (session: PilotSession, principal: PCPrincipal) => Promise<void>;
-  private readonly registeredExternalAuthorizationPorts:
-    ExternalAuthorizationPort[];
+  private readonly authorityRouter: AuthorityRouter;
 
   constructor(
     private readonly repository: IdentityAuthorizationRepository,
     private readonly envelopeSigningKey: string,
     externalAuthorizationPorts: readonly ExternalAuthorizationPort[] = [],
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    authorityRouter?: AuthorityRouter
   ) {
     if (envelopeSigningKey.length < 32) {
       throw new IdentityAuthorizationError(
@@ -271,9 +273,9 @@ export class IdentityAuthorizationService {
         "Principal Envelope signing key must be at least 32 characters"
       );
     }
-    this.registeredExternalAuthorizationPorts = [
-      ...externalAuthorizationPorts
-    ];
+    this.authorityRouter = authorityRouter ?? new AuthorityRouter();
+    externalAuthorizationPorts.forEach((port) =>
+      this.authorityRouter.registerProvider(port));
   }
 
   initialize(): Promise<void> {
@@ -442,7 +444,53 @@ export class IdentityAuthorizationService {
   }
 
   registerExternalAuthorizationPort(port: ExternalAuthorizationPort): void {
-    this.registeredExternalAuthorizationPorts.push(port);
+    this.authorityRouter.registerProvider(port);
+  }
+
+  registerProviderHealthPorts(
+    providerRegistrationId: string,
+    ports: readonly ProviderPortKind[]
+  ): void {
+    this.authorityRouter.health.register(providerRegistrationId, ports);
+  }
+
+  markProviderCompatible(
+    providerRegistrationId: string,
+    evidenceRef?: string
+  ): void {
+    this.authorityRouter.health.markCompatible(providerRegistrationId, evidenceRef);
+  }
+
+  markProviderFailure(
+    providerRegistrationId: string,
+    kind: ProviderFailureKind,
+    reasonCode: string,
+    evidenceRef?: string
+  ): void {
+    this.authorityRouter.health.markFailure(
+      providerRegistrationId,
+      kind,
+      reasonCode,
+      evidenceRef
+    );
+  }
+
+  providerHealth(providerRegistrationId: string): ProviderHealthObservation {
+    return this.authorityRouter.health.observation(providerRegistrationId);
+  }
+
+  isProviderUsable(
+    providerRegistrationId: string,
+    port?: ProviderPortKind
+  ): boolean {
+    return this.authorityRouter.health.isUsable(providerRegistrationId, port);
+  }
+
+  beginProviderAttempt(
+    providerRegistrationId: string,
+    port: ProviderPortKind
+  ): ProviderAttempt {
+    return this.authorityRouter.health.beginAttempt(providerRegistrationId, port);
   }
 
   async getPilotPrincipal(
@@ -603,15 +651,29 @@ export class IdentityAuthorizationService {
     const observedAt = this.now().toISOString();
 
     for (const action of actions) {
-      if (classifyCoreAuthority(
+      if (isPersonalConversation(
         principal,
         action,
         scopeRefs,
         input.tool_release_ids
-      ) === "PC_ONLY") {
+      )) {
         const deny = grants.find(grant => grant.effect === "deny" && (grant.action === action || grant.action === "*") && scopeMatches(grant, scopeRefs));
         if (deny) reasonCodes.push(`pc_explicit_deny:${action}`);
-        else { allowedActions.push(action); evidenceRefs.add("pc-policy:active-principal-personal-conversation:1"); }
+        else {
+          const routed = await this.authorityRouter.evaluate({
+            principal,
+            action,
+            resource_scope_refs: scopeRefs,
+            tool_release_ids: input.tool_release_ids,
+            observed_at: observedAt
+          });
+          routed.reason_codes.forEach((code) => reasonCodes.push(code));
+          routed.evidence_refs.forEach((ref) => evidenceRefs.add(ref));
+          if (routed.decision === "ALLOW") {
+            allowedActions.push(action);
+            evidenceRefs.add("pc-policy:active-principal-personal-conversation:1");
+          }
+        }
         continue;
       }
       const matching = grants.filter((grant) =>
@@ -630,19 +692,16 @@ export class IdentityAuthorizationService {
         continue;
       }
       evidenceRefs.add(allow.evidence_ref);
-      let externalAllowed = true;
-      for (const port of this.registeredExternalAuthorizationPorts) {
-        const decision = await port.evaluate({
-          principal,
-          action,
-          resource_scope_refs: scopeRefs,
-          observed_at: observedAt
-        });
-        decision.reason_codes.forEach((code) => reasonCodes.push(code));
-        decision.evidence_refs.forEach((ref) => evidenceRefs.add(ref));
-        if (decision.decision !== "ALLOW") externalAllowed = false;
-      }
-      if (externalAllowed) allowedActions.push(action);
+      const routed = await this.authorityRouter.evaluate({
+        principal,
+        action,
+        resource_scope_refs: scopeRefs,
+        tool_release_ids: input.tool_release_ids,
+        observed_at: observedAt
+      });
+      routed.reason_codes.forEach((code) => reasonCodes.push(code));
+      routed.evidence_refs.forEach((ref) => evidenceRefs.add(ref));
+      if (routed.decision === "ALLOW") allowedActions.push(action);
     }
 
     const ttlMs = positiveDuration(

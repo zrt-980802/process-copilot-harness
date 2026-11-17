@@ -180,6 +180,57 @@ describe("Workbench admission after a local Runtime rebuild", () => {
       String(url).startsWith("http://runtime"))).toBe(true);
   });
 
+  it("keeps personal admission available while closing only unavailable EE paths", async () => {
+    const f = await fixture();
+    const profile = await f.profiles.publishExpertProfile({
+      ...f.seeded.profile,
+      profile_release_id: "profile:conversation:personal:1",
+      tool_requirements: [],
+      output_contract: { kind: "AI_CONVERSATION", enterprise_write: false }
+    });
+    await f.profiles.assignProfile("owner", profile.profile_release_id);
+    f.workbench.options.tools = [];
+    f.workbench.options.conversationProfileReleaseId = profile.profile_release_id;
+    f.workbench.options.providerAvailability = {
+      isUsable: () => false,
+      observation: () => ({
+        contract_name: "pc.provider-health/1",
+        contract_version: 1,
+        health_observation_id: "provider-health:eeclaw",
+        provider_registration_id: "provider:eeclaw",
+        configuration_revision: 1,
+        provider_state: "UNAVAILABLE",
+        compatibility_status: "UNKNOWN",
+        port_health: { project_directory: "UNAVAILABLE" },
+        reason_codes: ["provider_project_directory_unavailable"],
+        evidence_refs: [],
+        checked_at: "2026-11-17T00:00:00.000Z",
+        expires_at: "2026-11-17T00:00:30.000Z"
+      }),
+      beginAttempt: () => ({
+        allowed: false,
+        probe: false,
+        success: () => undefined,
+        failure: () => undefined
+      })
+    };
+    const personal = {
+      ...f.workspace,
+      project_code: undefined,
+      profile_release_id: profile.profile_release_id
+    };
+
+    expect(f.workbench.hasProjectProvider()).toBe(false);
+    await expect(f.workbench.projects("token"))
+      .rejects.toMatchObject({ code: "PC_WORKBENCH_PROVIDER_UNAVAILABLE" });
+    await expect(f.workbench.catalog("token", "EP37"))
+      .rejects.toMatchObject({ code: "PC_WORKBENCH_PROVIDER_UNAVAILABLE" });
+    await expect(f.workbench.prepare(personal, "token", [{
+      resource_id: "input",
+      resource_version_id: "version"
+    }])).resolves.toMatchObject({ context: { tools: [] } });
+  });
+
   it("publishes a project CHAT profile from the allowed read subset without weakening SSTS requirements", async () => {
     const f = await fixture();
     const personal = await f.profiles.publishExpertProfile({ ...f.seeded.profile, profile_release_id: "profile:conversation:personal:1",

@@ -7,7 +7,15 @@ import { MemoryIdentityAuthorizationRepository } from "../src/index.js";
 
 const SIGNING_KEY = "dev05-test-signing-key-000000000000000000";
 
-async function fixture(externalPorts: readonly ExternalAuthorizationPort[] = []) {
+const externalAllow: ExternalAuthorizationPort = {
+  evaluate: () => Promise.resolve({
+    decision: "ALLOW",
+    reason_codes: ["eeclaw_allow"],
+    evidence_refs: ["eeclaw:C41:allow"]
+  })
+};
+
+async function fixture(externalPorts: readonly ExternalAuthorizationPort[] = [externalAllow]) {
   const repository = new MemoryIdentityAuthorizationRepository();
   const service = new IdentityAuthorizationService(
     repository,
@@ -81,7 +89,13 @@ describe("DEV-05 PCPrincipal and authorization", () => {
   });
 
   it("fails closed for project scope until an explicit grant exists", async () => {
-    const { service, provisioned, signedIn } = await fixture();
+    let externalCalls = 0;
+    const { service, provisioned, signedIn } = await fixture([{
+      evaluate: async () => {
+        externalCalls += 1;
+        return { decision: "ALLOW", reason_codes: [], evidence_refs: [] };
+      }
+    }]);
 
     const denied = await service.issueAuthorizationSnapshot(
       signedIn.access_token,
@@ -96,6 +110,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
     expect(denied.reason_codes).toContain(
       "pc_no_matching_allow:draft.generate"
     );
+    expect(externalCalls).toBe(0);
 
     const revised = await service.replaceAuthorizationGrants({
       principal_id: provisioned.principal.principal_id,
@@ -123,6 +138,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
       revised.authorization_revision
     );
     expect(Object.isFrozen(allowed)).toBe(true);
+    expect(externalCalls).toBe(1);
   });
 
   it("intersects external authorization and refuses stale snapshots", async () => {

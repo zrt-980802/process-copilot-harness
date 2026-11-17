@@ -22,8 +22,8 @@ these directories adjacent.
 - MEMORY-01A passed independent review after idempotency remediation.
 - MEMORY-01B is not implemented and remains on hold.
 - The next mainline is PC/EE identity, authorization and business-provider
-  decoupling. D0 contracts, D1 ports and D2 Standalone are complete; D3 is
-  planned but not started.
+  decoupling. D0 contracts, D1 ports, D2 Standalone and D3 Authority Router
+  with Provider-local degradation are complete; D4 is planned but not started.
 - EE business authorization remains authoritative for EE projects and objects;
   PC owns PC Principal, Session, Conversation, Memory, Task, Plugin, Tool,
   Approval and Audit policy.
@@ -32,9 +32,9 @@ This repository is a development baseline. It is not a production release or
 deployment qualification.
 
 D2 supports a controlled local/development identity and personal Workbench
-without EE configuration. This does not make the local provider a production
-IAM and does not implement provider-outage degradation or multi-provider
-routing.
+without EE configuration. D3 isolates a configured EE outage to EE-owned
+paths. This does not make the local provider a production IAM and does not
+implement production multi-provider routing.
 
 ## Verify
 

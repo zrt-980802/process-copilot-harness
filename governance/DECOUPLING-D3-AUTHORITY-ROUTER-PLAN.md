@@ -1,6 +1,6 @@
 # DECOUPLING D3：Authority Router 与 Provider-local Degradation 计划
 
-- 状态：Planned / Not Started
+- 状态：Complete
 - 前置：D2 Complete
 - 目标：按 action namespace、resource authority 与 provider health 路由授权和能力，使 EE 中断只关闭 EE-owned 路径
 - 非目标：多 Provider 生产接入、EE Provider Bundle 最终发布、生产 IAM、MEMORY-01B
@@ -20,7 +20,7 @@
 - 以 C63 为运行时路由事实；
 - 输入包含 action、resource authority、scope 与 required provider；
 - `PC_ONLY` 不调用外部端口；
-- `INTERSECTION_REQUIRED` 必须同时获得 PC 与目标 Provider Allow；
+- `PC_AND_PROVIDER` 必须同时获得 PC 与目标 Provider Allow；
 - unknown、route ambiguity 和 missing provider 全部 fail closed。
 
 准出：没有全局遍历所有 Provider 的授权逻辑，且路由证据进入审计。
@@ -97,4 +97,4 @@
 - Health 必须绕过逐请求授权才能工作；
 - 路由歧义不能稳定 fail closed。
 
-D3 必须由新的明确指令启动。本计划不表示 D3 已实施。
+D3 已按本计划完成。架构结果见 `architecture/external-provider-decoupling-d3-authority-router-v1.md`，开发者验证见 `product/docs/decoupling-d3-verification.md`。D4 必须由新的明确指令启动。

@@ -51,7 +51,7 @@ describe("EE Claw read-only authorization adapter", () => {
       observed_at: "2026-11-10T09:00:00.000Z" };
     await expect(adapter.evaluate(input)).resolves.toMatchObject({ decision: "ALLOW" });
     for (mode of ["project", "operation", "json", "null"]) {
-      await expect(adapter.evaluate(input)).resolves.toMatchObject({ decision: "DENY", reason_codes: ["eeclaw_adapter_contract_invalid"] });
+      await expect(adapter.evaluate(input)).rejects.toMatchObject({ code: "PC_PROVIDER_INCOMPATIBLE" });
     }
     await expect(adapter.evaluate({ ...input, resource_scope_refs: ["project:EP37", "project:EP38"] }))
       .resolves.toMatchObject({ decision: "DENY", reason_codes: ["eeclaw_project_scope_invalid"] });
@@ -115,7 +115,7 @@ describe("EE Claw read-only authorization adapter", () => {
     });
   });
 
-  it("denies missing links, mappings, transport and malformed contracts", async () => {
+  it("separates business denials from Provider transport and contract failures", async () => {
     const missingLink = new HttpEeClawAuthorizationAdapter({
       baseUrl: "http://eeclaw.internal",
       sharedSecret: "adapter-secret",
@@ -144,10 +144,21 @@ describe("EE Claw read-only authorization adapter", () => {
       action: "draft.generate",
       resource_scope_refs: [],
       observed_at: "2026-11-10T09:00:00.000Z"
-    })).resolves.toMatchObject({
-      decision: "DENY",
-      reason_codes: ["eeclaw_adapter_contract_invalid"]
+    })).rejects.toMatchObject({ code: "PC_PROVIDER_INCOMPATIBLE" });
+
+    const unavailable = new HttpEeClawAuthorizationAdapter({
+      baseUrl: "http://eeclaw.internal",
+      sharedSecret: "adapter-secret",
+      resolveAccountId: () => Promise.resolve("42"),
+      resolvePermissionKey: () => "page:architecture",
+      fetchImpl: () => Promise.reject(new TypeError("fetch failed"))
     });
+    await expect(unavailable.evaluate({
+      principal,
+      action: "draft.generate",
+      resource_scope_refs: [],
+      observed_at: "2026-11-10T09:00:00.000Z"
+    })).rejects.toMatchObject({ code: "PC_PROVIDER_UNAVAILABLE", retryable: true });
   });
 
   it("accepts only the pinned C42 zero-migration declaration", async () => {

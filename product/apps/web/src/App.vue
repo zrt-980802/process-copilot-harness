@@ -305,7 +305,9 @@ async function restoreSession(): Promise<void> {
 async function loadTasks(): Promise<void> {
   if (token.value === "") return;
   tasks.value = await api.listTasks(token.value);
-  projects.value = system.value?.capabilities.ee_provider === "configured"
+  projects.value = ["available", "degraded"].includes(
+    system.value?.capabilities.project_workbench ?? "unavailable"
+  )
     ? (await request<{ items: Array<{ project_code: string; project_name: string }> }>("/v1/workbench/projects", token.value)).items
     : [];
   if (!projects.value.some((item) => item.project_code === projectCode.value)) projectCode.value = projects.value[0]?.project_code ?? "";
@@ -467,6 +469,15 @@ async function initialize(): Promise<void> {
   }
 }
 
+async function retryProvider(): Promise<void> {
+  await run("retry-provider", async () => {
+    await request("/v1/providers/eeclaw/retry", undefined, { method: "POST" });
+    system.value = await api.capabilities();
+    await loadTasks();
+    notice.value = "EE 项目能力已重新检查";
+  });
+}
+
 onMounted(initialize);
 </script>
 
@@ -517,6 +528,16 @@ onMounted(initialize);
     :provider-mode="system?.provider_mode ?? 'ee-connected'"
     :account-name="accountName" :projection="projection" @open-task="selectTask" @refresh="refreshTask" @logout="logout">
     <template #default="{ mode, project: activeProject }">
+
+    <div v-if="system?.provider_mode === 'ee-connected' && system.capabilities.project_workbench === 'unavailable'"
+      class="global-error provider-unavailable" role="status">
+      <CircleAlert :size="18" />
+      <div>
+        <strong>EE 项目能力暂不可用</strong>
+        <span>个人对话仍可继续；恢复后刷新页面即可重新装配项目能力。</span>
+      </div>
+      <button class="secondary-button" type="button" :disabled="busy !== ''" @click="retryProvider">重试</button>
+    </div>
 
     <div v-if="error" class="global-error" role="alert">
       <CircleAlert :size="18" />

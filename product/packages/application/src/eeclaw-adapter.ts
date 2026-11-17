@@ -1,4 +1,5 @@
 import type { PCPrincipal } from "@pc/domain";
+import { IdentityAuthorizationError } from "@pc/domain";
 import type {
   ExternalAuthorizationDecision,
 } from "./identity-authorization.js";
@@ -138,19 +139,43 @@ implements EnterpriseAuthorizationPort {
         }
       );
     } catch {
-      return adapterDeny("eeclaw_adapter_unavailable");
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_UNAVAILABLE",
+        "EE authorization provider is temporarily unavailable",
+        true
+      );
     }
     if (!response.ok) {
-      return adapterDeny(`eeclaw_adapter_http_${response.status}`);
+      if ([401, 403].includes(response.status)) {
+        throw new IdentityAuthorizationError(
+          "PC_PROVIDER_AUTHENTICATION_FAILED",
+          "EE authorization provider rejected the adapter identity"
+        );
+      }
+      throw new IdentityAuthorizationError(
+        response.status >= 500
+          ? "PC_PROVIDER_UNAVAILABLE"
+          : "PC_PROVIDER_INCOMPATIBLE",
+        "EE authorization provider returned an unusable response",
+        response.status >= 500
+      );
     }
     let body: {
       ok?: boolean;
       data?: EeClawAuthorizationDecision;
     };
     try { body = await response.json() as typeof body; }
-    catch { return adapterDeny("eeclaw_adapter_contract_invalid"); }
+    catch {
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_INCOMPATIBLE",
+        "EE authorization provider returned invalid JSON"
+      );
+    }
     if (body === null || typeof body !== "object" || Array.isArray(body)) {
-      return adapterDeny("eeclaw_adapter_contract_invalid");
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_INCOMPATIBLE",
+        "EE authorization provider returned an incompatible contract"
+      );
     }
     const decision = body.data;
     if (
@@ -174,7 +199,10 @@ implements EnterpriseAuthorizationPort {
           || Date.parse(decision.expires_at) <= Date.parse(input.observed_at))
       )
     ) {
-      return adapterDeny("eeclaw_adapter_contract_invalid");
+      throw new IdentityAuthorizationError(
+        "PC_PROVIDER_INCOMPATIBLE",
+        "EE authorization provider returned an incompatible contract"
+      );
     }
     return {
       decision: decision.decision,

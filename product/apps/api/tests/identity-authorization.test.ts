@@ -4,6 +4,7 @@ import { IdentityAuthorizationService } from "@pc/application";
 import { MemoryIdentityAuthorizationRepository } from "@pc/persistence";
 import { buildApiServer } from "../src/server.js";
 import { LocalIdentityProvider } from "../src/local-identity-provider.js";
+import type { RuntimeWorkbench } from "../src/workbench.js";
 
 const servers: FastifyInstance[] = [];
 
@@ -30,7 +31,7 @@ describe("Identity and Authorization API", () => {
       expected_authorization_revision:
         provisioned.principal.authorization_revision,
       grants: [{
-        action: "draft.generate",
+        action: "resource.read",
         scope_type: "project",
         scope_id: "project-api",
         effect: "allow",
@@ -75,7 +76,7 @@ describe("Identity and Authorization API", () => {
       url: "/v1/authorization/snapshots",
       headers: { authorization: `Bearer ${accessToken}` },
       payload: {
-        actions: ["draft.generate"],
+        actions: ["resource.read"],
         resource_scope_refs: ["project:project-api"],
         tool_release_ids: ["tool:ssts-draft:1"],
         policy_model_revision: 1,
@@ -103,7 +104,7 @@ describe("Identity and Authorization API", () => {
     expect(envelope.statusCode).toBe(200);
     expect(envelope.json()).toMatchObject({
       subject_principal_id: provisioned.principal.principal_id,
-      allowed_actions: ["draft.generate"],
+      allowed_actions: ["resource.read"],
       runtime_id: "runtime-api"
     });
   });
@@ -123,5 +124,50 @@ describe("Identity and Authorization API", () => {
     });
     expect(missing.statusCode).toBe(401);
     expect(missing.json().error.code).toBe("PC_AUTHENTICATION_REQUIRED");
+  });
+
+  it("reports Provider-local degradation without marking PC Core unhealthy", async () => {
+    const service = new IdentityAuthorizationService(
+      new MemoryIdentityAuthorizationRepository(),
+      "api-test-signing-key-00000000000000000000"
+    );
+    await service.initialize();
+    service.registerExternalAuthorizationPort({
+      provider_registration_id: "provider:eeclaw",
+      resource_authority: "eeclaw",
+      evaluate: async () => ({ decision: "ALLOW", reason_codes: [], evidence_refs: [] })
+    });
+    service.registerProviderHealthPorts("provider:eeclaw", ["project_directory"]);
+    service.markProviderFailure(
+      "provider:eeclaw",
+      "UNAVAILABLE",
+      "provider_test_unavailable"
+    );
+    const workbench = {
+      hasProjectProvider: () => false
+    } as unknown as RuntimeWorkbench;
+    const server = buildApiServer({
+      identityAuthorization: service,
+      providerMode: "ee-connected",
+      workbench
+    });
+    servers.push(server);
+
+    const health = await server.inject({ method: "GET", url: "/health" });
+    expect(health.statusCode).toBe(200);
+    expect(health.json()).toMatchObject({
+      status: "ok",
+      capabilities: {
+        core: "configured",
+        personal_workbench: "available",
+        ee_provider: "unavailable",
+        project_workbench: "unavailable"
+      },
+      provider_health: {
+        provider_registration_id: "provider:eeclaw",
+        provider_state: "UNAVAILABLE",
+        reason_codes: expect.arrayContaining(["provider_test_unavailable"])
+      }
+    });
   });
 });

@@ -93,3 +93,5 @@
 - 外部 Provider Contract C61-C65：`external-provider-contract-catalog-v1.md`
 - 外部 Provider 解耦 D1 Port 拆分：`external-provider-decoupling-d1-port-split-v1.md`
 - 外部 Provider 解耦 D2 Standalone：`external-provider-decoupling-d2-standalone-v1.md`
+- 外部 Provider 解耦 D3 Authority Router：`external-provider-decoupling-d3-authority-router-v1.md`
+- DECOUPLING D3 开发者验证：`../product/docs/decoupling-d3-verification.md`
