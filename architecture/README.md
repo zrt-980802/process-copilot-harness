@@ -91,3 +91,4 @@
 - PC Core 与外部业务平台解耦 ADR：`ADR-0024-pc-core-external-business-provider-decoupling.md`
 - 外部 Provider 解耦 D0 调用清单与权威路由表：`external-provider-decoupling-d0-inventory-v1.md`
 - 外部 Provider Contract C61-C65：`external-provider-contract-catalog-v1.md`
+- 外部 Provider 解耦 D1 Port 拆分：`external-provider-decoupling-d1-port-split-v1.md`

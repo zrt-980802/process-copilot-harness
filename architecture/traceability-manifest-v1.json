@@ -188,8 +188,8 @@
       "external_authorities": ["E01", "E02", "E03", "E04"],
       "contracts": ["C01", "C02", "C03", "C04", "C15", "C16", "C21", "C22", "C23", "C24", "C32", "C33", "C41", "C42", "C61", "C62", "C63", "C64", "C65"],
       "test_refs": ["TS-DECOUPLING-001", "TS-DECOUPLING-002", "TS-DECOUPLING-003", "TS-DECOUPLING-004", "TS-DECOUPLING-005"],
-      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-IAM-003", "REF-ROLE-001", "REF-ROLE-003", "architecture/external-provider-decoupling-d0-inventory-v1.md", "architecture/external-provider-contract-catalog-v1.md"],
-      "implementation_status": "d0-contract-inventory-complete-d1-not-started"
+      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-IAM-003", "REF-ROLE-001", "REF-ROLE-003", "architecture/external-provider-decoupling-d0-inventory-v1.md", "architecture/external-provider-contract-catalog-v1.md", "architecture/external-provider-decoupling-d1-port-split-v1.md"],
+      "implementation_status": "d1-port-split-complete-d2-not-started"
     }
   ]
 }

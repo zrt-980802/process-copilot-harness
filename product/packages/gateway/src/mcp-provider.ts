@@ -5,6 +5,7 @@ import {
 } from "@modelcontextprotocol/client";
 import type { ToolRelease } from "@pc/domain";
 import type {
+  BusinessCapabilityCatalog, BusinessCapabilityProviderPort,
   ConnectorRegistration, CredentialIssuerPort, GatewayProviderPort
 } from "./types.js";
 import { GatewayProviderError } from "./types.js";
@@ -50,11 +51,7 @@ function failure(error: unknown, dispatched: boolean, signal?: AbortSignal): Gat
     dispatched && !denied && !invalidRequest, !dispatched && !denied && !invalidRequest);
 }
 
-export interface EeMcpCatalog {
-  server_id: string;
-  catalog_digest: string;
-  tools: Array<Omit<ToolRelease, "contract_name" | "contract_version" | "status" | "release_digest">>;
-}
+export type EeMcpCatalog = BusinessCapabilityCatalog;
 
 export class EeMcpCredentialIssuer implements CredentialIssuerPort {
   constructor(private readonly endpoint: string, private readonly secret: string) {
@@ -82,7 +79,9 @@ export class EeMcpCredentialIssuer implements CredentialIssuerPort {
   }
 }
 
-export class EeMcpGatewayProvider implements GatewayProviderPort {
+export class EeMcpGatewayProvider implements BusinessCapabilityProviderPort {
+  readonly provider_registration_id = "provider:eeclaw";
+  readonly resource_authority = "eeclaw";
   private readonly endpoint: URL;
 
   constructor(endpoint: string, private readonly timeoutMs = 30_000) {
@@ -333,7 +332,7 @@ export class EeMcpGatewayProvider implements GatewayProviderPort {
 }
 
 export async function synchronizeEeMcpCatalog(input: {
-  provider: EeMcpGatewayProvider;
+  provider: BusinessCapabilityProviderPort;
   access_token: string;
   tenant_id: string;
   endpoint: string;

@@ -7,6 +7,7 @@ import { EventProjectionService } from "@pc/event-projection";
 import type { SstsTaskWorkspace } from "@pc/ssts-draft";
 import type { SstsDraftService } from "@pc/ssts-draft";
 import { RuntimeWorkbench, type WorkbenchOptions } from "../src/workbench.js";
+import { EeClawWorkbenchProjectionAdapter } from "../src/ee-provider.js";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -37,7 +38,12 @@ async function fixture() {
   const options = { registry, profiles, runtimeUrl: "http://runtime", tools: [seeded.tool],
     connector: { connector_id: "ee", mcp_server_id: "ee-mcp", provider_key: "official-mcp",
       auth_mode: "delegated", state: "ACTIVE", capability_digest: "catalog-digest" },
-    projects: async () => [{ project_code: "EP37" }],
+    projectDirectory: {
+      provider_registration_id: "provider:eeclaw",
+      resource_authority: "eeclaw",
+      listProjects: async () => [{ project_code: "EP37" }]
+    },
+    workbenchProjection: new EeClawWorkbenchProjectionAdapter(),
     identity: { authenticate, evaluatePrincipalAuthorization: async () => ({ decision: "ALLOW" }), issuePrincipalEnvelope: async () => ({}) },
     resources: { getResourceProjection: async () => ({ resource: { current_version_id: "version" } }),
       createBinding: async () => ({ binding_id: "binding" }), getWorkspaceView: async () => view,
@@ -99,7 +105,7 @@ describe("Workbench admission after a local Runtime rebuild", () => {
     expect(reviewer.tool_set.map((tool) => tool.tool_release_id)).toEqual([f.seeded.tool.tool_release_id]);
     expect(fetch).not.toHaveBeenCalled();
 
-    f.workbench.options.projects = async () => [];
+    f.workbench.options.projectDirectory.listProjects = async () => [];
     await expect(f.workbench.capabilityChain("token", "EP37"))
       .rejects.toMatchObject({ code: "PC_WORKBENCH_PROJECT_DENIED" });
     expect(fetch).not.toHaveBeenCalled();
@@ -194,7 +200,7 @@ describe("Workbench admission after a local Runtime rebuild", () => {
 
   it("rejects inaccessible projects before allocating a Runtime", async () => {
     const f = await fixture();
-    f.workbench.options.projects = async () => [];
+    f.workbench.options.projectDirectory.listProjects = async () => [];
     const resolver = vi.fn();
     f.workbench.options.resolveRuntime = resolver;
     await expect(f.prepare()).rejects.toMatchObject({ code: "PC_WORKBENCH_PROJECT_DENIED" });
@@ -275,7 +281,7 @@ describe("Workbench admission after a local Runtime rebuild", () => {
   it("denies saved project projections after membership revocation without allocating execution", async () => {
     const f = await fixture();
     const ssts = { getWorkspace: async () => ({ workspace: f.workspace }) } as unknown as SstsDraftService;
-    f.workbench.options.projects = async () => [];
+    f.workbench.options.projectDirectory.listProjects = async () => [];
     await expect(f.workbench.owned(ssts, "token", f.workspace.workspace_id)).rejects.toMatchObject({ code: "PC_WORKBENCH_PROJECT_DENIED" });
     expect(fetch).not.toHaveBeenCalled();
   });

@@ -1,13 +1,19 @@
-import type { IdentityAuthorizationService } from "@pc/application";
+import type {
+  IdentityAuthorizationService,
+  IdentityProviderAccount,
+  IdentityProviderPort
+} from "@pc/application";
 import type { PCPrincipal, PilotSession } from "@pc/domain";
 import { IdentityAuthorizationError } from "@pc/domain";
 
 interface EeSessionIdentity {
-  account: { id: number; username: string; display_name: string; status: string };
+  account: IdentityProviderAccount;
   session_id: string; session_expires_at: number;
 }
 
-export class EeLogin {
+export class EeLogin implements IdentityProviderPort {
+  readonly provider_registration_id = "provider:eeclaw";
+  readonly identity_provider_ref = "eeclaw";
   constructor(private readonly identity: IdentityAuthorizationService,
     readonly issuer: string, private readonly serviceSecret: string, readonly tenant: string) {}
 
@@ -44,6 +50,16 @@ export class EeLogin {
       external_subject: String(proof.account.id), tenant_or_org_ref: this.tenant },
     proof.session_id, new Date(proof.session_expires_at * 1000).toISOString());
     return { ...session, account: proof.account };
+  }
+
+  authenticate(input: Parameters<IdentityProviderPort["authenticate"]>[0]) {
+    if (input.kind !== "ticket_exchange") {
+      throw new IdentityAuthorizationError(
+        "PC_AUTHENTICATION_REQUIRED",
+        "EE ticket exchange is required"
+      );
+    }
+    return this.exchange(input.ticket, input.code_verifier);
   }
 
   async validate(session: PilotSession, principal: PCPrincipal) {

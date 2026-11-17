@@ -463,6 +463,21 @@ export interface GatewayProviderPort {
   >;
 }
 
+export interface BusinessCapabilityCatalog {
+  readonly server_id: string;
+  readonly catalog_digest: string;
+  readonly tools: Array<Omit<
+    ToolRelease,
+    "contract_name" | "contract_version" | "status" | "release_digest"
+  >>;
+}
+
+export interface BusinessCapabilityProviderPort extends GatewayProviderPort {
+  readonly provider_registration_id: string;
+  readonly resource_authority: string;
+  discover(accessToken: string): Promise<BusinessCapabilityCatalog>;
+}
+
 export interface GatewayEventPublisherPort {
   approvalState(input: {
     tenant_id: string;

@@ -45,6 +45,8 @@ describe("EE Claw read-only authorization adapter", () => {
         } }));
       }
     });
+    expect(adapter.provider_registration_id).toBe("provider:eeclaw");
+    expect(adapter.resource_authority).toBe("eeclaw");
     const input = { principal, action: "page:functions", resource_scope_refs: ["project:EP37"],
       observed_at: "2026-11-10T09:00:00.000Z" };
     await expect(adapter.evaluate(input)).resolves.toMatchObject({ decision: "ALLOW" });

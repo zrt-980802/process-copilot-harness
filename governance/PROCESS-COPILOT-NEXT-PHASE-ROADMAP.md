@@ -1,6 +1,6 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 CONTRACT-INVENTORY COMPLETE / D1 NOT STARTED`
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 COMPLETE / D1 PORT-SPLIT COMPLETE / D2 PLANNED NOT STARTED`
 > 日期：2026-11-17（Asia/Shanghai）  
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
@@ -63,6 +63,18 @@ GitHub 建仓是外部状态变更。执行时需要确定仓库名称，并确�
 - 新增 C61-C65 Provider Registration、Health、Authority Route、Project Directory Snapshot 与 Capability Availability；
 - 只生成 Contract、fixture、TypeScript 和追踪证据，不改变登录、授权、API 或 Workbench 行为；
 - D0 门禁通过后停止，D1 必须另行启动。
+
+### 3.2 D1：行为保持的 Port 拆分
+
+状态：`COMPLETE`。设计与边界见 `architecture/external-provider-decoupling-d1-port-split-v1.md`，验证见 `product/docs/decoupling-d1-verification.md`。
+
+- 五类 Port 已形成 TypeScript 边界；
+- EE 登录、授权、项目目录、MCP 能力和 Workbench 投影已成为明确实现；
+- Server、Workbench 与 Catalog 同步改为消费 Port；
+- EE-connected 现有对外行为由 golden tests 冻结；
+- 未引入 Standalone、Authority Router、Provider Health 或多 Provider。
+
+D2 的详细执行计划见 `governance/DECOUPLING-D2-STANDALONE-PLAN.md`。
 
 ## 4. DECOUPLING-CORE-01：PC 独立控制面
 

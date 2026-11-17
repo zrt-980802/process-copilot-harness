@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { timingSafeEqual } from "node:crypto";
 import type {
   CreateAssignmentInput,
+  IdentityProviderPort,
   IdentityAuthorizationService,
   ProfileCapabilityService,
   RegisterRuntimeInput,
@@ -38,10 +39,9 @@ import type {
 } from "@pc/ssts-draft";
 import { SstsDraftError } from "@pc/ssts-draft";
 import type { RuntimeWorkbench, RuntimeToolContext } from "./workbench.js";
-import type { EeLogin } from "./ee-login.js";
 
 export interface ApiServerDependencies {
-  eeLogin?: EeLogin;
+  identityProvider?: IdentityProviderPort;
   eeIdentitySecret?: string;
   workbench?: RuntimeWorkbench;
   runtimeRegistry?: RuntimeRegistryService;
@@ -534,7 +534,7 @@ export function buildApiServer(
   }));
 
   server.post("/v1/pilot/sign-in", async (request) => {
-    if (dependencies.eeLogin) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "请使用 EE 统一账号登录");
+    if (dependencies.identityProvider) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "请使用 EE 统一账号登录");
     const body = request.body as {
       tenant_id: string;
       account_key: string;
@@ -548,7 +548,7 @@ export function buildApiServer(
   });
 
   server.post("/v1/auth/ee/exchange", async (request, reply) => {
-    if (!dependencies.eeLogin) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "EE login is not enabled");
+    if (!dependencies.identityProvider) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "EE login is not enabled");
     // JSON requests cannot be submitted cross-origin by a form. Reject explicit
     // foreign origins as well; the local reverse proxy preserves the browser host.
     const origin = request.headers.origin;
@@ -557,7 +557,11 @@ export function buildApiServer(
     }
     const body = request.body as { ticket?: unknown; code_verifier?: unknown } | undefined;
     reply.header("Cache-Control", "no-store");
-    return dependencies.eeLogin.exchange(body?.ticket, body?.code_verifier);
+    return dependencies.identityProvider.authenticate({
+      kind: "ticket_exchange",
+      ticket: body?.ticket,
+      code_verifier: body?.code_verifier
+    });
   });
 
   server.post("/v1/auth/logout", async (request, reply) => {
@@ -569,11 +573,11 @@ export function buildApiServer(
   server.get("/v1/internal/identity/ee-bindings", async (request, reply) => {
     const expected = Buffer.from(dependencies.eeIdentitySecret ?? "");
     const supplied = Buffer.from(String(request.headers["x-pc-adapter-secret"] ?? ""));
-    if (!dependencies.eeLogin || expected.length < 24 || expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) {
+    if (!dependencies.identityProvider || expected.length < 24 || expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) {
       throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "Service authentication required");
     }
     reply.header("Cache-Control", "no-store");
-    return dependencies.eeLogin.bindings();
+    return dependencies.identityProvider.bindings();
   });
 
   server.get("/v1/identity/me", async (request, reply) => {
@@ -581,9 +585,12 @@ export function buildApiServer(
       bearerToken(request.headers.authorization)
     );
     reply.header("Cache-Control", "no-store");
-    const account = await dependencies.eeLogin?.validate(authenticated.session, authenticated.principal);
+    const account = await dependencies.identityProvider?.validate(authenticated.session, authenticated.principal);
     return {
-      ...(account ? { account, login_provider: "eeclaw" } : {}),
+      ...(account ? {
+        account,
+        login_provider: dependencies.identityProvider?.identity_provider_ref
+      } : {}),
       principal: authenticated.principal,
       authentication_context_id:
         authenticated.session.authentication_context_id,

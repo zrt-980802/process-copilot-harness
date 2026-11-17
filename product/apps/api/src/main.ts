@@ -39,6 +39,10 @@ import { RuntimeWorkbench, RuntimeSstsDraftEngine } from "./workbench.js";
 import { mcpDigest } from "@pc/gateway";
 import { buildApiServer } from "./server.js";
 import { EeLogin } from "./ee-login.js";
+import {
+  EeClawProjectDirectoryAdapter,
+  EeClawWorkbenchProjectionAdapter
+} from "./ee-provider.js";
 import { UserRuntimeResolver } from "./user-runtime.js";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -376,6 +380,12 @@ if (gatewayStoreKind !== "disabled") {
     throw new Error("EE MCP URL/Secret, pilot tenant and EE authorization adapter are required");
   }
   const mcpProvider = new EeMcpGatewayProvider(mcpEndpoint);
+  const projectDirectory = new EeClawProjectDirectoryAdapter({
+    identity: identityAuthorization,
+    baseUrl: eeClawAdapterUrl,
+    sharedSecret: eeClawAdapterSecret
+  });
+  const workbenchProjection = new EeClawWorkbenchProjectionAdapter();
   controlledGateway = new ControlledExecutionGatewayService(
     repository,
     identityAuthorization,
@@ -467,6 +477,8 @@ if (gatewayStoreKind !== "disabled") {
       runtimeUrl: new URL(runtimeUrl).origin, profileReleaseId: profileId,
       reviewProfileReleaseId: reviewProfileId,
       conversationProfileReleaseId: conversationProfile.profile_release_id,
+      projectDirectory,
+      workbenchProjection,
       ...(runtimeResolver ? { resolveRuntime: async (principal) => {
         if (principal.principal_id === pilotPrincipalId) return new URL(runtimeUrl).origin;
         return runtimeResolver.resolve(principal);
@@ -490,22 +502,7 @@ if (gatewayStoreKind !== "disabled") {
         return binding;
       },
       workspace: async (workspace_id, tenant_id, principal_id) => (await sstsDraft!.getWorkspace({ workspace_id, tenant_id, principal_id })).workspace,
-      ...(process.env.PC_RUNTIME_SERVICE_SECRET ? { runtimeSecret: process.env.PC_RUNTIME_SERVICE_SECRET } : {}),
-      projects: async (principalId) => {
-        const accountId = await identity.resolveExternalSubject(principalId, "eeclaw");
-        if (!accountId) throw new Error("Verified EE identity required");
-        const response = await fetch(`${eeClawAdapterUrl.replace(/\/$/u, "")}/api/internal/process-copilot/v1/projects/accessible`, {
-          method: "POST", redirect: "error", headers: { "content-type": "application/json", "x-pc-adapter-secret": eeClawAdapterSecret },
-          body: JSON.stringify({ account_id: accountId, permission_key: "page:projects", operation: "read" }),
-          signal: AbortSignal.timeout(5_000) });
-        if (!response.ok) throw new Error("EE project authorization unavailable");
-        const body = await response.json() as { ok: boolean; data?: { contract_name?: string; items?: Record<string, unknown>[]; authorization_version_digest?: string } };
-        if (!body.ok || body.data?.contract_name !== "eeclaw.accessible-projects/1"
-          || !Array.isArray(body.data.items) || !/^[a-f0-9]{64}$/u.test(body.data.authorization_version_digest ?? "")) {
-          throw new Error("Invalid EE project directory contract");
-        }
-        return body.data.items;
-      } });
+      ...(process.env.PC_RUNTIME_SERVICE_SECRET ? { runtimeSecret: process.env.PC_RUNTIME_SERVICE_SECRET } : {}) });
   }
   if (pilotPrincipalId !== undefined) {
     const externalAccountId = await identityAuthorization.resolveExternalSubject(pilotPrincipalId, "eeclaw");
@@ -589,19 +586,22 @@ if (sstsStoreKind !== "disabled") {
   await sstsDraft.initialize();
 }
 
-let eeLogin: EeLogin | undefined;
+let identityProvider: EeLogin | undefined;
 if (process.env.PC_LOGIN_MODE === "ee") {
   const tenant = process.env.PC_PILOT_TENANT_ID;
   if (!identityAuthorization || !eeClawAdapterUrl || !eeClawAdapterSecret || !tenant) {
     throw new Error("EE login requires Identity, EE issuer, service secret and tenant configuration");
   }
-  eeLogin = new EeLogin(identityAuthorization, eeClawAdapterUrl, eeClawAdapterSecret, tenant);
-  const login = eeLogin;
+  identityProvider = new EeLogin(identityAuthorization, eeClawAdapterUrl, eeClawAdapterSecret, tenant);
+  const login = identityProvider;
   identityAuthorization.registerSessionValidator(async (session, principal) => { await login.validate(session, principal); });
 }
 
 const server = buildApiServer({
-  ...(eeLogin === undefined ? {} : { eeLogin, eeIdentitySecret: eeClawAdapterSecret! }),
+  ...(identityProvider === undefined ? {} : {
+    identityProvider,
+    eeIdentitySecret: eeClawAdapterSecret!
+  }),
   ...(workbench === undefined ? {} : { workbench }),
   ...(registry === undefined ? {} : { runtimeRegistry: registry }),
   ...(identityAuthorization === undefined ? {} : { identityAuthorization }),

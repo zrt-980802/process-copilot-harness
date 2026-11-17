@@ -1,8 +1,8 @@
 import type { PCPrincipal } from "@pc/domain";
 import type {
   ExternalAuthorizationDecision,
-  ExternalAuthorizationPort
 } from "./identity-authorization.js";
+import type { EnterpriseAuthorizationPort } from "./external-provider.js";
 
 export interface EeClawAuthorizationDecision {
   readonly contract_name: "eeclaw.authorization-decision/1";
@@ -82,7 +82,9 @@ function adapterDeny(
 }
 
 export class HttpEeClawAuthorizationAdapter
-implements ExternalAuthorizationPort {
+implements EnterpriseAuthorizationPort {
+  readonly provider_registration_id = "provider:eeclaw";
+  readonly resource_authority = "eeclaw";
   private readonly fetchImpl: typeof fetch;
   private readonly baseUrl: string;
 

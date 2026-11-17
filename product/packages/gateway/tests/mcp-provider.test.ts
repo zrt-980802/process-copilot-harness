@@ -116,6 +116,8 @@ describe("DEV-09A-3 official MCP SDK protocol integration", () => {
 
   it("discovers exact immutable schemas and changes release identity with schema changes", async () => {
     const f = await fixture();
+    expect(f.provider.provider_registration_id).toBe("provider:eeclaw");
+    expect(f.provider.resource_authority).toBe("eeclaw");
     const first = await f.provider.discover(SECRET);
     expect(await f.provider.discover(SECRET)).toEqual(first);
     expect(first.tools[0]).toMatchObject({ provider_kind: "ee_mcp", input_schema: { additionalProperties: false },

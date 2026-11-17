@@ -1,5 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { IdentityAuthorizationService, ProfileCapabilityService, RuntimeRegistryService } from "@pc/application";
+import type {
+  IdentityAuthorizationService,
+  ProfileCapabilityService,
+  ProjectDirectoryPort,
+  RuntimeRegistryService,
+  WorkbenchProjectionPort
+} from "@pc/application";
 import type { PCPrincipal, PrincipalEnvelope, RuntimeCapabilityManifest, SessionAssignment, ToolRelease } from "@pc/domain";
 import { IdentityAuthorizationError, RuntimeRegistryError } from "@pc/domain";
 import type { ControlledExecutionGatewayService, ConnectorRegistration, ExternalAccountBinding, GatewayRepository, ToolExecutionEnvelope } from "@pc/gateway";
@@ -36,7 +42,8 @@ export interface WorkbenchOptions {
   profileReleaseId: string;
   reviewProfileReleaseId: string;
   runtimeSecret?: string;
-  projects(principalId: string): Promise<Record<string, unknown>[]>;
+  projectDirectory: ProjectDirectoryPort;
+  workbenchProjection: WorkbenchProjectionPort;
   workspace(id: string, tenantId: string, principalId: string): Promise<SstsTaskWorkspace>;
 }
 
@@ -64,7 +71,7 @@ export class RuntimeWorkbench {
 
   async projects(accessToken: string) {
     const { principal } = await this.options.identity.authenticate(accessToken);
-    return this.options.projects(principal.principal_id);
+    return this.options.projectDirectory.listProjects({ principal });
   }
 
   async catalog(accessToken: string, project: string) {
@@ -85,7 +92,7 @@ export class RuntimeWorkbench {
   async capabilityChain(accessToken: string, project: string, workspace?: SstsTaskWorkspace) {
     const { principal } = await this.options.identity.authenticate(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
-    const accessible = await this.options.projects(principal.principal_id);
+    const accessible = await this.options.projectDirectory.listProjects({ principal });
     const projectRecord = accessible.find((item) => item.project_code === project);
     if (!projectRecord) denied("PC_WORKBENCH_PROJECT_DENIED");
     if (workspace && (workspace.tenant_id !== principal.tenant_id
@@ -110,7 +117,7 @@ export class RuntimeWorkbench {
     const operations = workspace
       ? await this.options.events.listTaskOperations(workspace.business_task_id)
       : [];
-    const recentOperations = await Promise.all([...operations]
+    const providerOperations = await Promise.all([...operations]
       .sort((left, right) => right.updated_at.localeCompare(left.updated_at))
       .slice(0, 5)
       .map(async (operation) => {
@@ -123,21 +130,31 @@ export class RuntimeWorkbench {
           operation_kind: operation.operation_kind,
           state: operation.state,
           updated_at: operation.updated_at,
-          tool_release_id: external?.tool_release_id,
-          tool_name: tool?.tool_definition_id,
-          outcome_state: external?.outcome_state,
-          trace_refs: [...new Set([...(operation.evidence_refs ?? []), ...(external?.evidence_refs ?? [])]
-            .filter((ref) => ref.startsWith("eea://traces/")))]
+          ...(external?.tool_release_id === undefined
+            ? {}
+            : { tool_release_id: external.tool_release_id }),
+          ...(tool?.tool_definition_id === undefined
+            ? {}
+            : { tool_name: tool.tool_definition_id }),
+          ...(external?.outcome_state === undefined
+            ? {}
+            : { outcome_state: external.outcome_state }),
+          evidence_refs: [...new Set([
+            ...(operation.evidence_refs ?? []),
+            ...(external?.evidence_refs ?? [])
+          ])]
         };
       }));
+    const providerProjection = this.options.workbenchProjection.project({
+      project_code: project,
+      project_record: projectRecord,
+      authorization_revision: principal.authorization_revision,
+      tools: catalog.tools,
+      operations: providerOperations
+    });
 
     return {
-      scope: {
-        project_code: project,
-        project_name: typeof projectRecord.project_name === "string" ? projectRecord.project_name : project,
-        authorization_revision: principal.authorization_revision,
-        source: "EE accessible project membership and per-tool authorization"
-      },
+      ...providerProjection,
       profile: profile ? {
         profile_release_id: profile.profile_release_id,
         profile_definition_id: profile.profile_definition_id,
@@ -155,16 +172,6 @@ export class RuntimeWorkbench {
         runtime_requirements: snapshot.runtime_requirements,
         created_at: snapshot.created_at
       } : undefined,
-      tool_set: catalog.tools.map((tool) => ({
-        tool_release_id: tool.tool_release_id,
-        tool_definition_id: tool.tool_definition_id,
-        display_name: typeof tool.compatibility.display_name === "string"
-          ? tool.compatibility.display_name
-          : tool.tool_definition_id,
-        action_class: tool.risk_manifest.action_class,
-        provider_kind: tool.provider_kind,
-        status: tool.status
-      })),
       runtime: runtime ? {
         state: runtime.runtime.state,
         runtime_epoch: runtime.runtime.runtime_epoch,
@@ -188,7 +195,6 @@ export class RuntimeWorkbench {
         state: this.options.connector.state,
         capability_digest: this.options.connector.capability_digest
       },
-      recent_operations: recentOperations,
       workspace: workspace ? {
         workspace_id: workspace.workspace_id,
         title: workspace.title,
