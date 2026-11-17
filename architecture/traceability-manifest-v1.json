@@ -2,7 +2,7 @@
   "manifest_name": "process-copilot-architecture-traceability",
   "manifest_version": 1,
   "status": "accepted-blueprint",
-  "generated_at": "2026-11-09",
+  "generated_at": "2026-11-17",
   "authority": {
     "adr_index": "architecture/README.md",
     "module_matrix": "architecture/implementation-module-responsibility-matrix-v1.md",
@@ -21,7 +21,8 @@
     "TS-EVENT": "Event ingestion, ordering, gap repair, projection, replay and business state",
     "TS-DEPLOY": "Isolation, capacity, health, telemetry, rollout and disaster recovery",
     "TS-ARCH": "Contract compatibility, traceability, forbidden dependency and ADR consistency",
-    "TS-LEGACY": "EE Claw V1 contract freeze, baseline wildcard, no-migration rollback and immediate revocation"
+    "TS-LEGACY": "EE Claw V1 contract freeze, baseline wildcard, no-migration rollback and immediate revocation",
+    "TS-DECOUPLING": "PC standalone startup, provider routing, capability-local degradation, authority intersection and revocation"
   },
   "entries": [
     {
@@ -179,6 +180,16 @@
       "test_refs": ["TS-LEGACY-003", "TS-LEGACY-004", "TS-LEGACY-005", "TS-SECURITY-012"],
       "evidence_refs": ["REF-ROLE-001", "REF-ROLE-003"],
       "implementation_status": "planned"
+    },
+    {
+      "requirement_id": "ADR-0024",
+      "status": "proposed",
+      "modules": ["M01", "M02", "M03", "M07", "M08", "M11", "M14", "M16", "M21", "M22"],
+      "external_authorities": ["E01", "E02", "E03", "E04"],
+      "contracts": ["C01", "C02", "C03", "C04", "C15", "C16", "C21", "C22", "C23", "C24", "C32", "C33", "C41", "C42"],
+      "test_refs": ["TS-DECOUPLING-001", "TS-DECOUPLING-002", "TS-DECOUPLING-003", "TS-DECOUPLING-004", "TS-DECOUPLING-005"],
+      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-IAM-003", "REF-ROLE-001", "REF-ROLE-003"],
+      "implementation_status": "proposed-not-authorized"
     }
   ]
 }

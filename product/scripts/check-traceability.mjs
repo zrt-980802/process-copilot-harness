@@ -12,7 +12,7 @@ const memoryManifest = JSON.parse(
 const entries = [...baseManifest.entries, ...memoryManifest.entries];
 const schemaFiles = await readdir(path.join(root, "packages", "contracts", "schemas"));
 const schemaIds = new Set(schemaFiles.map((file) => file.slice(0, 3)));
-const expectedAdrs = Array.from({ length: 23 }, (_, index) =>
+const expectedAdrs = Array.from({ length: 24 }, (_, index) =>
   `ADR-${String(index + 1).padStart(4, "0")}`
 );
 const requirementIds = new Set(

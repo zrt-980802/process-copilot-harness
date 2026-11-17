@@ -1,6 +1,6 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 NEXT`
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 PROPOSED / REVIEW NEXT`
 > 日期：2026-11-17（Asia/Shanghai）  
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
@@ -37,6 +37,8 @@ MEMORY-01A closure
 GitHub 建仓是外部状态变更。执行时需要确定仓库名称，并确认当前 `gh` 或 SSH 身份可用；不复用或覆盖现有 `process-copilot-dev` 仓库。
 
 ## 3. DECOUPLING-ADR-01：先冻结边界
+
+状态：`PROPOSED`。草案见 `architecture/ADR-0024-pc-core-external-business-provider-decoupling.md`；未授权进入代码实施。
 
 新增 Superseding ADR，定义：
 
