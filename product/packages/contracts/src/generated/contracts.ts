@@ -1,4 +1,4 @@
-/* Generated from architecture stable and memory contract catalogs. Do not edit. */
+/* Generated from architecture stable, memory, and external-provider contract catalogs. Do not edit. */
 
 export interface C01Contract {
   contract_name: string;
@@ -1144,5 +1144,97 @@ export interface C60Contract {
   deadline: string;
   completed_at?: string;
   recovery_case_id?: string;
+  [key: string]: unknown;
+}
+
+export interface C61Contract {
+  contract_name: string;
+  contract_version: number;
+  provider_registration_id: string;
+  provider_key: string;
+  display_name: string;
+  provider_kind: "EXTERNAL_BUSINESS" | "LOCAL" | "IDENTITY_ONLY";
+  tenant_scope: Record<string, unknown>;
+  port_kinds: unknown[];
+  action_namespaces: unknown[];
+  resource_authorities: unknown[];
+  connector_registration_refs: unknown[];
+  identity_provider_refs: unknown[];
+  registration_revision: number;
+  configuration_digest: string;
+  registration_state: "ACTIVE" | "DISABLED" | "SUPERSEDED";
+  registered_at: string;
+  updated_at: string;
+  [key: string]: unknown;
+}
+
+export interface C62Contract {
+  contract_name: string;
+  contract_version: number;
+  health_observation_id: string;
+  provider_registration_id: string;
+  configuration_revision: number;
+  provider_state: "UNCONFIGURED" | "STARTING" | "HEALTHY" | "DEGRADED" | "UNAVAILABLE" | "DISABLED";
+  compatibility_status: "COMPATIBLE" | "INCOMPATIBLE" | "UNKNOWN" | "NOT_APPLICABLE";
+  port_health: Record<string, unknown>;
+  reason_codes: unknown[];
+  evidence_refs: unknown[];
+  checked_at: string;
+  expires_at: string;
+  [key: string]: unknown;
+}
+
+export interface C63Contract {
+  contract_name: string;
+  contract_version: number;
+  route_id: string;
+  route_revision: number;
+  action_namespace: string;
+  action_pattern: string;
+  resource_authority: string;
+  resource_scope_pattern: string;
+  authorization_mode: "PC_ONLY" | "PC_AND_PROVIDER";
+  provider_registration_id?: string;
+  capability_provider_required: boolean;
+  ambiguity_policy: "DENY";
+  route_state: "ACTIVE" | "DISABLED" | "SUPERSEDED";
+  route_digest: string;
+  effective_from: string;
+  effective_to?: string;
+  [key: string]: unknown;
+}
+
+export interface C64Contract {
+  contract_name: string;
+  contract_version: number;
+  snapshot_id: string;
+  provider_registration_id: string;
+  tenant_id: string;
+  principal_id: string;
+  identity_link_ref: string;
+  resource_authority: string;
+  projects: unknown[];
+  source_revision: string;
+  source_digest: string;
+  evidence_refs: unknown[];
+  observed_at: string;
+  expires_at: string;
+  [key: string]: unknown;
+}
+
+export interface C65Contract {
+  contract_name: string;
+  contract_version: number;
+  availability_id: string;
+  provider_registration_id: string;
+  tenant_id: string;
+  principal_id?: string;
+  health_observation_id: string;
+  catalog_revision: string;
+  capabilities: unknown[];
+  reason_codes: unknown[];
+  evidence_refs: unknown[];
+  observed_at: string;
+  expires_at: string;
   [key: string]: unknown;
 }

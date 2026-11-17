@@ -45,7 +45,7 @@ for (const entry of entries) {
   }
 }
 
-for (const contractId of Array.from({ length: 60 }, (_, index) =>
+for (const contractId of Array.from({ length: 65 }, (_, index) =>
   `C${String(index + 1).padStart(2, "0")}`
 )) {
   if (!schemaIds.has(contractId)) errors.push(`Generated schema is missing ${contractId}`);

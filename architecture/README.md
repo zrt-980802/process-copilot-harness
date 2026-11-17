@@ -39,7 +39,7 @@
 | [ADR-0021](ADR-0021-memory-projection-provider-and-recovery.md) | 记忆 Projection、Provider、缓存与恢复 | Accepted | Keyword / Vector / Graph、Provider Adapter、Rebuild |
 | [ADR-0022](ADR-0022-digital-impression-delegation-separation.md) | 数字印象、长期记忆与委托授权分离 | Accepted | DigitalImpression、Delegation、Digital Delegate |
 | [ADR-0023](ADR-0023-memory-context-exposure-session-rotation.md) | 记忆上下文暴露记录与 DSH Session 轮换 | Accepted | Memory Revoke、Session Persistence、Rotation |
-| [ADR-0024](ADR-0024-pc-core-external-business-provider-decoupling.md) | PC Core 与外部业务平台解耦 | Proposed | Identity、Authorization、Project Directory、Business Capability、Workbench Projection |
+| [ADR-0024](ADR-0024-pc-core-external-business-provider-decoupling.md) | PC Core 与外部业务平台解耦 | Accepted | Identity、Authorization、Project Directory、Business Capability、Workbench Projection |
 
 ## 关联文档
 
@@ -89,3 +89,5 @@
 - Memory Implementation Decision Pack：`memory-implementation-decision-pack-v1.md`
 - MEMORY-01A Authority 与 Contract 开发者验证：`../product/docs/memory-01a-verification.md`
 - PC Core 与外部业务平台解耦 ADR：`ADR-0024-pc-core-external-business-provider-decoupling.md`
+- 外部 Provider 解耦 D0 调用清单与权威路由表：`external-provider-decoupling-d0-inventory-v1.md`
+- 外部 Provider Contract C61-C65：`external-provider-contract-catalog-v1.md`

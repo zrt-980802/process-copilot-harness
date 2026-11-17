@@ -16,11 +16,11 @@ const manifest = JSON.parse(
   }>;
 };
 
-describe("C01-C60 contract fixtures", () => {
-  it("contains exactly 60 schemas and fixture pairs", async () => {
-    await expect(readdir(path.join(packageRoot, "schemas"))).resolves.toHaveLength(60);
-    await expect(readdir(path.join(packageRoot, "fixtures", "valid"))).resolves.toHaveLength(60);
-    await expect(readdir(path.join(packageRoot, "fixtures", "invalid"))).resolves.toHaveLength(60);
+describe("C01-C65 contract fixtures", () => {
+  it("contains exactly 65 schemas and fixture pairs", async () => {
+    await expect(readdir(path.join(packageRoot, "schemas"))).resolves.toHaveLength(65);
+    await expect(readdir(path.join(packageRoot, "fixtures", "valid"))).resolves.toHaveLength(65);
+    await expect(readdir(path.join(packageRoot, "fixtures", "invalid"))).resolves.toHaveLength(65);
   });
 
   for (const contract of manifest.contracts) {
@@ -154,5 +154,48 @@ describe("C01-C60 contract fixtures", () => {
     const withToolGrant = structuredClone(c52Fixture);
     withToolGrant.items[0].tool_release_id = "forbidden-tool";
     expect(validateContext(withToolGrant)).toBe(false);
+  });
+
+  it("freezes external-provider authority routing and non-authoritative availability semantics", async () => {
+    const c61 = JSON.parse(await readFile(path.join(
+      packageRoot, "schemas", "C61.pc.provider-registration-1.schema.json"
+    ), "utf8"));
+    const c63 = JSON.parse(await readFile(path.join(
+      packageRoot, "schemas", "C63.pc.authority-route-1.schema.json"
+    ), "utf8"));
+    const c64 = JSON.parse(await readFile(path.join(
+      packageRoot, "schemas", "C64.pc.project-directory-snapshot-1.schema.json"
+    ), "utf8"));
+    const c65 = JSON.parse(await readFile(path.join(
+      packageRoot, "schemas", "C65.pc.capability-availability-1.schema.json"
+    ), "utf8"));
+    const route = JSON.parse(await readFile(path.join(
+      packageRoot, "fixtures", "valid", "C63.valid.json"
+    ), "utf8"));
+    const ajv = new Ajv2020({ allErrors: true, strict: true });
+    addFormats(ajv);
+    const validateRoute = ajv.compile(c63);
+
+    expect(c61.additionalProperties).toBe(false);
+    expect(c61.properties.port_kinds.items.enum).toContain("PROJECT_DIRECTORY");
+    expect(c64.properties).not.toHaveProperty("decision");
+    expect(c64.properties).not.toHaveProperty("allowed_actions");
+    expect(c65.properties).not.toHaveProperty("decision");
+    expect(c65.properties.capabilities.items.properties.availability_state.enum).toEqual([
+      "AVAILABLE", "DEGRADED", "UNAVAILABLE", "DISABLED"
+    ]);
+    expect(validateRoute(route), JSON.stringify(validateRoute.errors)).toBe(true);
+    expect(validateRoute({ ...route, authorization_mode: "PC_ONLY" })).toBe(false);
+    const pcOnly = {
+      ...route,
+      authorization_mode: "PC_ONLY",
+      action_namespace: "conversation.run",
+      action_pattern: "conversation.run",
+      resource_authority: "pc",
+      resource_scope_pattern: "user:*",
+      capability_provider_required: false
+    };
+    delete pcOnly.provider_registration_id;
+    expect(validateRoute(pcOnly), JSON.stringify(validateRoute.errors)).toBe(true);
   });
 });

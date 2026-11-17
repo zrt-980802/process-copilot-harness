@@ -1,6 +1,6 @@
 # ADR-0024：PC Core 与外部业务平台解耦
 
-- 状态：Proposed
+- 状态：Accepted
 - 日期：2026-11-17
 - 范围：PC Identity、Authorization、Project Directory、Business Capability、Workbench Projection 与外部 Provider 路由
 - 前置决策：ADR-0007、ADR-0008、ADR-0010、ADR-0012、ADR-0014、ADR-0015 至 ADR-0017、ADR-0018 至 ADR-0023
@@ -338,7 +338,7 @@ PC 不得持久化为权威：
 - C41/C42 EE Authorization 与 Legacy Compatibility；
 - C43-C60 Memory Authority 与 Context 边界。
 
-实施前需要在独立 Contract Review 中补充 Provider Registration、Provider Health、Authority Route、Project Directory Snapshot 和 Capability Availability Contract。编号和字段不在本 ADR 中提前冻结。
+首批 D0 Contract 已冻结为 C61-C65：Provider Registration、Provider Health、Authority Route、Project Directory Snapshot 和 Capability Availability。其字段与评审结论见 `external-provider-contract-catalog-v1.md`；D0 只建立边界，不改变现有运行行为。
 
 主要影响模块：M01、M02、M03、M07、M08、M11、M14、M16、M21、M22；Memory M23-M29 只消费 PC Authorization Port，不直接依赖 EE Provider。
 

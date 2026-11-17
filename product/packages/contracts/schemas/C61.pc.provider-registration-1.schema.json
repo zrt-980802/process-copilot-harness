@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C61.schema.json",
+  "title": "C61 pc.provider-registration/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "provider_registration_id",
+    "provider_key",
+    "display_name",
+    "provider_kind",
+    "tenant_scope",
+    "port_kinds",
+    "action_namespaces",
+    "resource_authorities",
+    "connector_registration_refs",
+    "identity_provider_refs",
+    "registration_revision",
+    "configuration_digest",
+    "registration_state",
+    "registered_at",
+    "updated_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.provider-registration/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "provider_registration_id": {
+      "type": "string",
+      "pattern": "^provider:[a-z0-9][a-z0-9._-]*$"
+    },
+    "provider_key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_kind": {
+      "type": "string",
+      "enum": [
+        "EXTERNAL_BUSINESS",
+        "LOCAL",
+        "IDENTITY_ONLY"
+      ]
+    },
+    "tenant_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_kind"
+      ],
+      "properties": {
+        "scope_kind": {
+          "type": "string",
+          "enum": [
+            "GLOBAL",
+            "TENANT"
+          ]
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "scope_kind": {
+              "const": "GLOBAL"
+            },
+            "tenant_id": {}
+          },
+          "not": {
+            "properties": {
+              "tenant_id": {}
+            },
+            "required": [
+              "tenant_id"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "scope_kind": {
+              "const": "TENANT"
+            },
+            "tenant_id": {}
+          },
+          "required": [
+            "tenant_id"
+          ]
+        }
+      ]
+    },
+    "port_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "IDENTITY",
+          "ENTERPRISE_AUTHORIZATION",
+          "PROJECT_DIRECTORY",
+          "BUSINESS_CAPABILITY",
+          "WORKBENCH_PROJECTION"
+        ]
+      }
+    },
+    "action_namespaces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:[.:][a-z0-9*_-]+)+$"
+      }
+    },
+    "resource_authorities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9._-]*$"
+      }
+    },
+    "connector_registration_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "identity_provider_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "registration_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "configuration_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "registration_state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "DISABLED",
+        "SUPERSEDED"
+      ]
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C61; source=architecture/external-provider-contract-catalog-v1.md"
+}

@@ -480,6 +480,46 @@
       "schema": "schemas/C60.pc.memory-session-invalidation-1.schema.json",
       "valid_fixture": "fixtures/valid/C60.valid.json",
       "invalid_fixture": "fixtures/invalid/C60.missing-invalidation_id.invalid.json"
+    },
+    {
+      "id": "C61",
+      "contract_name": "pc.provider-registration/1",
+      "contract_version": 1,
+      "schema": "schemas/C61.pc.provider-registration-1.schema.json",
+      "valid_fixture": "fixtures/valid/C61.valid.json",
+      "invalid_fixture": "fixtures/invalid/C61.missing-provider_registration_id.invalid.json"
+    },
+    {
+      "id": "C62",
+      "contract_name": "pc.provider-health/1",
+      "contract_version": 1,
+      "schema": "schemas/C62.pc.provider-health-1.schema.json",
+      "valid_fixture": "fixtures/valid/C62.valid.json",
+      "invalid_fixture": "fixtures/invalid/C62.missing-health_observation_id.invalid.json"
+    },
+    {
+      "id": "C63",
+      "contract_name": "pc.authority-route/1",
+      "contract_version": 1,
+      "schema": "schemas/C63.pc.authority-route-1.schema.json",
+      "valid_fixture": "fixtures/valid/C63.valid.json",
+      "invalid_fixture": "fixtures/invalid/C63.missing-route_id.invalid.json"
+    },
+    {
+      "id": "C64",
+      "contract_name": "pc.project-directory-snapshot/1",
+      "contract_version": 1,
+      "schema": "schemas/C64.pc.project-directory-snapshot-1.schema.json",
+      "valid_fixture": "fixtures/valid/C64.valid.json",
+      "invalid_fixture": "fixtures/invalid/C64.missing-snapshot_id.invalid.json"
+    },
+    {
+      "id": "C65",
+      "contract_name": "pc.capability-availability/1",
+      "contract_version": 1,
+      "schema": "schemas/C65.pc.capability-availability-1.schema.json",
+      "valid_fixture": "fixtures/valid/C65.valid.json",
+      "invalid_fixture": "fixtures/invalid/C65.missing-availability_id.invalid.json"
     }
   ]
 }

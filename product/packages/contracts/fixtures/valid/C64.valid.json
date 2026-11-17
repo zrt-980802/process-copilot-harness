@@ -1,0 +1,25 @@
+{
+  "contract_name": "pc.project-directory-snapshot/1",
+  "contract_version": 1,
+  "snapshot_id": "project-directory:eeclaw-1",
+  "provider_registration_id": "provider:eeclaw",
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "identity_link_ref": "identity-link:eeclaw-contract",
+  "resource_authority": "eeclaw",
+  "projects": [
+    {
+      "project_ref": "eeclaw:project:EP37",
+      "project_code": "EP37",
+      "display_name": "EP37 Demo Project",
+      "organization_ref": "eeclaw:organization:demo"
+    }
+  ],
+  "source_revision": "ee-authorization-digest-1",
+  "source_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "evidence_refs": [
+    "eeclaw:accessible-projects:1"
+  ],
+  "observed_at": "2026-11-17T00:00:00.000Z",
+  "expires_at": "2026-11-17T00:05:00.000Z"
+}

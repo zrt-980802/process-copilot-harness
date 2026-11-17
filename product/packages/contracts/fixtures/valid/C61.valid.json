@@ -1,0 +1,37 @@
+{
+  "contract_name": "pc.provider-registration/1",
+  "contract_version": 1,
+  "provider_registration_id": "provider:eeclaw",
+  "provider_key": "eeclaw",
+  "display_name": "EE-Claw Provider",
+  "provider_kind": "EXTERNAL_BUSINESS",
+  "tenant_scope": {
+    "scope_kind": "TENANT",
+    "tenant_id": "tenant-contract"
+  },
+  "port_kinds": [
+    "IDENTITY",
+    "ENTERPRISE_AUTHORIZATION",
+    "PROJECT_DIRECTORY",
+    "BUSINESS_CAPABILITY",
+    "WORKBENCH_PROJECTION"
+  ],
+  "action_namespaces": [
+    "ee.*",
+    "page:*"
+  ],
+  "resource_authorities": [
+    "eeclaw"
+  ],
+  "connector_registration_refs": [
+    "connector:ee-mcp"
+  ],
+  "identity_provider_refs": [
+    "identity-provider:eeclaw"
+  ],
+  "registration_revision": 1,
+  "configuration_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "registration_state": "ACTIVE",
+  "registered_at": "2026-11-17T00:00:00.000Z",
+  "updated_at": "2026-11-17T00:00:00.000Z"
+}

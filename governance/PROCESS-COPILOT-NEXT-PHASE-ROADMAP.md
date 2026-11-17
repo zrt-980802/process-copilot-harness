@@ -1,6 +1,6 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 PROPOSED / REVIEW NEXT`
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 CONTRACT-INVENTORY COMPLETE / D1 NOT STARTED`
 > 日期：2026-11-17（Asia/Shanghai）  
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
@@ -38,7 +38,7 @@ GitHub 建仓是外部状态变更。执行时需要确定仓库名称，并确�
 
 ## 3. DECOUPLING-ADR-01：先冻结边界
 
-状态：`PROPOSED`。草案见 `architecture/ADR-0024-pc-core-external-business-provider-decoupling.md`；未授权进入代码实施。
+状态：`ACCEPTED`。见 `architecture/ADR-0024-pc-core-external-business-provider-decoupling.md`。当前只授权 D0 Contract 与调用清单，不授权 D1 运行时重构。
 
 新增 Superseding ADR，定义：
 
@@ -53,6 +53,16 @@ GitHub 建仓是外部状态变更。执行时需要确定仓库名称，并确�
 - Standalone、EE-connected 和 multi-provider 三种运行模式。
 
 权威边界固定为：PC 管 PC Principal、Session、对话、Memory、Task、Plugin、Tool、Approval 和 Audit；EE 继续管理 EE 账号状态、项目成员、业务对象与最终业务授权。
+
+### 3.1 D0：合同与调用清单
+
+状态：`COMPLETE`。验证见 `product/docs/decoupling-d0-verification.md`；D1 尚未开始。
+
+- 冻结现有 EE 登录、逐请求 Session 校验、外部授权、项目目录、MCP Catalog、执行与 Workbench 投影调用；
+- 建立 action namespace、resource authority 与 Provider route 表；
+- 新增 C61-C65 Provider Registration、Health、Authority Route、Project Directory Snapshot 与 Capability Availability；
+- 只生成 Contract、fixture、TypeScript 和追踪证据，不改变登录、授权、API 或 Workbench 行为；
+- D0 门禁通过后停止，D1 必须另行启动。
 
 ## 4. DECOUPLING-CORE-01：PC 独立控制面
 

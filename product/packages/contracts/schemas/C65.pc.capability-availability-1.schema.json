@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C65.schema.json",
+  "title": "C65 pc.capability-availability/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "availability_id",
+    "provider_registration_id",
+    "tenant_id",
+    "health_observation_id",
+    "catalog_revision",
+    "capabilities",
+    "reason_codes",
+    "evidence_refs",
+    "observed_at",
+    "expires_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.capability-availability/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "availability_id": {
+      "type": "string",
+      "pattern": "^capability-availability:[a-zA-Z0-9._-]+$"
+    },
+    "provider_registration_id": {
+      "type": "string",
+      "pattern": "^provider:[a-z0-9][a-z0-9._-]*$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "health_observation_id": {
+      "type": "string",
+      "pattern": "^provider-health:[a-zA-Z0-9._-]+$"
+    },
+    "catalog_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_ref",
+          "action_namespace",
+          "resource_authority",
+          "operation_class",
+          "approval_requirement",
+          "availability_state"
+        ],
+        "properties": {
+          "capability_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tool_release_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action_namespace": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:[.:][a-z0-9*_-]+)+$"
+          },
+          "resource_authority": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]*$"
+          },
+          "operation_class": {
+            "type": "string",
+            "enum": [
+              "READ",
+              "WRITE",
+              "DESTRUCTIVE",
+              "EXTERNAL_SIDE_EFFECT"
+            ]
+          },
+          "approval_requirement": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "REQUIRED",
+              "CONDITIONAL"
+            ]
+          },
+          "availability_state": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "DEGRADED",
+              "UNAVAILABLE",
+              "DISABLED"
+            ]
+          }
+        }
+      }
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C65; source=architecture/external-provider-contract-catalog-v1.md"
+}

@@ -1,0 +1,29 @@
+{
+  "contract_name": "pc.capability-availability/1",
+  "contract_version": 1,
+  "availability_id": "capability-availability:eeclaw-1",
+  "provider_registration_id": "provider:eeclaw",
+  "tenant_id": "tenant-contract",
+  "principal_id": "principal-contract",
+  "health_observation_id": "provider-health:eeclaw-1",
+  "catalog_revision": "ee-mcp-catalog-1",
+  "capabilities": [
+    {
+      "capability_ref": "capability:ee.get_project_context",
+      "tool_release_id": "tool:ee_mcp:contract",
+      "action_namespace": "ee.*",
+      "resource_authority": "eeclaw",
+      "operation_class": "READ",
+      "approval_requirement": "NONE",
+      "availability_state": "AVAILABLE"
+    }
+  ],
+  "reason_codes": [
+    "provider_and_catalog_available"
+  ],
+  "evidence_refs": [
+    "eea://catalog/read-tools#contract"
+  ],
+  "observed_at": "2026-11-17T00:00:00.000Z",
+  "expires_at": "2026-11-17T00:05:00.000Z"
+}

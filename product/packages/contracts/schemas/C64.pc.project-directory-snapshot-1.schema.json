@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C64.schema.json",
+  "title": "C64 pc.project-directory-snapshot/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "snapshot_id",
+    "provider_registration_id",
+    "tenant_id",
+    "principal_id",
+    "identity_link_ref",
+    "resource_authority",
+    "projects",
+    "source_revision",
+    "source_digest",
+    "evidence_refs",
+    "observed_at",
+    "expires_at"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.project-directory-snapshot/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^project-directory:[a-zA-Z0-9._-]+$"
+    },
+    "provider_registration_id": {
+      "type": "string",
+      "pattern": "^provider:[a-z0-9][a-z0-9._-]*$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "identity_link_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource_authority": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$"
+    },
+    "projects": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "project_ref",
+          "project_code",
+          "display_name"
+        ],
+        "properties": {
+          "project_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "project_code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "organization_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C64; source=architecture/external-provider-contract-catalog-v1.md"
+}

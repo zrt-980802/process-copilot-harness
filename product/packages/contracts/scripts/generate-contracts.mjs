@@ -6,13 +6,20 @@ import {
   memoryFixtureOverrides,
   memorySchemaOverrides
 } from "./memory-contract-definitions.mjs";
+import {
+  externalProviderEnumOverrides,
+  externalProviderFixtureOverrides,
+  externalProviderRootSchemaOverrides,
+  externalProviderSchemaOverrides
+} from "./external-provider-contract-definitions.mjs";
 
 const productRoot = process.cwd();
 const packageRoot = path.join(productRoot, "packages", "contracts");
 const architectureRoot = path.resolve(productRoot, "..", "architecture");
 const catalogSources = [
   ["stable-contract-catalog-v1.md", await readFile(path.join(architectureRoot, "stable-contract-catalog-v1.md"), "utf8")],
-  ["memory-contract-catalog-v1.md", await readFile(path.join(architectureRoot, "memory-contract-catalog-v1.md"), "utf8")]
+  ["memory-contract-catalog-v1.md", await readFile(path.join(architectureRoot, "memory-contract-catalog-v1.md"), "utf8")],
+  ["external-provider-contract-catalog-v1.md", await readFile(path.join(architectureRoot, "external-provider-contract-catalog-v1.md"), "utf8")]
 ];
 
 const booleanFields = new Set([
@@ -217,6 +224,7 @@ const enumOverrides = {
   }
 };
 Object.assign(enumOverrides, memoryEnumOverrides);
+Object.assign(enumOverrides, externalProviderEnumOverrides);
 
 const releaseStates = ["DRAFT", "VALIDATED", "APPROVED", "PUBLISHED", "SUPERSEDED"];
 const lockLevels = [
@@ -956,6 +964,7 @@ const schemaOverrides = {
   }
 };
 Object.assign(schemaOverrides, memorySchemaOverrides);
+Object.assign(schemaOverrides, externalProviderSchemaOverrides);
 
 const compatibilityBaseline = {
   sourceCommit: "cefa7432f966e17b41c1638e128de652b934fd20",
@@ -1506,6 +1515,7 @@ const fixtureOverrides = {
   }
 };
 Object.assign(fixtureOverrides, memoryFixtureOverrides);
+Object.assign(fixtureOverrides, externalProviderFixtureOverrides);
 
 function fieldSchema(contractId, field) {
   const schemaOverride = schemaOverrides[contractId]?.[field];
@@ -1584,8 +1594,8 @@ for (const [source, catalog] of catalogSources) {
   }
 }
 
-if (contracts.length !== 60) {
-  throw new Error(`Expected 60 contracts, parsed ${contracts.length}`);
+if (contracts.length !== 65) {
+  throw new Error(`Expected 65 contracts, parsed ${contracts.length}`);
 }
 
 const outputDirectories = [
@@ -1601,7 +1611,7 @@ for (const directory of outputDirectories) {
 
 const manifest = [];
 const interfaces = [
-  "/* Generated from architecture stable and memory contract catalogs. Do not edit. */",
+  "/* Generated from architecture stable, memory, and external-provider contract catalogs. Do not edit. */",
   ""
 ];
 
@@ -1642,7 +1652,8 @@ for (const contract of contracts) {
     ].includes(contract.id),
     required,
     properties,
-    $comment: `${contract.id}; source=architecture/${contract.source}`
+    $comment: `${contract.id}; source=architecture/${contract.source}`,
+    ...(externalProviderRootSchemaOverrides[contract.id] ?? {})
   };
   const valid = Object.fromEntries(
     Object.entries(properties).map(([field, propertySchema]) => [

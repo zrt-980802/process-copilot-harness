@@ -1,0 +1,24 @@
+{
+  "contract_name": "pc.provider-health/1",
+  "contract_version": 1,
+  "health_observation_id": "provider-health:eeclaw-1",
+  "provider_registration_id": "provider:eeclaw",
+  "configuration_revision": 1,
+  "provider_state": "HEALTHY",
+  "compatibility_status": "COMPATIBLE",
+  "port_health": {
+    "identity": "HEALTHY",
+    "enterprise_authorization": "HEALTHY",
+    "project_directory": "HEALTHY",
+    "business_capability": "HEALTHY",
+    "workbench_projection": "HEALTHY"
+  },
+  "reason_codes": [
+    "provider_checks_passed"
+  ],
+  "evidence_refs": [
+    "compatibility:eeclaw:v1"
+  ],
+  "checked_at": "2026-11-17T00:00:00.000Z",
+  "expires_at": "2026-11-17T00:05:00.000Z"
+}

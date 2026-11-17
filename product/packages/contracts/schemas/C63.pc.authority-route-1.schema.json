@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C63.schema.json",
+  "title": "C63 pc.authority-route/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "route_id",
+    "route_revision",
+    "action_namespace",
+    "action_pattern",
+    "resource_authority",
+    "resource_scope_pattern",
+    "authorization_mode",
+    "capability_provider_required",
+    "ambiguity_policy",
+    "route_state",
+    "route_digest",
+    "effective_from"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.authority-route/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "route_id": {
+      "type": "string",
+      "pattern": "^authority-route:[a-zA-Z0-9._-]+$"
+    },
+    "route_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "action_namespace": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.:][a-z0-9*_-]+)+$"
+    },
+    "action_pattern": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource_authority": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$"
+    },
+    "resource_scope_pattern": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_mode": {
+      "type": "string",
+      "enum": [
+        "PC_ONLY",
+        "PC_AND_PROVIDER"
+      ]
+    },
+    "provider_registration_id": {
+      "type": "string",
+      "pattern": "^provider:[a-z0-9][a-z0-9._-]*$"
+    },
+    "capability_provider_required": {
+      "type": "boolean"
+    },
+    "ambiguity_policy": {
+      "type": "string",
+      "enum": [
+        "DENY"
+      ]
+    },
+    "route_state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "DISABLED",
+        "SUPERSEDED"
+      ]
+    },
+    "route_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "effective_to": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$comment": "C63; source=architecture/external-provider-contract-catalog-v1.md",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "authorization_mode": {
+            "const": "PC_ONLY"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "provider_registration_id": {},
+          "resource_authority": {
+            "const": "pc"
+          },
+          "capability_provider_required": {
+            "const": false
+          }
+        },
+        "not": {
+          "properties": {
+            "provider_registration_id": {}
+          },
+          "required": [
+            "provider_registration_id"
+          ]
+        }
+      },
+      "else": {
+        "properties": {
+          "provider_registration_id": {}
+        },
+        "required": [
+          "provider_registration_id"
+        ]
+      }
+    }
+  ]
+}
