@@ -1,6 +1,6 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`PLANNED`  
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 NEXT`
 > 日期：2026-11-17（Asia/Shanghai）  
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
@@ -19,6 +19,8 @@ MEMORY-01A closure
 不并行启动 MEMORY-01B，避免同时改动 Memory Authorization Port、身份来源和外部授权路由。
 
 ## 2. SOURCE-BASELINE-01：新仓库与 GitHub 基线
+
+状态：`COMPLETE`。私有仓库：`https://github.com/zrt-980802/process-copilot-harness`；基线根提交：`935b84165d2d8a61c4af08036edc18a344422cb8`。
 
 目标不是直接复制当前脏工作树，而是形成一份来源清晰、可复现、无凭据的新主仓库。
 

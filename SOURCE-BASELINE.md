@@ -1,11 +1,13 @@
 # Source Baseline
 
 - Baseline date: 2026-11-17 (Asia/Shanghai)
-- Status: `SOURCE_BASELINE_VERIFIED`
+- Status: `SOURCE_BASELINE_PUBLISHED`
 - Source Product HEAD: `8e3134951ef478c5fb500457f8eda32d136e60c3`
 - Source Product files: 494 tracked or non-ignored working-tree files
 - Source Architecture files: 59
 - Governance files: 2
+- Baseline root commit: `935b84165d2d8a61c4af08036edc18a344422cb8`
+- Private remote: `https://github.com/zrt-980802/process-copilot-harness`
 
 ## Source locations
 
@@ -57,7 +59,7 @@ source-to-baseline SHA-256 comparison: Product 494/494, Architecture 59/59
 The sensitive-content review found no private key, GitHub token, AWS key or
 real model API key. The only token-shaped model key is an intentional negative
 test fixture for Memory secret rejection. Git object inspection and remote hash
-verification are completed during publication.
+verification completed successfully during publication.
 
 The initial staged whitespace check reports inherited trailing spaces and
 extra final blank lines in historical Architecture Markdown files. Those files
