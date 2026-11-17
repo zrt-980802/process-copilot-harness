@@ -237,6 +237,23 @@ function scopeMatches(
   return resourceScopeRefs.includes(`${grant.scope_type}:${grant.scope_id}`);
 }
 
+type CoreAuthorityClass = "PC_ONLY" | "EXTERNAL_INTERSECTION";
+
+function classifyCoreAuthority(
+  principal: PCPrincipal,
+  action: string,
+  scopeRefs: readonly string[],
+  toolReleaseIds: readonly string[]
+): CoreAuthorityClass {
+  if (action === "conversation.run"
+    && scopeRefs.length === 1
+    && scopeRefs[0] === `user:${principal.principal_id}`
+    && toolReleaseIds.length === 0) {
+    return "PC_ONLY";
+  }
+  return "EXTERNAL_INTERSECTION";
+}
+
 export class IdentityAuthorizationService {
   private sessionValidator?: (session: PilotSession, principal: PCPrincipal) => Promise<void>;
   private readonly registeredExternalAuthorizationPorts:
@@ -586,8 +603,12 @@ export class IdentityAuthorizationService {
     const observedAt = this.now().toISOString();
 
     for (const action of actions) {
-      if (action === "conversation.run" && scopeRefs.length === 1
-        && scopeRefs[0] === `user:${principal.principal_id}` && input.tool_release_ids.length === 0) {
+      if (classifyCoreAuthority(
+        principal,
+        action,
+        scopeRefs,
+        input.tool_release_ids
+      ) === "PC_ONLY") {
         const deny = grants.find(grant => grant.effect === "deny" && (grant.action === action || grant.action === "*") && scopeMatches(grant, scopeRefs));
         if (deny) reasonCodes.push(`pc_explicit_deny:${action}`);
         else { allowedActions.push(action); evidenceRefs.add("pc-policy:active-principal-personal-conversation:1"); }

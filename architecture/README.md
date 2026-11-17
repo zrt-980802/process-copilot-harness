@@ -92,3 +92,4 @@
 - 外部 Provider 解耦 D0 调用清单与权威路由表：`external-provider-decoupling-d0-inventory-v1.md`
 - 外部 Provider Contract C61-C65：`external-provider-contract-catalog-v1.md`
 - 外部 Provider 解耦 D1 Port 拆分：`external-provider-decoupling-d1-port-split-v1.md`
+- 外部 Provider 解耦 D2 Standalone：`external-provider-decoupling-d2-standalone-v1.md`

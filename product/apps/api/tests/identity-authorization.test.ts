@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { IdentityAuthorizationService } from "@pc/application";
 import { MemoryIdentityAuthorizationRepository } from "@pc/persistence";
 import { buildApiServer } from "../src/server.js";
+import { LocalIdentityProvider } from "../src/local-identity-provider.js";
 
 const servers: FastifyInstance[] = [];
 
@@ -36,7 +37,11 @@ describe("Identity and Authorization API", () => {
         evidence_ref: "pilot-grant:project-api"
       }]
     });
-    const server = buildApiServer({ identityAuthorization: service });
+    const server = buildApiServer({
+      identityAuthorization: service,
+      localIdentityProvider: new LocalIdentityProvider(service, "tenant-api"),
+      providerMode: "standalone"
+    });
     servers.push(server);
 
     const signIn = await server.inject({
@@ -58,6 +63,7 @@ describe("Identity and Authorization API", () => {
     });
     expect(identity.statusCode).toBe(200);
     expect(identity.json()).toMatchObject({
+      login_provider: "pc-local",
       principal: {
         principal_id: provisioned.principal.principal_id,
         tenant_id: "tenant-api"

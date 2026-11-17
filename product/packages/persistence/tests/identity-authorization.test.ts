@@ -31,11 +31,16 @@ async function fixture(externalPorts: readonly ExternalAuthorizationPort[] = [])
 
 describe("DEV-05 PCPrincipal and authorization", () => {
   it("permits an active user's personal conversation without enterprise grants", async () => {
-    const externalDeny: ExternalAuthorizationPort = { evaluate: async () => ({ decision: "DENY", reason_codes: ["no_enterprise_access"], evidence_refs: [] }) };
+    let externalCalls = 0;
+    const externalDeny: ExternalAuthorizationPort = { evaluate: async () => {
+      externalCalls += 1;
+      return { decision: "DENY", reason_codes: ["no_enterprise_access"], evidence_refs: [] };
+    } };
     const { service, provisioned } = await fixture([externalDeny]);
     const request = { principal_id: provisioned.principal.principal_id, actions: ["conversation.run"],
       resource_scope_refs: [`user:${provisioned.principal.principal_id}`], tool_release_ids: [], policy_model_revision: 1 };
     expect((await service.evaluatePrincipalAuthorization(request)).decision).toBe("ALLOW");
+    expect(externalCalls).toBe(0);
     for (const changed of [
       { resource_scope_refs: ["user:someone-else"] }, { resource_scope_refs: ["project:EP37"] },
       { resource_scope_refs: [...request.resource_scope_refs, "project:EP37"] },

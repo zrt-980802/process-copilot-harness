@@ -18,7 +18,8 @@ interface Execution {
   events: Array<{ event_type: string; occurred_at: string; payload?: { text?: string[] } }>;
 }
 const props = defineProps<{ token: string; principal: Principal; accountName: string; tasks: Workspace[];
-  projects: Array<{ project_code: string; project_name: string }>; initialTab?: string; initialProject?: string }>();
+  projects: Array<{ project_code: string; project_name: string }>;
+  providerMode: "standalone" | "ee-connected"; initialTab?: string; initialProject?: string }>();
 const emit = defineEmits<{ openTask: [id: string, target: string]; openProject: [code: string]; refresh: [] }>();
 const tasks = ref<Workspace[]>([]);
 const projections = ref<TaskProjection[]>([]);
@@ -84,7 +85,9 @@ async function refresh() {
   try {
     const [owned, visible] = await Promise.allSettled([
       request<{ tasks: Workspace[] }>("/v1/ssts-tasks", token, { signal }),
-      request<{ items: Approval[] }>("/v1/workbench/approvals", token, { signal })]);
+      props.providerMode === "ee-connected"
+        ? request<{ items: Approval[] }>("/v1/workbench/approvals", token, { signal })
+        : Promise.resolve({ items: [] })]);
     if (version !== generation) return;
     if (owned.status === "rejected") throw owned.reason;
     tasks.value = [...owned.value.tasks].sort((a, b) => b.updated_at.localeCompare(a.updated_at));

@@ -64,8 +64,9 @@ export class EeLogin implements IdentityProviderPort {
 
   async validate(session: PilotSession, principal: PCPrincipal) {
     const match = /^ee:([0-9a-f-]{36}):[0-9a-f-]{36}$/u.exec(session.authentication_context_id);
+    if (!match) return undefined;
     const subject = await this.identity.resolveExternalSubject(principal.principal_id, "eeclaw", { issuer: this.issuer, tenant: this.tenant });
-    if (!match || !subject || principal.tenant_id !== this.tenant) {
+    if (!subject || principal.tenant_id !== this.tenant) {
       throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "请使用 EE 统一账号登录");
     }
     const data = await this.call("validate", { session_id: match[1], account_id: subject });

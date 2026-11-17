@@ -1,6 +1,6 @@
 # DECOUPLING D2：PC Core Standalone 详细执行计划
 
-- 状态：Planned / Not Started
+- 状态：Complete（2026-11-17）
 - 前置：D0、D1 Complete
 - 目标：无 EE 配置时，PC Core 可启动并提供本地身份、个人对话、个人任务/记忆和非 EE 能力；EE-connected 现有行为保持
 - 非目标：完整 Authority Router、Provider Health UI、多 Provider、EE Provider Bundle 收口、MEMORY-01B
@@ -141,3 +141,5 @@
 ## 5. D2 完成定义
 
 D2 只有在 Standalone 与 EE-connected 两套配置矩阵均通过，并且安全断言证明 PC-only 不触发 EE、无 EE Tool 自动授权时才能标记 Complete。D2 通过不代表 Provider outage 降级、多 Provider Router 或生产就绪；这些分别属于 D3-D5。
+
+完成证据：`architecture/external-provider-decoupling-d2-standalone-v1.md`、`product/docs/decoupling-d2-verification.md`。D3 仅形成 `governance/DECOUPLING-D3-AUTHORITY-ROUTER-PLAN.md`，尚未实施。

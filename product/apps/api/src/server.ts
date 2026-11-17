@@ -41,7 +41,9 @@ import { SstsDraftError } from "@pc/ssts-draft";
 import type { RuntimeWorkbench, RuntimeToolContext } from "./workbench.js";
 
 export interface ApiServerDependencies {
-  identityProvider?: IdentityProviderPort;
+  localIdentityProvider?: IdentityProviderPort;
+  eeIdentityProvider?: IdentityProviderPort;
+  providerMode?: "standalone" | "ee-connected";
   eeIdentitySecret?: string;
   workbench?: RuntimeWorkbench;
   runtimeRegistry?: RuntimeRegistryService;
@@ -418,7 +420,25 @@ export function buildApiServer(
       : "configured",
     ssts_draft: dependencies.sstsDraft === undefined
       ? "not-configured"
-      : "configured"
+      : "configured",
+    provider_mode: dependencies.providerMode
+      ?? (dependencies.eeIdentityProvider === undefined
+        ? "standalone"
+        : "ee-connected"),
+    capabilities: {
+      core: dependencies.identityAuthorization !== undefined
+        ? "configured"
+        : "not-configured",
+      personal_workbench: dependencies.workbench === undefined
+        ? "unavailable"
+        : "available",
+      ee_provider: dependencies.eeIdentityProvider === undefined
+        ? "unconfigured"
+        : "configured",
+      project_workbench: dependencies.workbench?.hasProjectProvider() === true
+        ? "available"
+        : "unavailable"
+    }
   }));
 
   if (dependencies.workbench !== undefined) {
@@ -534,21 +554,34 @@ export function buildApiServer(
   }));
 
   server.post("/v1/pilot/sign-in", async (request) => {
-    if (dependencies.identityProvider) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "请使用 EE 统一账号登录");
     const body = request.body as {
-      tenant_id: string;
+      tenant_id?: string;
       account_key: string;
       secret: string;
     };
+    if (dependencies.localIdentityProvider !== undefined) {
+      return dependencies.localIdentityProvider.authenticate({
+        kind: "local_credentials",
+        tenant_id: body.tenant_id,
+        account_key: body.account_key,
+        secret: body.secret
+      });
+    }
+    if (dependencies.eeIdentityProvider !== undefined) {
+      throw new IdentityAuthorizationError(
+        "PC_AUTHENTICATION_REQUIRED",
+        "请使用 EE 统一账号登录"
+      );
+    }
     return identityFrom(dependencies).signInPilot(
-      body.tenant_id,
+      body.tenant_id ?? "",
       body.account_key,
       body.secret
     );
   });
 
   server.post("/v1/auth/ee/exchange", async (request, reply) => {
-    if (!dependencies.identityProvider) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "EE login is not enabled");
+    if (!dependencies.eeIdentityProvider) throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "EE login is not enabled");
     // JSON requests cannot be submitted cross-origin by a form. Reject explicit
     // foreign origins as well; the local reverse proxy preserves the browser host.
     const origin = request.headers.origin;
@@ -557,7 +590,7 @@ export function buildApiServer(
     }
     const body = request.body as { ticket?: unknown; code_verifier?: unknown } | undefined;
     reply.header("Cache-Control", "no-store");
-    return dependencies.identityProvider.authenticate({
+    return dependencies.eeIdentityProvider.authenticate({
       kind: "ticket_exchange",
       ticket: body?.ticket,
       code_verifier: body?.code_verifier
@@ -573,11 +606,11 @@ export function buildApiServer(
   server.get("/v1/internal/identity/ee-bindings", async (request, reply) => {
     const expected = Buffer.from(dependencies.eeIdentitySecret ?? "");
     const supplied = Buffer.from(String(request.headers["x-pc-adapter-secret"] ?? ""));
-    if (!dependencies.identityProvider || expected.length < 24 || expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) {
+    if (!dependencies.eeIdentityProvider || expected.length < 24 || expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) {
       throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "Service authentication required");
     }
     reply.header("Cache-Control", "no-store");
-    return dependencies.identityProvider.bindings();
+    return dependencies.eeIdentityProvider.bindings();
   });
 
   server.get("/v1/identity/me", async (request, reply) => {
@@ -585,12 +618,18 @@ export function buildApiServer(
       bearerToken(request.headers.authorization)
     );
     reply.header("Cache-Control", "no-store");
-    const account = await dependencies.identityProvider?.validate(authenticated.session, authenticated.principal);
+    const provider = authenticated.session.authentication_context_id.startsWith("ee:")
+      ? dependencies.eeIdentityProvider
+      : dependencies.localIdentityProvider;
+    const account = await provider?.validate(
+      authenticated.session,
+      authenticated.principal
+    );
     return {
-      ...(account ? {
-        account,
-        login_provider: dependencies.identityProvider?.identity_provider_ref
-      } : {}),
+      ...(provider === undefined
+        ? {}
+        : { login_provider: provider.identity_provider_ref }),
+      ...(account === undefined ? {} : { account }),
       principal: authenticated.principal,
       authentication_context_id:
         authenticated.session.authentication_context_id,

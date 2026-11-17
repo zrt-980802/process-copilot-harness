@@ -44,6 +44,8 @@ import {
   EeClawWorkbenchProjectionAdapter
 } from "./ee-provider.js";
 import { UserRuntimeResolver } from "./user-runtime.js";
+import { LocalIdentityProvider } from "./local-identity-provider.js";
+import { classifyProviderConfiguration } from "./provider-bootstrap.js";
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "127.0.0.1";
@@ -55,6 +57,7 @@ const resourceStoreKind = process.env.PC_RESOURCE_STORE ?? "disabled";
 const gatewayStoreKind = process.env.PC_GATEWAY_STORE ?? "disabled";
 const eventStoreKind = process.env.PC_EVENT_STORE ?? "disabled";
 const sstsStoreKind = process.env.PC_SSTS_STORE ?? "disabled";
+const providerConfiguration = classifyProviderConfiguration(process.env);
 
 let registry: RuntimeRegistryService | undefined;
 let identityAuthorization: IdentityAuthorizationService | undefined;
@@ -65,6 +68,7 @@ let eventProjection: EventProjectionService | undefined;
 let sstsDraft: SstsDraftService | undefined;
 let pilotPrincipalId: string | undefined;
 let workbench: RuntimeWorkbench | undefined;
+let fixedProfileReleaseId: string | undefined;
 
 if (identityStoreKind !== "disabled") {
   const signingKey = process.env.PC_ENVELOPE_SIGNING_KEY;
@@ -123,8 +127,8 @@ if (identityStoreKind !== "disabled") {
   }
 }
 
-const eeClawAdapterUrl = process.env.EECLAW_ADAPTER_URL;
-const eeClawAdapterSecret = process.env.EECLAW_ADAPTER_SECRET;
+const eeClawAdapterUrl = providerConfiguration.ee.authorization_url;
+const eeClawAdapterSecret = providerConfiguration.ee.authorization_secret;
 if (
   identityAuthorization !== undefined
   && eeClawAdapterUrl !== undefined
@@ -194,7 +198,9 @@ if (profileStoreKind !== "disabled") {
     throw new Error(`Unsupported PC_PROFILE_STORE: ${profileStoreKind}`);
   }
   await profileCapability.initialize();
-  await profileCapability.seedFixedFoRelease();
+  fixedProfileReleaseId = (
+    await profileCapability.seedFixedFoRelease()
+  ).profile.profile_release_id;
 }
 
 if (resourceStoreKind !== "disabled") {
@@ -549,6 +555,71 @@ if (gatewayStoreKind !== "disabled") {
   }
 }
 
+const standaloneRuntimeUrl = process.env.PC_WORKBENCH_RUNTIME_URL;
+if (
+  providerConfiguration.mode === "standalone"
+  && standaloneRuntimeUrl !== undefined
+  && sstsStoreKind !== "disabled"
+  && identityAuthorization !== undefined
+  && profileCapability !== undefined
+  && registry !== undefined
+  && resourceWorkspace !== undefined
+  && eventProjection !== undefined
+  && fixedProfileReleaseId !== undefined
+) {
+  const baseProfile = await profileCapability.getProfileRelease(
+    fixedProfileReleaseId
+  );
+  if (baseProfile === undefined) {
+    throw new Error("Fixed Core profile was not published");
+  }
+  const conversationProfile = await profileCapability.publishExpertProfile({
+    ...baseProfile,
+    profile_release_id: "profile:conversation:personal:1",
+    profile_definition_id: "profile:conversation:personal",
+    tool_requirements: [],
+    knowledge_policy: {
+      source: "session-materialized-only",
+      enterprise_access: false
+    },
+    output_contract: {
+      kind: "AI_CONVERSATION",
+      enterprise_write: false
+    },
+    completion_contract: { requires_ee_trace: false },
+    dependency_lock_digest: mcpDigest([])
+  });
+  const runtimeResolver = process.env.PC_USER_RUNTIME_MANAGER_URL
+    ? new UserRuntimeResolver(
+        process.env.PC_USER_RUNTIME_MANAGER_URL,
+        process.env.PC_RUNTIME_SERVICE_SECRET ?? ""
+      )
+    : undefined;
+  workbench = new RuntimeWorkbench({
+    identity: identityAuthorization,
+    profiles: profileCapability,
+    registry,
+    resources: resourceWorkspace,
+    events: eventProjection,
+    tools: [],
+    runtimeUrl: new URL(standaloneRuntimeUrl).origin,
+    conversationProfileReleaseId: conversationProfile.profile_release_id,
+    ...(runtimeResolver === undefined
+      ? {}
+      : { resolveRuntime: (principal) => runtimeResolver.resolve(principal) }),
+    workspace: async (workspaceId, tenantId, principalId) => (
+      await sstsDraft!.getWorkspace({
+        workspace_id: workspaceId,
+        tenant_id: tenantId,
+        principal_id: principalId
+      })
+    ).workspace,
+    ...(process.env.PC_RUNTIME_SERVICE_SECRET === undefined
+      ? {}
+      : { runtimeSecret: process.env.PC_RUNTIME_SERVICE_SECRET })
+  });
+}
+
 if (sstsStoreKind !== "disabled") {
   if (
     profileCapability === undefined
@@ -586,20 +657,46 @@ if (sstsStoreKind !== "disabled") {
   await sstsDraft.initialize();
 }
 
-let identityProvider: EeLogin | undefined;
-if (process.env.PC_LOGIN_MODE === "ee") {
+let localIdentityProvider: LocalIdentityProvider | undefined;
+let eeIdentityProvider: EeLogin | undefined;
+if (providerConfiguration.mode === "standalone" && identityAuthorization) {
+  const tenant = process.env.PC_PILOT_TENANT_ID;
+  if (!tenant) {
+    throw new Error(
+      "PC_PILOT_TENANT_ID is required for Standalone local identity"
+    );
+  }
+  localIdentityProvider = new LocalIdentityProvider(
+    identityAuthorization,
+    tenant
+  );
+}
+if (providerConfiguration.mode === "ee-connected") {
   const tenant = process.env.PC_PILOT_TENANT_ID;
   if (!identityAuthorization || !eeClawAdapterUrl || !eeClawAdapterSecret || !tenant) {
     throw new Error("EE login requires Identity, EE issuer, service secret and tenant configuration");
   }
-  identityProvider = new EeLogin(identityAuthorization, eeClawAdapterUrl, eeClawAdapterSecret, tenant);
-  const login = identityProvider;
-  identityAuthorization.registerSessionValidator(async (session, principal) => { await login.validate(session, principal); });
+  eeIdentityProvider = new EeLogin(
+    identityAuthorization,
+    eeClawAdapterUrl,
+    eeClawAdapterSecret,
+    tenant
+  );
+  const login = eeIdentityProvider;
+  identityAuthorization.registerSessionValidator(async (session, principal) => {
+    if (session.authentication_context_id.startsWith("ee:")) {
+      await login.validate(session, principal);
+    }
+  });
 }
 
 const server = buildApiServer({
-  ...(identityProvider === undefined ? {} : {
-    identityProvider,
+  providerMode: providerConfiguration.mode,
+  ...(localIdentityProvider === undefined ? {} : {
+    localIdentityProvider
+  }),
+  ...(eeIdentityProvider === undefined ? {} : {
+    eeIdentityProvider,
     eeIdentitySecret: eeClawAdapterSecret!
   }),
   ...(workbench === undefined ? {} : { workbench }),

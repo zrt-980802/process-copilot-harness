@@ -1,6 +1,6 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 COMPLETE / D1 PORT-SPLIT COMPLETE / D2 PLANNED NOT STARTED`
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 COMPLETE / D1 COMPLETE / D2 STANDALONE COMPLETE / D3 PLANNED NOT STARTED`
 > 日期：2026-11-17（Asia/Shanghai）  
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
@@ -76,7 +76,23 @@ GitHub 建仓是外部状态变更。执行时需要确定仓库名称，并确�
 
 D2 的详细执行计划见 `governance/DECOUPLING-D2-STANDALONE-PLAN.md`。
 
+### 3.3 D2：PC Core Standalone
+
+状态：`COMPLETE`。架构结果见 `architecture/external-provider-decoupling-d2-standalone-v1.md`，验证见 `product/docs/decoupling-d2-verification.md`。
+
+- 无 EE 配置时可装配本地身份与个人 Workbench；
+- 个人 `conversation.run` 不调用 EE Authorization；
+- 个人 Profile 的外部 Tool Set 为空；
+- 部分 EE 配置稳定 fail closed；
+- `/health` 暴露最小 Capability Availability；
+- 前端 Standalone 不请求 EE 登录、项目目录、Catalog 或审批；
+- EE-connected 的 D1 golden behavior 保持。
+
+下一阶段 D3 的详细计划见 `governance/DECOUPLING-D3-AUTHORITY-ROUTER-PLAN.md`。D3 尚未启动。
+
 ## 4. DECOUPLING-CORE-01：PC 独立控制面
+
+当前进度：D2 已完成最小 `PC_ONLY` 分类与 Standalone；完整按 Provider/action/resource 的 Authority Router 属于 D3。
 
 - 将 EE Session 从唯一登录前提改为一种 `IdentityProvider`；
 - 将全局 `ExternalAuthorizationPort[]` 改成按 Provider、action namespace 和 resource authority 路由；

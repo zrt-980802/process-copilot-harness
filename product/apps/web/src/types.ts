@@ -24,6 +24,16 @@ export interface SignInResult {
   expires_at: string;
 }
 
+export interface SystemCapabilities {
+  provider_mode: "standalone" | "ee-connected";
+  capabilities: {
+    core: "configured" | "not-configured";
+    personal_workbench: "available" | "unavailable";
+    ee_provider: "configured" | "unconfigured";
+    project_workbench: "available" | "unavailable";
+  };
+}
+
 export interface Workspace {
   project_code?: string;
   function_code?: string;

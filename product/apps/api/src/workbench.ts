@@ -30,20 +30,20 @@ export interface WorkbenchOptions {
   profiles: ProfileCapabilityService;
   registry: RuntimeRegistryService;
   resources: ResourceWorkspaceService;
-  gateway: ControlledExecutionGatewayService;
-  gatewayRepository: GatewayRepository;
+  gateway?: ControlledExecutionGatewayService;
+  gatewayRepository?: GatewayRepository;
   events: EventProjectionService;
-  connector: ConnectorRegistration;
+  connector?: ConnectorRegistration;
   tools: ToolRelease[];
   runtimeUrl: string;
   resolveRuntime?(principal: PCPrincipal): Promise<string>;
   ensureExternalAccount?(principal: PCPrincipal): Promise<ExternalAccountBinding>;
   conversationProfileReleaseId?: string;
-  profileReleaseId: string;
-  reviewProfileReleaseId: string;
+  profileReleaseId?: string;
+  reviewProfileReleaseId?: string;
   runtimeSecret?: string;
-  projectDirectory: ProjectDirectoryPort;
-  workbenchProjection: WorkbenchProjectionPort;
+  projectDirectory?: ProjectDirectoryPort;
+  workbenchProjection?: WorkbenchProjectionPort;
   workspace(id: string, tenantId: string, principalId: string): Promise<SstsTaskWorkspace>;
 }
 
@@ -69,12 +69,35 @@ export class RuntimeWorkbench {
   private readonly activeTurns = new Set<string>();
   constructor(readonly options: WorkbenchOptions) {}
 
+  hasProjectProvider(): boolean {
+    return this.options.gateway !== undefined
+      && this.options.gatewayRepository !== undefined
+      && this.options.connector !== undefined
+      && this.options.projectDirectory !== undefined
+      && this.options.workbenchProjection !== undefined
+      && this.options.profileReleaseId !== undefined
+      && this.options.reviewProfileReleaseId !== undefined;
+  }
+
+  private projectProvider() {
+    const { gateway, gatewayRepository, connector, projectDirectory,
+      workbenchProjection, profileReleaseId, reviewProfileReleaseId } = this.options;
+    if (!gateway || !gatewayRepository || !connector || !projectDirectory
+      || !workbenchProjection || !profileReleaseId || !reviewProfileReleaseId) {
+      denied("PC_WORKBENCH_PROJECT_PROVIDER_UNAVAILABLE");
+    }
+    return { gateway, gatewayRepository, connector, projectDirectory,
+      workbenchProjection, profileReleaseId, reviewProfileReleaseId };
+  }
+
   async projects(accessToken: string) {
     const { principal } = await this.options.identity.authenticate(accessToken);
+    if (this.options.projectDirectory === undefined) return [];
     return this.options.projectDirectory.listProjects({ principal });
   }
 
   async catalog(accessToken: string, project: string) {
+    const external = this.projectProvider();
     const { principal } = await this.options.identity.authenticate(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
     const tools = [];
@@ -85,14 +108,15 @@ export class RuntimeWorkbench {
         policy_model_revision: 1 });
       if (decision.decision === "ALLOW") tools.push(tool);
     }
-    return { connector: { connector_id: this.options.connector.connector_id,
-      state: this.options.connector.state, capability_digest: this.options.connector.capability_digest }, tools };
+    return { connector: { connector_id: external.connector.connector_id,
+      state: external.connector.state, capability_digest: external.connector.capability_digest }, tools };
   }
 
   async capabilityChain(accessToken: string, project: string, workspace?: SstsTaskWorkspace) {
+    const external = this.projectProvider();
     const { principal } = await this.options.identity.authenticate(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
-    const accessible = await this.options.projectDirectory.listProjects({ principal });
+    const accessible = await external.projectDirectory.listProjects({ principal });
     const projectRecord = accessible.find((item) => item.project_code === project);
     if (!projectRecord) denied("PC_WORKBENCH_PROJECT_DENIED");
     if (workspace && (workspace.tenant_id !== principal.tenant_id
@@ -121,31 +145,31 @@ export class RuntimeWorkbench {
       .sort((left, right) => right.updated_at.localeCompare(left.updated_at))
       .slice(0, 5)
       .map(async (operation) => {
-        const external = await this.options.gatewayRepository.getOperation(operation.operation_id);
-        const tool = external
-          ? this.options.tools.find((item) => item.tool_release_id === external.tool_release_id)
+        const operationRecord = await external.gatewayRepository.getOperation(operation.operation_id);
+        const tool = operationRecord
+          ? this.options.tools.find((item) => item.tool_release_id === operationRecord.tool_release_id)
           : undefined;
         return {
           operation_id: operation.operation_id,
           operation_kind: operation.operation_kind,
           state: operation.state,
           updated_at: operation.updated_at,
-          ...(external?.tool_release_id === undefined
+          ...(operationRecord?.tool_release_id === undefined
             ? {}
-            : { tool_release_id: external.tool_release_id }),
+            : { tool_release_id: operationRecord.tool_release_id }),
           ...(tool?.tool_definition_id === undefined
             ? {}
             : { tool_name: tool.tool_definition_id }),
-          ...(external?.outcome_state === undefined
+          ...(operationRecord?.outcome_state === undefined
             ? {}
-            : { outcome_state: external.outcome_state }),
+            : { outcome_state: operationRecord.outcome_state }),
           evidence_refs: [...new Set([
             ...(operation.evidence_refs ?? []),
-            ...(external?.evidence_refs ?? [])
+            ...(operationRecord?.evidence_refs ?? [])
           ])]
         };
       }));
-    const providerProjection = this.options.workbenchProjection.project({
+    const providerProjection = external.workbenchProjection.project({
       project_code: project,
       project_record: projectRecord,
       authorization_revision: principal.authorization_revision,
@@ -188,12 +212,12 @@ export class RuntimeWorkbench {
         } : undefined
       } : undefined,
       connector: {
-        connector_id: this.options.connector.connector_id,
-        mcp_server_id: this.options.connector.mcp_server_id,
-        provider_key: this.options.connector.provider_key,
-        auth_mode: this.options.connector.auth_mode,
-        state: this.options.connector.state,
-        capability_digest: this.options.connector.capability_digest
+        connector_id: external.connector.connector_id,
+        mcp_server_id: external.connector.mcp_server_id,
+        provider_key: external.connector.provider_key,
+        auth_mode: external.connector.auth_mode,
+        state: external.connector.state,
+        capability_digest: external.connector.capability_digest
       },
       workspace: workspace ? {
         workspace_id: workspace.workspace_id,
@@ -213,7 +237,13 @@ export class RuntimeWorkbench {
       || (input.mode !== undefined && !["READ", "REVIEW", "CHAT"].includes(input.mode))) denied("PC_WORKBENCH_TASK_INVALID");
     const project = input.project_code?.trim();
     let tools: ToolRelease[] = [];
-    let profileId = input.mode === "REVIEW" ? this.options.reviewProfileReleaseId : this.options.profileReleaseId;
+    let profileId: string | undefined;
+    if (project) {
+      const external = this.projectProvider();
+      profileId = input.mode === "REVIEW"
+        ? external.reviewProfileReleaseId
+        : external.profileReleaseId;
+    }
     if (project) tools = (await this.catalog(accessToken, project)).tools;
     if (input.mode === "CHAT") {
       const base = this.options.conversationProfileReleaseId
@@ -231,6 +261,7 @@ export class RuntimeWorkbench {
         profileId = profile.profile_release_id;
       } else profileId = base.profile_release_id;
     } else if (!project) denied("PC_WORKBENCH_PROJECT_REQUIRED");
+    if (!profileId) denied("PC_WORKBENCH_PROJECT_PROVIDER_UNAVAILABLE");
     const profile = await this.options.profiles.getProfileRelease(profileId);
     if (!profile || profile.tool_requirements.some((id) => !tools.some((tool) => tool.tool_release_id === id))) {
       denied("PC_WORKBENCH_PROFILE_DENIED");
@@ -328,7 +359,8 @@ export class RuntimeWorkbench {
     const capabilities = await this.fetchRuntime("/capabilities", runtimeUrl);
     const manifest = capabilities.capability_manifest as RuntimeCapabilityManifest;
     const health = await this.fetchRuntime("/health", runtimeUrl);
-    if (health.status !== "ok" || !manifest || !manifest.tool_provider_capabilities.includes("pc-controlled-gateway")) {
+    if (health.status !== "ok" || !manifest
+      || (tools.length > 0 && !manifest.tool_provider_capabilities.includes("pc-controlled-gateway"))) {
       throw new SstsDraftError("PC_RUNTIME_NOT_READY", "Runtime is not ready for governed tools", true);
     }
     let runtime = await o.registry.getRuntimeProjection(manifest.runtime_id).catch(absent);
@@ -367,6 +399,10 @@ export class RuntimeWorkbench {
     }
     const oldView = previous ? await o.resources.getWorkspaceView(previous.assignment.workspace_view_snapshot_id) : undefined;
     if (!refs.length) {
+      const personal = workspace.project_code === undefined;
+      const acquisitionOperation = personal
+        ? "session-personal-context"
+        : "session-project-binding";
       const content = Buffer.from(JSON.stringify({ project_code: workspace.project_code,
         function_code: workspace.function_code ?? null, profile_release_id: workspace.profile_release_id }));
       const expectedDigest = `sha256:${createHash("sha256").update(content).digest("hex")}`;
@@ -377,13 +413,14 @@ export class RuntimeWorkbench {
         && saved.resource.tenant_id === principal.tenant_id && saved.resource.created_by === principal.principal_id
         && saved.resource.current_version_id === savedRef.resource_version_id && version?.content_digest === expectedDigest
         && version.provenance.source_system === "pc-workbench"
-        && version.provenance.acquisition_operation === "session-project-binding") refs = [savedRef];
+        && version.provenance.acquisition_operation === acquisitionOperation) refs = [savedRef];
       else {
         const context = await o.resources.uploadResource({ tenant_id: principal.tenant_id,
-        principal_id: principal.principal_id, kind: "EVIDENCE_SNAPSHOT", display_name: "EE project binding.json",
+        principal_id: principal.principal_id, kind: "EVIDENCE_SNAPSHOT",
+        display_name: personal ? "Personal conversation context.json" : "EE project binding.json",
         classification: "INTERNAL", owner_scope: { scope_type: "USER_ROOT", scope_id: principal.principal_id },
         media_type: "application/json", content,
-        provenance: { source_system: "pc-workbench", acquisition_operation: "session-project-binding" } });
+        provenance: { source_system: "pc-workbench", acquisition_operation: acquisitionOperation } });
         refs = [context.resource_ref];
       }
     }
@@ -440,11 +477,12 @@ export class RuntimeWorkbench {
       }
       assignment = assigned.assignment;
     }
-    const account = tools.length ? (await o.ensureExternalAccount?.(principal)
-      ?? await o.gatewayRepository.findExternalAccountBinding(principal.tenant_id, o.connector.connector_id, principal.principal_id)) : undefined;
+    const external = tools.length > 0 ? this.projectProvider() : undefined;
+    const account = external ? (await o.ensureExternalAccount?.(principal)
+      ?? await external.gatewayRepository.findExternalAccountBinding(principal.tenant_id, external.connector.connector_id, principal.principal_id)) : undefined;
     if (tools.length && (!account || account.status !== "ACTIVE")) denied("PC_WORKBENCH_EXTERNAL_ACCOUNT_DENIED");
     const principalEnvelope = await o.identity.issuePrincipalEnvelope(token, { snapshot: authorization,
-      audience: tools.length ? `gateway:${o.connector.connector_id}` : "runtime:personal-conversation", pc_session_id: pcSessionId,
+      audience: external ? `gateway:${external.connector.connector_id}` : "runtime:personal-conversation", pc_session_id: pcSessionId,
       business_task_id: workspace.business_task_id, runtime_id: assignment.runtime_id,
       runtime_epoch: assignment.runtime_epoch, assignment_generation: assignment.assignment_generation,
       fencing_token: assignment.fencing_token, ...(account ? { credential_generation: account.credential_generation } : {}),
@@ -484,8 +522,9 @@ export class RuntimeWorkbench {
       || !validJsonText(input.call_id) || !validJsonText(input.arguments)) denied("PC_WORKBENCH_TOOL_ARGUMENT_INVALID");
     if (!input?.context?.principal_envelope || typeof input.tool_release_id !== "string") denied("PC_WORKBENCH_TOOL_CONTEXT_INVALID");
     if (!Array.isArray(input.context.tools) || !input.context.tools.some(tool => tool.tool_release_id === input.tool_release_id)) denied("PC_WORKBENCH_TOOL_SCOPE_DENIED");
+    const external = this.projectProvider();
     const principal = await o.identity.verifyPrincipalEnvelope(input.context.principal_envelope,
-      `gateway:${o.connector.connector_id}`);
+      `gateway:${external.connector.connector_id}`);
     const envelope = input.context.principal_envelope;
     const projection = await o.registry.getSessionProjection(envelope.pc_session_id);
     const snapshot = await o.profiles.getEffectiveProfileSnapshot(projection.assignment.effective_profile_snapshot_id);
@@ -520,7 +559,7 @@ export class RuntimeWorkbench {
       deadline: new Date(Math.min(Date.now() + 60_000, Date.parse(envelope.expires_at))).toISOString(),
       recovery_class: tool.recovery_class as ToolExecutionEnvelope["recovery_class"],
       ...(input.approval_id ? { approval_snapshot_ref: input.approval_id } : {}) };
-    const result = await o.gateway.execute(execution, signal ? { signal } : {});
+    const result = await external.gateway.execute(execution, signal ? { signal } : {});
     return { content: [{ type: "text", text: JSON.stringify(result) }], structuredContent: result,
       isError: result.status !== "SUCCEEDED" };
   }
@@ -534,6 +573,7 @@ export class RuntimeWorkbench {
   async requestWrite(workspace: SstsTaskWorkspace, token: string, input: {
     tool_release_id: string; arguments: Record<string, unknown>; call_id: string;
   }, refs: Array<{ resource_id: string; resource_version_id: string }>) {
+    const external = this.projectProvider();
     const { assignment, snapshot, context } = await this.prepare(workspace, token, refs);
     const tool = await this.options.profiles.getToolRelease(input.tool_release_id);
     if (!tool || tool.tool_definition_id !== "ee.submit_ssts_review"
@@ -544,7 +584,7 @@ export class RuntimeWorkbench {
     await this.options.events.planOperation({ operation_id: operationId, business_task_id: workspace.business_task_id,
       tenant_id: workspace.tenant_id, principal_id: workspace.owner_principal_id, operation_kind: "WRITE",
       recovery_class: "RECONCILE_BEFORE_RETRY", input_digest: mcpDigest(input.arguments), evidence_refs: [tool.tool_release_id] });
-    return this.options.gateway.requestApproval({ tenant_id: workspace.tenant_id,
+    return external.gateway.requestApproval({ tenant_id: workspace.tenant_id,
       requested_by: workspace.owner_principal_id, actor_principal_id: workspace.owner_principal_id,
       business_task_id: workspace.business_task_id, operation_id: operationId,
       tool_release_id: tool.tool_release_id, arguments: input.arguments,
@@ -554,8 +594,9 @@ export class RuntimeWorkbench {
   }
 
   async approvals(token: string) {
+    const external = this.projectProvider();
     const { principal } = await this.options.identity.authenticate(token);
-    const candidates = await this.options.gatewayRepository.listApprovals(principal.tenant_id);
+    const candidates = await external.gatewayRepository.listApprovals(principal.tenant_id);
     const visible = [];
     for (const approval of candidates) {
       const decision = await this.options.identity.evaluatePrincipalAuthorization({ principal_id: principal.principal_id,
@@ -568,7 +609,8 @@ export class RuntimeWorkbench {
 
   async executeApproved(workspace: SstsTaskWorkspace, token: string, approvalId: string,
     refs: Array<{ resource_id: string; resource_version_id: string }>) {
-    const approval = await this.options.gateway.getApproval(approvalId);
+    const external = this.projectProvider();
+    const approval = await external.gateway.getApproval(approvalId);
     if (!approval || approval.requested_by !== workspace.owner_principal_id || approval.business_task_id !== workspace.business_task_id
       || approval.command_context?.workspace_id !== workspace.workspace_id || !approval.arguments) denied("PC_WORKBENCH_APPROVAL_SCOPE_DENIED");
     const { context } = await this.prepare(workspace, token, refs);
@@ -577,20 +619,22 @@ export class RuntimeWorkbench {
   }
 
   async reconcile(workspace: SstsTaskWorkspace, operationId: string) {
-    const operation = await this.options.gateway.getOperation(operationId);
+    const external = this.projectProvider();
+    const operation = await external.gateway.getOperation(operationId);
     if (!operation || operation.business_task_id !== workspace.business_task_id || operation.principal_id !== workspace.owner_principal_id) denied("PC_WORKBENCH_OPERATION_SCOPE_DENIED");
-    return this.options.gateway.reconcile(operationId);
+    return external.gateway.reconcile(operationId);
   }
 
   async decide(token: string, id: string, version: number, decision: "APPROVE" | "REJECT") {
+    const external = this.projectProvider();
     const { principal } = await this.options.identity.authenticate(token);
-    const approval = await this.options.gateway.getApproval(id);
+    const approval = await external.gateway.getApproval(id);
     if (!approval || approval.tenant_id !== principal.tenant_id) denied("PC_WORKBENCH_APPROVAL_SCOPE_DENIED");
     const auth = await this.options.identity.evaluatePrincipalAuthorization({ principal_id: principal.principal_id,
       actions: ["approval.decide"], resource_scope_refs: approval.resource_scope_refs ?? [],
       tool_release_ids: [], policy_model_revision: 1 });
     if (auth.decision !== "ALLOW") denied("PC_WORKBENCH_APPROVER_DENIED");
-    return this.options.gateway.decideApproval({ tenant_id: principal.tenant_id, approval_id: id,
+    return external.gateway.decideApproval({ tenant_id: principal.tenant_id, approval_id: id,
       approver_principal_id: principal.principal_id, expected_version: version, decision,
       reason_codes: ["workbench_exact_arguments_reviewed"] });
   }
@@ -677,9 +721,14 @@ export class RuntimeWorkbench {
   async projection(workspace: SstsTaskWorkspace) {
     const session = await this.options.registry.getSessionProjection(this.sessionId(workspace)).catch(absent);
     const operations = await this.options.events.listTaskOperations(workspace.business_task_id);
+    const gateway = this.options.gateway;
     const ledger = await Promise.all(operations.map(async (operation) => ({ operation,
-      external: await this.options.gateway.getOperation(operation.operation_id),
-      audit: await this.options.gateway.listOperationAudit(operation.operation_id) })));
+      external: gateway === undefined
+        ? undefined
+        : await gateway.getOperation(operation.operation_id),
+      audit: gateway === undefined
+        ? []
+        : await gateway.listOperationAudit(operation.operation_id) })));
     let runtimeAvailable = false;
     let events: Record<string, unknown> = { events: [] };
     if (session) {

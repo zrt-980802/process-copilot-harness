@@ -24,6 +24,7 @@ import type {
   DraftRevision,
   InputSlot,
   Principal,
+  SystemCapabilities,
   TaskInput,
   TaskProjection,
   Workspace,
@@ -112,6 +113,7 @@ const draftFilename = ref("");
 const busy = ref("");
 const error = ref<{ title: string; message: string; retryable: boolean }>();
 const notice = ref("");
+const system = ref<SystemCapabilities>();
 
 const accountKey = ref("");
 const secret = ref("");
@@ -229,13 +231,20 @@ async function run<T>(
 
 async function signIn(): Promise<void> {
   const result = await run("login", async () => {
+    const submittedAccount = accountKey.value;
     let signedIn;
-    try { signedIn = await api.signIn(accountKey.value, secret.value); }
+    try {
+      signedIn = await api.signIn(
+        accountKey.value,
+        secret.value,
+        system.value?.provider_mode ?? "ee-connected"
+      );
+    }
     finally { secret.value = ""; }
     token.value = signedIn.access_token;
     sessionStorage.setItem(TOKEN_KEY, signedIn.access_token);
     principal.value = await api.me(signedIn.access_token);
-    accountName.value = principal.value.ee_account?.username ?? "";
+    accountName.value = principal.value.ee_account?.username ?? submittedAccount;
     sessionStorage.setItem(ACCOUNT_KEY, accountName.value);
     await loadTasks();
     const remembered = sessionStorage.getItem(TASK_KEY);
@@ -259,7 +268,13 @@ function clearSession(): void {
 }
 
 async function logout(): Promise<void> {
-  await run("logout", async () => { await api.signOut(token.value); clearSession(); });
+  await run("logout", async () => {
+    await api.signOut(
+      token.value,
+      system.value?.provider_mode ?? "ee-connected"
+    );
+    clearSession();
+  });
 }
 
 async function restoreSession(): Promise<void> {
@@ -269,14 +284,15 @@ async function restoreSession(): Promise<void> {
       catch (caught) { if (!(caught instanceof ApiClientError) || caught.status !== 401) throw caught; clearSession(); }
     }
     if (!token.value) {
+      if (system.value?.provider_mode === "standalone") return;
       let signedIn;
-      try { signedIn = await api.signIn(); }
+      try { signedIn = await api.signIn(undefined, undefined, "ee-connected"); }
       catch (caught) { if (caught instanceof ApiClientError && caught.status === 401) return; throw caught; }
       token.value = signedIn.access_token;
       sessionStorage.setItem(TOKEN_KEY, signedIn.access_token);
     }
     principal.value = await api.me(token.value);
-    accountName.value = principal.value.ee_account?.username ?? "";
+    accountName.value = principal.value.ee_account?.username ?? accountName.value;
     sessionStorage.setItem(ACCOUNT_KEY, accountName.value);
     await loadTasks();
     const remembered = sessionStorage.getItem(TASK_KEY);
@@ -289,7 +305,9 @@ async function restoreSession(): Promise<void> {
 async function loadTasks(): Promise<void> {
   if (token.value === "") return;
   tasks.value = await api.listTasks(token.value);
-  projects.value = (await request<{ items: Array<{ project_code: string; project_name: string }> }>("/v1/workbench/projects", token.value)).items;
+  projects.value = system.value?.capabilities.ee_provider === "configured"
+    ? (await request<{ items: Array<{ project_code: string; project_name: string }> }>("/v1/workbench/projects", token.value)).items
+    : [];
   if (!projects.value.some((item) => item.project_code === projectCode.value)) projectCode.value = projects.value[0]?.project_code ?? "";
 }
 
@@ -440,7 +458,16 @@ async function download(): Promise<void> {
   });
 }
 
-onMounted(restoreSession);
+async function initialize(): Promise<void> {
+  try {
+    system.value = await api.capabilities();
+    await restoreSession();
+  } catch (caught) {
+    showError(caught, "无法读取系统能力状态");
+  }
+}
+
+onMounted(initialize);
 </script>
 
 <template>
@@ -450,14 +477,14 @@ onMounted(restoreSession);
         <span class="brand-mark">PC</span>
         <div>
           <p>Process Copilot</p>
-          <h1>FO SSTS Draft Assistant</h1>
+          <h1>Process Copilot</h1>
         </div>
       </div>
-      <span class="environment-badge">LOCAL · EE MCP · DSH</span>
+      <span class="environment-badge">{{ system?.provider_mode === 'standalone' ? 'STANDALONE · DSH' : 'EE CONNECTED · MCP · DSH' }}</span>
 
       <form class="login-form" @submit.prevent="signIn">
         <label>
-          EE 账号
+          {{ system?.provider_mode === 'standalone' ? '本地账号' : 'EE 账号' }}
           <input v-model="accountKey" autocomplete="username" required />
         </label>
         <label>
@@ -487,6 +514,7 @@ onMounted(restoreSession);
   </main>
 
   <WorkbenchShell v-else-if="principal" :token="token" :principal="principal" :tasks="tasks" :projects="projects"
+    :provider-mode="system?.provider_mode ?? 'ee-connected'"
     :account-name="accountName" :projection="projection" @open-task="selectTask" @refresh="refreshTask" @logout="logout">
     <template #default="{ mode, project: activeProject }">
 

@@ -18,7 +18,14 @@ describe("API health", () => {
     expect(response.json()).toMatchObject({
       service: "process-copilot-api",
       status: "ok",
-      contract_baseline: "v1"
+      contract_baseline: "v1",
+      provider_mode: "standalone",
+      capabilities: {
+        core: "not-configured",
+        personal_workbench: "unavailable",
+        ee_provider: "unconfigured",
+        project_workbench: "unavailable"
+      }
     });
   });
 });

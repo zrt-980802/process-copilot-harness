@@ -4,6 +4,7 @@ import type {
   InputSlot,
   Principal,
   SignInResult,
+  SystemCapabilities,
   TaskProjection,
   UploadedResource,
   Workspace
@@ -85,10 +86,25 @@ async function base64(file: File): Promise<string> {
 }
 
 export const api = {
+  capabilities(): Promise<SystemCapabilities> {
+    return request("/health");
+  },
+
   async accountPresentation(): Promise<EEAccountPresentation> {
     return await eeAuth("me") as unknown as EEAccountPresentation;
   },
-  async signIn(accountKey?: string, secret?: string): Promise<SignInResult> {
+  async signIn(accountKey: string | undefined, secret: string | undefined,
+    providerMode: SystemCapabilities["provider_mode"]): Promise<SignInResult> {
+    if (providerMode === "standalone") {
+      if (accountKey === undefined || secret === undefined) {
+        throw new ApiClientError(401, "PC_AUTHENTICATION_REQUIRED",
+          "Local credentials are required", false);
+      }
+      return request("/v1/pilot/sign-in", undefined, json("POST", {
+        account_key: accountKey,
+        secret
+      }));
+    }
     if (accountKey !== undefined) await eeAuth("login", { username: accountKey, password: secret });
     else await eeAuth("me");
     const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
@@ -97,9 +113,11 @@ export const api = {
     return request("/v1/auth/ee/exchange", undefined, json("POST", { ticket: launch.ticket, code_verifier: verifier }));
   },
 
-  async signOut(token: string): Promise<void> {
-    try { await eeAuth("logout", {}); }
-    catch (error) { if (!(error instanceof ApiClientError) || error.status !== 401) throw error; }
+  async signOut(token: string, providerMode: SystemCapabilities["provider_mode"]): Promise<void> {
+    if (providerMode === "ee-connected") {
+      try { await eeAuth("logout", {}); }
+      catch (error) { if (!(error instanceof ApiClientError) || error.status !== 401) throw error; }
+    }
     await request("/v1/auth/logout", token, json("POST", {}));
   },
 

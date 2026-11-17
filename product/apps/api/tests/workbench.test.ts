@@ -36,6 +36,8 @@ async function fixture() {
     owner_principal_id: "owner", project_code: "EP37", profile_release_id: seeded.profile.profile_release_id } as SstsTaskWorkspace;
   const authenticate = vi.fn(async () => ({ principal: { tenant_id: "tenant", principal_id: "owner", authorization_revision: 1 } }));
   const options = { registry, profiles, runtimeUrl: "http://runtime", tools: [seeded.tool],
+    profileReleaseId: seeded.profile.profile_release_id,
+    reviewProfileReleaseId: seeded.profile.profile_release_id,
     connector: { connector_id: "ee", mcp_server_id: "ee-mcp", provider_key: "official-mcp",
       auth_mode: "delegated", state: "ACTIVE", capability_digest: "catalog-digest" },
     projectDirectory: {
@@ -48,6 +50,7 @@ async function fixture() {
     resources: { getResourceProjection: async () => ({ resource: { current_version_id: "version" } }),
       createBinding: async () => ({ binding_id: "binding" }), getWorkspaceView: async () => view,
       createWorkspaceView: async () => view, materialize: async () => ({}) },
+    gateway: { getOperation: async () => undefined, listOperationAudit: async () => [] },
     gatewayRepository: { findExternalAccountBinding: async () => ({ status: "ACTIVE", credential_generation: 1 }),
       getOperation: async () => undefined }, events: { listTaskOperations: async () => [] }
   } as unknown as WorkbenchOptions;
@@ -61,6 +64,17 @@ async function fixture() {
   }
   return { workbench, registry, workspace, profiles, seeded, register, authenticate,
     prepare: () => workbench.prepare(workspace, "token", [ref]),
+    standaloneRuntime: () => {
+      live = { ...live, tool_provider_capabilities: [] };
+      workbench.options.gateway = undefined;
+      workbench.options.gatewayRepository = undefined;
+      workbench.options.connector = undefined;
+      workbench.options.projectDirectory = undefined;
+      workbench.options.workbenchProjection = undefined;
+      workbench.options.profileReleaseId = undefined;
+      workbench.options.reviewProfileReleaseId = undefined;
+      workbench.options.tools = [];
+    },
     rebuild: () => { live = { ...live, bundle_lock_digest: "bundle-new", manifest_digest: "bundle-new" }; } };
 }
 
@@ -134,6 +148,36 @@ describe("Workbench admission after a local Runtime rebuild", () => {
     expect(workspace).toMatchObject({ principal_id: "owner", profile_release_id: profile.profile_release_id });
     expect(workspace).not.toHaveProperty("project_code");
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("runs the personal admission path without any EE provider dependency", async () => {
+    const f = await fixture();
+    const profile = await f.profiles.publishExpertProfile({
+      ...f.seeded.profile,
+      profile_release_id: "profile:conversation:personal:1",
+      tool_requirements: [],
+      output_contract: { kind: "AI_CONVERSATION", enterprise_write: false }
+    });
+    await f.profiles.assignProfile("owner", profile.profile_release_id);
+    f.standaloneRuntime();
+    f.workbench.options.conversationProfileReleaseId = profile.profile_release_id;
+    const workspace = {
+      ...f.workspace,
+      project_code: undefined,
+      profile_release_id: profile.profile_release_id
+    };
+
+    await expect(f.workbench.projects("token")).resolves.toEqual([]);
+    await expect(f.workbench.catalog("token", "EP37"))
+      .rejects.toMatchObject({ code: "PC_WORKBENCH_PROJECT_PROVIDER_UNAVAILABLE" });
+    const prepared = await f.workbench.prepare(workspace, "token", [{
+      resource_id: "input",
+      resource_version_id: "version"
+    }]);
+    expect(prepared.context.tools).toEqual([]);
+    expect(prepared.context.principal_envelope).toBeDefined();
+    expect(vi.mocked(fetch).mock.calls.every(([url]) =>
+      String(url).startsWith("http://runtime"))).toBe(true);
   });
 
   it("publishes a project CHAT profile from the allowed read subset without weakening SSTS requirements", async () => {
