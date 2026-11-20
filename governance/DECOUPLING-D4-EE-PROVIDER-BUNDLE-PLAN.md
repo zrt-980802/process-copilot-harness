@@ -5,6 +5,8 @@
 - 目标：把 D3 的单进程 EE 装配收口为可版本化、可恢复、可审计的 Provider Bundle
 - 非目标：第二个生产 Provider、EE 权限迁移、生产 IAM、MEMORY-01B、远端发布
 
+D4-0 与 D4-1 的已授权执行任务书见 `DECOUPLING-D4A-EE-PROVIDER-BUNDLE-LIFECYCLE-TASK.md`。该任务完成时只能标记 `D4A COMPLETE / D4B NOT STARTED`，不得据此宣告 D4 全部完成。
+
 ## 1. D4-0：冻结 Bundle 与故障合同
 
 - 定义 EE Bundle 版本、Registration Revision、Compatibility、Catalog Revision 和配置摘要；
