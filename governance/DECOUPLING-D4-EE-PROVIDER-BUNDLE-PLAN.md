@@ -57,6 +57,8 @@ D4-0 与 D4-1 的已授权执行任务书见 `DECOUPLING-D4A-EE-PROVIDER-BUNDLE-
 
 ## 6. D4-5：运行与前端收口
 
+Provider 中立前端与 EE/SSTS 场景隔离已由独立任务书 `FRONTEND-PROVIDER-ISOLATION-01-TASK.md` 授权。该任务只收口用户体验和请求装配，不代表 D4-5 的管理员权限、审计 operation 或 D4 整体完成。
+
 - 将 retry 从最小启动端点收口为有节流、审计和内部权限的 Provider operation；
 - 前端消费稳定 Availability，不直接推断 Health；
 - 补 Provider 状态、最后检查时间、原因与安全重试，不建设完整运维平台；
