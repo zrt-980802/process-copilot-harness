@@ -526,9 +526,9 @@ onMounted(initialize);
 
   <WorkbenchShell v-else-if="principal" :token="token" :principal="principal" :tasks="tasks" :projects="projects"
     :provider-mode="system?.provider_mode ?? 'ee-connected'"
+    :project-provider-unavailable="system?.provider_mode === 'ee-connected' && system.capabilities.project_workbench === 'unavailable'"
     :account-name="accountName" :projection="projection" @open-task="selectTask" @refresh="refreshTask" @logout="logout">
-    <template #default="{ mode, project: activeProject }">
-
+    <template #provider-status>
     <div v-if="system?.provider_mode === 'ee-connected' && system.capabilities.project_workbench === 'unavailable'"
       class="global-error provider-unavailable" role="status">
       <CircleAlert :size="18" />
@@ -538,6 +538,8 @@ onMounted(initialize);
       </div>
       <button class="secondary-button" type="button" :disabled="busy !== ''" @click="retryProvider">重试</button>
     </div>
+    </template>
+    <template #default="{ mode, project: activeProject }">
 
     <div v-if="error" class="global-error" role="alert">
       <CircleAlert :size="18" />

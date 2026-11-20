@@ -1594,8 +1594,8 @@ for (const [source, catalog] of catalogSources) {
   }
 }
 
-if (contracts.length !== 65) {
-  throw new Error(`Expected 65 contracts, parsed ${contracts.length}`);
+if (contracts.length !== 66) {
+  throw new Error(`Expected 66 contracts, parsed ${contracts.length}`);
 }
 
 const outputDirectories = [

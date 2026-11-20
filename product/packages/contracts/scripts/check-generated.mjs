@@ -8,14 +8,14 @@ const packageRoot = path.join(root, "packages", "contracts");
 const manifestPath = path.join(packageRoot, "contract-manifest.json");
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 
-if (manifest.contracts.length !== 65) {
-  throw new Error(`Expected 65 generated contracts, found ${manifest.contracts.length}`);
+if (manifest.contracts.length !== 66) {
+  throw new Error(`Expected 66 generated contracts, found ${manifest.contracts.length}`);
 }
 
 const schemas = await readdir(path.join(packageRoot, "schemas"));
 const valid = await readdir(path.join(packageRoot, "fixtures", "valid"));
 const invalid = await readdir(path.join(packageRoot, "fixtures", "invalid"));
-if (schemas.length !== 65 || valid.length !== 65 || invalid.length !== 65) {
+if (schemas.length !== 66 || valid.length !== 66 || invalid.length !== 66) {
   throw new Error(
     `Generated counts differ: schemas=${schemas.length}, valid=${valid.length}, invalid=${invalid.length}`
   );

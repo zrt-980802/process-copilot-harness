@@ -234,3 +234,14 @@ rollback_plan
 - [x] ADR-0016 Release 不可变、双人审批、Checksum 和回滚测试通过，证据见 `product/packages/authorization/tests/enterprise-authorization.test.ts`；
 - [x] ADR-0017 V1 Contract、零迁移、Baseline 和即时撤权测试通过，证据见 `product/packages/authorization/tests/enterprise-authorization.test.ts`。
 
+## 11. D4A Provider Bundle 兼容扩展
+
+- 2026-11-20：新增 C66 `pc.provider-bundle/1`；未知 major、未知字段和凭据字段拒绝。
+- C61 Registration、C62 Health、C63 Authority Route 和 C65 Availability 的 v1 schema 与语义不变。
+- C66 `READY` 映射到 C62 `HEALTHY`；C65 用既有 `evidence_refs` 表达 generation/registration revision，不附加未版本化字段。
+- D4A 的 `DEGRADED` 只允许诊断，五类 EE Port 均不可执行。Health/Availability 不产生授权 Allow。
+- Connector registration key 绑定进程 epoch 和 generation；旧 Principal Envelope audience、Binding、Credential Lease 不能在重载/重启后成为当前 Connector。
+- D1-D3、Gateway、Runtime、SSTS、MEMORY-01A 既有测试保持；无需 EE/schema/DSH 迁移。
+- 验证：`product/packages/contracts/tests/provider-bundle.test.ts`、`product/apps/api/tests/ee-provider-bundle.test.ts`、`product/apps/api/tests/ee-provider-bundle-startup.test.ts`。
+- 结论仅为 `D4A COMPLETE / D4B NOT STARTED`，不是独立验收或发布资格；完整结果见 `product/docs/decoupling-d4a-verification.md`。
+

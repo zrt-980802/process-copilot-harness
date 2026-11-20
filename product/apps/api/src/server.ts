@@ -39,8 +39,10 @@ import type {
 } from "@pc/ssts-draft";
 import { SstsDraftError } from "@pc/ssts-draft";
 import type { RuntimeWorkbench, RuntimeToolContext } from "./workbench.js";
+import type { EeProviderBundle } from "./ee-provider-bundle.js";
 
 export interface ApiServerDependencies {
+  eeBundle?: EeProviderBundle;
   localIdentityProvider?: IdentityProviderPort;
   eeIdentityProvider?: IdentityProviderPort;
   providerMode?: "standalone" | "ee-connected";
@@ -398,9 +400,9 @@ export function buildApiServer(
   });
 
   server.get("/health", async () => {
-    const providerHealth = dependencies.providerMode === "ee-connected"
+    const providerHealth = dependencies.eeBundle?.observation() ?? (dependencies.providerMode === "ee-connected"
       ? dependencies.identityAuthorization?.providerHealth("provider:eeclaw")
-      : undefined;
+      : undefined);
     const eeProviderState = providerHealth?.provider_state.toLowerCase()
       ?? "unconfigured";
     const projectWorkbench = dependencies.workbench?.hasProjectProvider() === true
@@ -445,7 +447,8 @@ export function buildApiServer(
       ee_provider: eeProviderState,
       project_workbench: projectWorkbench
     },
-    ...(providerHealth === undefined ? {} : { provider_health: providerHealth })
+    ...(providerHealth === undefined ? {} : { provider_health: providerHealth }),
+    ...(dependencies.eeBundle ? { provider_bundle: dependencies.eeBundle.descriptor() } : {})
   };
   });
 
@@ -453,7 +456,8 @@ export function buildApiServer(
     server.post("/v1/providers/eeclaw/retry", async () => {
       await dependencies.retryEeProvider!();
       return {
-        provider_health: dependencies.identityAuthorization?.providerHealth(
+        ...(dependencies.eeBundle ? { provider_bundle: dependencies.eeBundle.descriptor() } : {}),
+        provider_health: dependencies.eeBundle?.observation() ?? dependencies.identityAuthorization?.providerHealth(
           "provider:eeclaw"
         )
       };

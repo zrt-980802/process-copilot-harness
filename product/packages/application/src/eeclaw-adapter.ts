@@ -215,25 +215,33 @@ implements EnterpriseAuthorizationPort {
   }
 
   async fetchCompatibility(): Promise<EeClawLegacyCompatibilityDeclaration> {
-    const response = await this.fetchImpl(
+    let response: Response;
+    try { response = await this.fetchImpl(
       `${this.baseUrl}/api/internal/process-copilot/v1/compatibility`,
       {
         headers: {
           "x-pc-adapter-secret": this.options.sharedSecret
         },
-        signal: AbortSignal.timeout(5_000)
+        redirect: "error", signal: AbortSignal.timeout(5_000)
       }
-    );
-    if (!response.ok) {
-      throw new Error(`EE Claw compatibility request failed: ${response.status}`);
+    ); } catch (error) {
+      throw new IdentityAuthorizationError(error instanceof Error && error.name === "TimeoutError"
+        ? "PC_PROVIDER_TIMEOUT" : "PC_PROVIDER_UNAVAILABLE", "EE compatibility transport failed", true);
     }
-    const body = await response.json() as {
+    if (!response.ok) {
+      throw new IdentityAuthorizationError([401, 403].includes(response.status)
+        ? "PC_PROVIDER_AUTHENTICATION_FAILED" : response.status >= 500 ? "PC_PROVIDER_UNAVAILABLE" : "PC_PROVIDER_INCOMPATIBLE",
+      "EE compatibility request failed", response.status >= 500);
+    }
+    let body: {
       ok?: boolean;
       data?: EeClawLegacyCompatibilityDeclaration;
     };
-    const declaration = body.data;
+    try { body = await response.json() as typeof body; }
+    catch { throw new IdentityAuthorizationError("PC_PROVIDER_PROTOCOL_FAILED", "EE compatibility returned invalid JSON"); }
+    const declaration = body?.data;
     if (
-      body.ok !== true
+      body?.ok !== true
       || declaration?.contract_name
         !== "eeclaw.legacy-auth-compatibility/1"
       || declaration.contract_version !== 1
@@ -242,7 +250,7 @@ implements EnterpriseAuthorizationPort {
       || declaration.data_migration_required
       || declaration.revocation_mode !== "request_time"
     ) {
-      throw new Error("EE Claw compatibility declaration is unsupported");
+      throw new IdentityAuthorizationError("PC_PROVIDER_INCOMPATIBLE", "EE Claw compatibility declaration is unsupported");
     }
     return declaration;
   }

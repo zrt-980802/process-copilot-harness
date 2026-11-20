@@ -45,6 +45,7 @@ export interface WorkbenchOptions {
   reviewProfileReleaseId?: string;
   runtimeSecret?: string;
   projectDirectory?: ProjectDirectoryPort;
+  providerCatalogRevision?(): string;
   workbenchProjection?: WorkbenchProjectionPort;
   providerAvailability?: {
     isUsable(providerRegistrationId: string): boolean;
@@ -197,7 +198,7 @@ export class RuntimeWorkbench {
       principal_id: principal.principal_id,
       health_observation_id: observation?.health_observation_id
         ?? `provider-health:${providerId.replace(/^provider:/u, "")}`,
-      catalog_revision: this.options.connector?.capability_digest ?? "catalog-unavailable",
+      catalog_revision: this.options.connector?.capability_digest ?? this.options.providerCatalogRevision?.() ?? "catalog-unavailable",
       capabilities,
       reason_codes: observation?.reason_codes ?? ["provider_unconfigured"],
       evidence_refs: observation?.evidence_refs.length

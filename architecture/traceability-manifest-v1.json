@@ -2,7 +2,7 @@
   "manifest_name": "process-copilot-architecture-traceability",
   "manifest_version": 1,
   "status": "accepted-blueprint",
-  "generated_at": "2026-11-17",
+  "generated_at": "2026-11-20",
   "authority": {
     "adr_index": "architecture/README.md",
     "module_matrix": "architecture/implementation-module-responsibility-matrix-v1.md",
@@ -186,10 +186,10 @@
       "status": "accepted",
       "modules": ["M01", "M02", "M03", "M07", "M08", "M11", "M14", "M16", "M21", "M22"],
       "external_authorities": ["E01", "E02", "E03", "E04"],
-      "contracts": ["C01", "C02", "C03", "C04", "C15", "C16", "C21", "C22", "C23", "C24", "C32", "C33", "C41", "C42", "C61", "C62", "C63", "C64", "C65"],
-      "test_refs": ["TS-DECOUPLING-001", "TS-DECOUPLING-002", "TS-DECOUPLING-003", "TS-DECOUPLING-004", "TS-DECOUPLING-005"],
-      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-IAM-003", "REF-ROLE-001", "REF-ROLE-003", "architecture/external-provider-decoupling-d0-inventory-v1.md", "architecture/external-provider-contract-catalog-v1.md", "architecture/external-provider-decoupling-d1-port-split-v1.md", "architecture/external-provider-decoupling-d2-standalone-v1.md", "product/docs/decoupling-d2-verification.md", "architecture/external-provider-decoupling-d3-authority-router-v1.md", "product/docs/decoupling-d3-verification.md"],
-      "implementation_status": "d3-authority-router-provider-local-degradation-complete"
+      "contracts": ["C01", "C02", "C03", "C04", "C15", "C16", "C21", "C22", "C23", "C24", "C32", "C33", "C41", "C42", "C61", "C62", "C63", "C64", "C65", "C66"],
+      "test_refs": ["TS-DECOUPLING-001", "TS-DECOUPLING-002", "TS-DECOUPLING-003", "TS-DECOUPLING-004", "TS-DECOUPLING-005", "TS-DECOUPLING-006"],
+      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-IAM-003", "REF-ROLE-001", "REF-ROLE-003", "architecture/external-provider-decoupling-d0-inventory-v1.md", "architecture/external-provider-contract-catalog-v1.md", "architecture/external-provider-decoupling-d1-port-split-v1.md", "architecture/external-provider-decoupling-d2-standalone-v1.md", "product/docs/decoupling-d2-verification.md", "architecture/external-provider-decoupling-d3-authority-router-v1.md", "product/docs/decoupling-d3-verification.md", "architecture/external-provider-decoupling-d4a-provider-bundle-v1.md", "product/docs/decoupling-d4a-verification.md"],
+      "implementation_status": "d4a-provider-bundle-lifecycle-complete-d4b-not-started"
     }
   ]
 }

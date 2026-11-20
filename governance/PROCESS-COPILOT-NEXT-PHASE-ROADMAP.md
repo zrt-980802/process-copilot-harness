@@ -1,7 +1,7 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 COMPLETE / D1 COMPLETE / D2 STANDALONE COMPLETE / D3 AUTHORITY ROUTER COMPLETE / D4 PLANNED NOT STARTED`
-> 日期：2026-11-17（Asia/Shanghai）  
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0 COMPLETE / D1 COMPLETE / D2 STANDALONE COMPLETE / D3 AUTHORITY ROUTER COMPLETE / D4A COMPLETE / D4B NOT STARTED`
+> 日期：2026-11-20（Asia/Shanghai）
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
 
@@ -99,11 +99,17 @@ D2 的详细执行计划见 `governance/DECOUPLING-D2-STANDALONE-PLAN.md`。
 - C65 Availability 与前端状态不替代执行授权；
 - 受退避和 single-flight 控制的恢复可重新装配 EE Catalog/Workbench。
 
-下一阶段 D4 的详细计划见 `governance/DECOUPLING-D4-EE-PROVIDER-BUNDLE-PLAN.md`。D4 尚未启动。
+### 3.5 D4A：EE Provider Bundle 生命周期
+
+状态：`D4A COMPLETE / D4B NOT STARTED`。仅完成 W0、D4-0/D4-1 及所需 API/Workbench 接线、本地开发者验证。
+五类 Port、Catalog/Profile/Connector 通过同一 generation 原子发布；失败关闭 EE 执行，保留 Core 个人工作台。
+合同新增 C66，C61/C62/C65 语义不变；single-flight、旧 generation fencing、实际 API 不可达启动及前端状态检查通过。
+结果见 `architecture/external-provider-decoupling-d4a-provider-bundle-v1.md`、`product/docs/decoupling-d4a-verification.md`。
+D4 总计划见 `governance/DECOUPLING-D4-EE-PROVIDER-BUNDLE-PLAN.md`；D4-2 至 D4-6 未实施，须新任务授权，不自动进入 D4B。
 
 ## 4. DECOUPLING-CORE-01：PC 独立控制面
 
-当前进度：D3 已完成按 Provider/action/resource 的 Authority Router、Provider Health 与 EE 局部降级；D4 将收口 EE Provider Bundle、端口级 Health、可信 Operation Resolver 与跨实例撤权。
+当前进度：D3 Authority Router 与局部降级、D4A EE Bundle 生命周期已完成；端口级 Health、可信 Operation Resolver、跨实例撤权等 D4B 范围尚未开始。
 
 - 将 EE Session 从唯一登录前提改为一种 `IdentityProvider`；
 - 将全局 `ExternalAuthorizationPort[]` 改成按 Provider、action namespace 和 resource authority 路由；

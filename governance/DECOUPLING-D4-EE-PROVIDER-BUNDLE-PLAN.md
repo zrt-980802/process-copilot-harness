@@ -1,11 +1,15 @@
 # DECOUPLING D4：EE Provider Bundle 与运行治理计划
 
-- 状态：Planned / Not Started
+- 状态：D4A COMPLETE / D4B NOT STARTED（D4 整体尚未完成）
 - 前置：D3 Complete
 - 目标：把 D3 的单进程 EE 装配收口为可版本化、可恢复、可审计的 Provider Bundle
 - 非目标：第二个生产 Provider、EE 权限迁移、生产 IAM、MEMORY-01B、远端发布
 
 D4-0 与 D4-1 的已授权执行任务书见 `DECOUPLING-D4A-EE-PROVIDER-BUNDLE-LIFECYCLE-TASK.md`。该任务完成时只能标记 `D4A COMPLETE / D4B NOT STARTED`，不得据此宣告 D4 全部完成。
+
+2026-11-20 实际结果：W0 与 D4-0/D4-1 已通过本地开发者门禁。C66、聚合状态机、single-flight、完整候选原子发布、旧端口/Connector/Workbench fencing、Core 个人路径保留、health/C65/retry 接线和最小前端不可用状态已实现。
+验证记录：`../product/docs/decoupling-d4a-verification.md`；架构结果：`../architecture/external-provider-decoupling-d4a-provider-bundle-v1.md`。
+以下 D4-2 至 D4-6 仍为计划，未开展，不自动进入 D4B。
 
 ## 1. D4-0：冻结 Bundle 与故障合同
 
@@ -77,4 +81,4 @@ D4-0 与 D4-1 的已授权执行任务书见 `DECOUPLING-D4A-EE-PROVIDER-BUNDLE-
 - 跨实例恢复必须绕过 request-time authorization；
 - 任务扩展为第二 Provider 或生产发布。
 
-D4 必须由新的明确指令启动。本计划不表示 D4 已实施。
+D4A 已按明确任务完成其边界；D4B 必须由新的明确指令启动。本计划不表示 D4 整体已完成。

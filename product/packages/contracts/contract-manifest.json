@@ -520,6 +520,14 @@
       "schema": "schemas/C65.pc.capability-availability-1.schema.json",
       "valid_fixture": "fixtures/valid/C65.valid.json",
       "invalid_fixture": "fixtures/invalid/C65.missing-availability_id.invalid.json"
+    },
+    {
+      "id": "C66",
+      "contract_name": "pc.provider-bundle/1",
+      "contract_version": 1,
+      "schema": "schemas/C66.pc.provider-bundle-1.schema.json",
+      "valid_fixture": "fixtures/valid/C66.valid.json",
+      "invalid_fixture": "fixtures/invalid/C66.missing-provider_id.invalid.json"
     }
   ]
 }

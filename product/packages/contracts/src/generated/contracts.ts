@@ -1238,3 +1238,20 @@ export interface C65Contract {
   expires_at: string;
   [key: string]: unknown;
 }
+
+export interface C66Contract {
+  contract_name: string;
+  contract_version: number;
+  provider_id: string;
+  bundle_version: string;
+  registration_revision: number;
+  compatibility_status: "COMPATIBLE" | "INCOMPATIBLE" | "UNKNOWN" | "NOT_APPLICABLE";
+  catalog_revision: string;
+  configuration_digest: string;
+  bundle_generation: string;
+  bundle_state: "UNCONFIGURED" | "STARTING" | "READY" | "DEGRADED" | "UNAVAILABLE" | "DISABLED";
+  reason_codes: unknown[];
+  observed_at: string;
+  expires_at: string;
+  [key: string]: unknown;
+}

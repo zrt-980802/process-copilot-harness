@@ -86,7 +86,7 @@ export class ProviderHealthRegistry {
     configurationRevision = 1
   ): void {
     const existing = this.records.get(providerRegistrationId);
-    if (existing !== undefined) {
+    if (existing !== undefined && existing.configurationRevision === configurationRevision) {
       ports.forEach((port) => existing.ports.add(port));
       return;
     }

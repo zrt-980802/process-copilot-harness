@@ -336,6 +336,7 @@ export async function synchronizeEeMcpCatalog(input: {
   access_token: string;
   tenant_id: string;
   endpoint: string;
+  registration_key?: string;
   profiles: { publishToolRelease(tool: EeMcpCatalog["tools"][number]): Promise<ToolRelease> };
   gateway: { registerConnector(
     registration: Omit<ConnectorRegistration, "connector_id" | "state" | "registration_revision" | "created_at" | "updated_at">,
@@ -352,6 +353,6 @@ export async function synchronizeEeMcpCatalog(input: {
     allowed_scopes: [...new Set(tools.flatMap((tool) => [...tool.required_permissions]))].sort(),
     tool_release_ids: tools.map((tool) => tool.tool_release_id).sort(),
     capability_digest: catalog.catalog_digest
-  }, { registration_key: "ee_mcp_catalog" });
+  }, { registration_key: input.registration_key ?? "ee_mcp_catalog" });
   return { connector, tools };
 }

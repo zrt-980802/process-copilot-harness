@@ -23,7 +23,8 @@ these directories adjacent.
 - MEMORY-01B is not implemented and remains on hold.
 - The next mainline is PC/EE identity, authorization and business-provider
   decoupling. D0 contracts, D1 ports, D2 Standalone and D3 Authority Router
-  with Provider-local degradation are complete; D4 is planned but not started.
+  with Provider-local degradation are complete. D4A Bundle lifecycle is complete;
+  D4B has not started. This is not completion of all D4 work.
 - EE business authorization remains authoritative for EE projects and objects;
   PC owns PC Principal, Session, Conversation, Memory, Task, Plugin, Tool,
   Approval and Audit policy.
@@ -35,6 +36,12 @@ D2 supports a controlled local/development identity and personal Workbench
 without EE configuration. D3 isolates a configured EE outage to EE-owned
 paths. This does not make the local provider a production IAM and does not
 implement production multi-provider routing.
+
+D4A publishes all five EE ports, Catalog, Profiles and Connector as one fenced
+generation. Failed reload closes EE execution and retains diagnostic metadata;
+the persistent personal Workbench continues. Architecture and developer evidence:
+`architecture/external-provider-decoupling-d4a-provider-bundle-v1.md` and
+`product/docs/decoupling-d4a-verification.md`.
 
 ## Verify
 

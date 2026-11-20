@@ -1,0 +1,16 @@
+{
+  "contract_name": "pc.provider-bundle/1",
+  "contract_version": 1,
+  "bundle_version": "1.0.0",
+  "registration_revision": 1,
+  "compatibility_status": "COMPATIBLE",
+  "catalog_revision": "ee-mcp-catalog-1",
+  "configuration_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "bundle_generation": "process-epoch-1.1",
+  "bundle_state": "READY",
+  "reason_codes": [
+    "bundle_ready"
+  ],
+  "observed_at": "2026-11-17T00:00:00.000Z",
+  "expires_at": "2026-11-17T00:05:00.000Z"
+}

@@ -447,6 +447,8 @@ export class IdentityAuthorizationService {
     this.authorityRouter.registerProvider(port);
   }
 
+  get providerHealthRegistry() { return this.authorityRouter.health; }
+
   registerProviderHealthPorts(
     providerRegistrationId: string,
     ports: readonly ProviderPortKind[]

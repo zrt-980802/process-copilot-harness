@@ -1,7 +1,7 @@
 # DECOUPLING-D4A：主线入口收口与 EE Provider Bundle 生命周期任务书
 
 - 任务编号：`DECOUPLING-D4A-EE-PROVIDER-BUNDLE-LIFECYCLE`
-- 状态：`READY / NOT STARTED`
+- 状态：`D4A COMPLETE / D4B NOT STARTED`（2026-11-20，本地开发者验证；非独立验收）
 - 日期：2026-11-20（Asia/Shanghai）
 - 前置：D0、D1、D2、D3 Complete；D3 实现基线与任务书起草时 GitHub `main` = `f9d0f26917df990bb6a657b52ab4208dfbac0b76`
 - 主工作仓库：`E:/shanzi_workspace/process-copilot-harness`

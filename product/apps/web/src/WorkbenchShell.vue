@@ -13,7 +13,7 @@ interface Tool { tool_release_id: string; tool_definition_id: string; input_sche
   risk_manifest: { action_class: string }; approval_policy: string; recovery_class: string }
 const props = defineProps<{ token: string; principal: Principal; accountName: string; tasks: Workspace[];
   projects: Array<{ project_code: string; project_name: string }>;
-  providerMode: "standalone" | "ee-connected"; projection?: TaskProjection | undefined }>();
+  providerMode: "standalone" | "ee-connected"; projectProviderUnavailable?: boolean; projection?: TaskProjection | undefined }>();
 const emit = defineEmits<{ openTask: [id: string]; refresh: []; logout: [] }>();
 const view = ref("home");
 const homeTab = ref("home");
@@ -169,15 +169,16 @@ watch(() => props.tasks.map((task) => `${task.workspace_id}:${task.version}`).jo
         <span v-if="view === 'home'" class="home-scope">个人范围 · 我的跨项目记录</span>
         <label v-else class="current-scope"><span>{{ project ? '项目范围' : '个人范围' }}</span><select v-model="project" aria-label="当前项目" @change="changeProject"><option value="">个人范围</option><option v-for="item in projects" :key="item.project_code" :value="item.project_code">{{ item.project_code }} · {{ item.project_name }}</option></select></label>
         <ChevronRight :size="15" class="muted" /><span class="breadcrumb">{{ title }}</span>
-        <div class="topbar-end"><span class="demo-indicator">{{ providerMode === 'standalone' ? '独立模式' : 'EE 已连接' }}</span><button v-if="view !== 'home' && providerMode === 'ee-connected'" class="icon-button" title="刷新项目数据" :disabled="busy" @click="refresh"><RefreshCw :size="17" :class="{ spin: busy }" /></button><button class="account-summary" title="账号与设置" aria-label="账号与设置" @click="accountDialog?.showModal()"><UserRound :size="17" /><span><strong>{{ principal.ee_account?.display_name || accountName }}</strong><small data-test="account-role">{{ accountRole }}</small></span></button></div>
+        <div class="topbar-end"><span class="demo-indicator">{{ providerMode === 'standalone' ? '独立模式' : projectProviderUnavailable ? 'EE 暂不可用' : 'EE 已连接' }}</span><button v-if="view !== 'home' && providerMode === 'ee-connected'" class="icon-button" title="刷新项目数据" :disabled="busy" @click="refresh"><RefreshCw :size="17" :class="{ spin: busy }" /></button><button class="account-summary" title="账号与设置" aria-label="账号与设置" @click="accountDialog?.showModal()"><UserRound :size="17" /><span><strong>{{ principal.ee_account?.display_name || accountName }}</strong><small data-test="account-role">{{ accountRole }}</small></span></button></div>
       </header>
+      <slot name="provider-status" />
       <div v-if="failure && projectView" class="workbench-alert" role="alert"><CircleAlert :size="18" /><span>{{ failure }}</span><button class="icon-button" title="重试" @click="refresh"><RefreshCw :size="16" /></button></div>
       <div v-if="busy && projectView" class="project-loading" role="status"><RefreshCw :size="14" class="spin" />读取项目资料</div>
 
       <PersonalHome :initial-tab="homeTab" :initial-project="homeProject" v-if="view === 'home'" :token="token" :principal="principal" :account-name="accountName" :tasks="tasks" :projects="projects" :provider-mode="providerMode" @open-task="openTask" @open-project="openProject" @refresh="emit('refresh')" />
 
       <div v-if="workspaceVisited" v-show="view === 'workspace' || view === 'conversation'" class="task-workspace" :class="{ 'conversation-workspace': view === 'conversation' }"><slot :mode="view" :project="project" /></div>
-      <section v-if="projectView && !project" class="project-scope-empty"><FolderOpen :size="26" /><h1>{{ projects.length ? '选择项目' : '暂无授权项目' }}</h1><p>{{ projects.length ? '项目资料' : '个人对话与我的记录' }}</p><button v-if="!projects.length" class="secondary-button" @click="navigate('home')"><Home :size="16" />我的首页</button></section>
+      <section v-if="projectView && !project" class="project-scope-empty"><FolderOpen :size="26" /><h1>{{ projectProviderUnavailable ? '项目能力暂不可用' : projects.length ? '选择项目' : '暂无授权项目' }}</h1><p>{{ projects.length ? '项目资料' : '个人对话与我的记录' }}</p><button v-if="!projects.length" class="secondary-button" @click="navigate('home')"><Home :size="16" />我的首页</button></section>
       <main v-if="projectView && project" class="desktop-content" :class="{ 'with-summary': view === 'overview' }">
         <section class="content-main">
           <template v-if="view === 'overview'">

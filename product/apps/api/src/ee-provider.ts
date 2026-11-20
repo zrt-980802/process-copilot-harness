@@ -31,7 +31,8 @@ export class EeClawProjectDirectoryAdapter implements ProjectDirectoryPort {
   async listProjects(input: Parameters<ProjectDirectoryPort["listProjects"]>[0]): Promise<readonly ProjectDirectoryItem[]> {
     const accountId = await this.options.identity.resolveExternalSubject(
       input.principal.principal_id,
-      "eeclaw"
+      "eeclaw",
+      { issuer: this.baseUrl, tenant: input.principal.tenant_id }
     );
     if (accountId === undefined) {
       throw new IdentityAuthorizationError(

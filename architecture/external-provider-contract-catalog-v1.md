@@ -1,8 +1,8 @@
 # Process Copilot 外部 Provider Contract Catalog v1
 
 - 状态：Accepted Extension
-- 日期：2026-11-17
-- 编号：延续 C01-C60，使用 C61-C65
+- 日期：2026-11-20
+- 编号：延续 C01-C60，使用 C61-C66（D4A 新增 C66）
 - 依据：ADR-0024、`external-provider-decoupling-d0-inventory-v1.md`
 - 边界：冻结 Provider 注册、健康、路由、目录与可用性；不改变当前运行行为
 
@@ -124,6 +124,26 @@ expires_at
 ```
 
 每个 capability 声明 capability/tool ref、action namespace、resource authority、operation class、approval requirement 与 availability state。`AVAILABLE` 只表示可发现和可装配，执行仍需 C03、C21-C24 和源系统最终授权。
+
+### C66 `pc.provider-bundle/1`
+
+Versioned D4A lifecycle descriptor, supplemental to unchanged C61/C62/C65. No credentials, endpoint values, executable Port or Authorization Allow are serialized. READY maps to the existing C62 HEALTHY state. Generation includes a process epoch; retained diagnostic metadata is not an active capability.
+
+```text
+provider_id
+bundle_version
+registration_revision
+compatibility_status
+catalog_revision
+configuration_digest
+bundle_generation
+bundle_state
+reason_codes[]
+observed_at
+expires_at
+```
+
+Lifecycle/failure semantics: `external-provider-decoupling-d4a-provider-bundle-v1.md`.
 
 ## 3. Port Catalog
 

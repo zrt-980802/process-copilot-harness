@@ -34,6 +34,10 @@ const healthStates = [
 ];
 
 export const externalProviderEnumOverrides = {
+  C66: {
+    bundle_state: ["UNCONFIGURED", "STARTING", "READY", "DEGRADED", "UNAVAILABLE", "DISABLED"],
+    compatibility_status: ["COMPATIBLE", "INCOMPATIBLE", "UNKNOWN", "NOT_APPLICABLE"]
+  },
   C61: {
     provider_kind: ["EXTERNAL_BUSINESS", "LOCAL", "IDENTITY_ONLY"],
     registration_state: ["ACTIVE", "DISABLED", "SUPERSEDED"]
@@ -50,6 +54,15 @@ export const externalProviderEnumOverrides = {
 };
 
 export const externalProviderSchemaOverrides = {
+  C66: {
+    provider_id: providerId,
+    bundle_version: { type: "string", pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    registration_revision: { type: "integer", minimum: 1 },
+    catalog_revision: { type: "string", minLength: 1 },
+    configuration_digest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" },
+    bundle_generation: { type: "string", minLength: 1 },
+    reason_codes: { type: "array", minItems: 1, uniqueItems: true, items: { type: "string", minLength: 1 } }
+  },
   C61: {
     provider_registration_id: providerId,
     provider_key: { type: "string", pattern: "^[a-z][a-z0-9._-]*$" },
@@ -257,6 +270,19 @@ export const externalProviderRootSchemaOverrides = {
 };
 
 export const externalProviderFixtureOverrides = {
+  C66: {
+    provider_id: "provider:eeclaw",
+    bundle_version: "1.0.0",
+    registration_revision: 1,
+    compatibility_status: "COMPATIBLE",
+    catalog_revision: "ee-mcp-catalog-1",
+    configuration_digest: sha256,
+    bundle_generation: "process-epoch-1.1",
+    bundle_state: "READY",
+    reason_codes: ["bundle_ready"],
+    observed_at: timestamp,
+    expires_at: expiry
+  },
   C61: {
     provider_registration_id: "provider:eeclaw",
     provider_key: "eeclaw",
