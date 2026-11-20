@@ -50,6 +50,12 @@ capabilities retain their vertical views. Design and local developer evidence:
 `architecture/frontend-provider-neutral-experience-v1.md` and
 `product/docs/frontend-provider-isolation-01-verification.md`.
 
+The subsequent real EE isolation task is blocked by EE-authenticated personal
+conversation failure during source outage and Business Operations remaining
+VERIFYING. A bounded Gateway Connector-target repair is locally verified;
+the task is not complete. Evidence and retest limits:
+`product/docs/real-ee-integration-closure-01.md`.
+
 ## Verify
 
 Prerequisites: Node.js 22 or later and pnpm 11.21.0.

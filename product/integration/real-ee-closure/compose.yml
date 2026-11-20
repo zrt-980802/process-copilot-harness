@@ -1,0 +1,190 @@
+name: pc-real-ee-closure-01
+x-ee: &ee
+  PC_LOCAL_DEMO: "1"
+  RC_TASK: REAL-EE-INTEGRATION-CLOSURE-01
+  PYTHON_DOTENV_DISABLED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONPATH: /ee/backend:/ee/apps/process-copilot-mcp-adapter
+  MYSQL_HOST: ee-mysql
+  MYSQL_PORT: "3306"
+  MYSQL_USER: ee_demo
+  MYSQL_DATABASE: ee_pc_demo
+  MYSQL_PASSWORD: ${RC_MYSQL_PASSWORD:?runtime only}
+  PROCESS_COPILOT_ADAPTER_SECRET: ${RC_EE_SECRET:?runtime only}
+  PROCESS_COPILOT_API_URL: http://pc-api:3000
+  FEISHU_APP_ID: isolated-no-external-bot
+  FEISHU_APP_SECRET: ${RC_EE_SECRET}
+  FEISHU_VERIFICATION_TOKEN: ${RC_EE_SECRET}
+  RC_ENGINEER_PASSWORD: ${RC_ENGINEER_PASSWORD:?runtime only}
+  RC_REVIEWER_PASSWORD: ${RC_REVIEWER_PASSWORD:?runtime only}
+  RC_GENERIC_PASSWORD: ${RC_GENERIC_PASSWORD:?runtime only}
+  RC_ZERO_PASSWORD: ${RC_ZERO_PASSWORD:?runtime only}
+  RC_ADMIN_PASSWORD: ${RC_ADMIN_PASSWORD:?runtime only}
+x-pc: &pc
+  RC_TASK: REAL-EE-INTEGRATION-CLOSURE-01
+  HOST: 0.0.0.0
+  PORT: "3000"
+  DATABASE_URL: postgresql://pc:${RC_POSTGRES_PASSWORD:?runtime only}@pc-postgres:5432/pc
+  PC_IDENTITY_STORE: postgres
+  PC_PROFILE_STORE: postgres
+  PC_RESOURCE_STORE: postgres
+  PC_RUNTIME_REGISTRY_STORE: postgres
+  PC_EVENT_STORE: postgres
+  PC_SSTS_STORE: postgres
+  PC_BLOB_ROOT: /data/blobs
+  PC_MATERIALIZATION_ROOT: /data/workspaces
+  PC_ENVELOPE_SIGNING_KEY: ${RC_SIGNING_KEY:?runtime only}
+  PC_RUNTIME_SERVICE_SECRET: ${RC_RUNTIME_SECRET:?runtime only}
+  PC_EVENT_INGEST_SECRET: ${RC_EVENT_SECRET:?runtime only}
+  PC_PILOT_TENANT_ID: rc_ee_integration_01
+  PC_WORKBENCH_RUNTIME_URL: http://pc-runtime:3100
+  PC_USER_RUNTIME_MANAGER_URL: http://user-runtime-manager:3200
+x-runtime: &runtime
+  <<: *pc
+  PORT: "3100"
+  PC_RUNTIME_EPOCH: "1"
+  PC_RUNTIME_STATE_ROOT: /runtime-state/host
+  PC_RUNTIME_WORKSPACE: /runtime-state/workspace
+  DSH_HOME: /runtime-state/home
+  DSH_BIN: /usr/local/bin/dsh-source
+  DSH_BRIDGE_COMMAND: python
+  DSH_PYTHON_BRIDGE: /app/python/dsh_runtime_bridge.py
+  PC_RUNTIME_BRIDGE_ROOT: /app/bridge
+  DSH_PROFILE_PATCH: /app/profiles/process-copilot-runtime/cordis.patch.yml
+  DSH_PROVIDER: deepseek-official
+  DSH_MODEL: ${RC_MODEL:-deepseek-chat}
+  DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+  DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+  DSH_REQUEST_TIMEOUT_MS: "180000"
+  PC_RUNTIME_TOOL_URL: http://pc-api:3000/v1/internal/runtime-tools/execute
+  PC_EVENT_INGEST_URL: http://pc-api:3000/v1/events/ingest
+services:
+  ee-mysql:
+    image: ${RC_MYSQL_IMAGE:?pinned image}
+    environment:
+      MYSQL_DATABASE: ee_pc_demo
+      MYSQL_USER: ee_demo
+      MYSQL_PASSWORD: ${RC_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${RC_MYSQL_ROOT_PASSWORD:?runtime only}
+    volumes: [ee-mysql-data:/var/lib/mysql]
+    networks: [control]
+    healthcheck: {test: [CMD-SHELL, 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent'], interval: 3s, timeout: 3s, retries: 50}
+  pc-postgres:
+    image: ${RC_POSTGRES_IMAGE:?pinned image}
+    environment: {POSTGRES_USER: pc, POSTGRES_PASSWORD: "${RC_POSTGRES_PASSWORD}", POSTGRES_DB: pc}
+    volumes: [pc-postgres-data:/var/lib/postgresql/data]
+    networks: [control]
+    healthcheck: {test: [CMD-SHELL, pg_isready -U pc -d pc], interval: 3s, timeout: 3s, retries: 40}
+  standalone-postgres:
+    image: ${RC_POSTGRES_IMAGE}
+    environment: {POSTGRES_USER: pc, POSTGRES_PASSWORD: "${RC_POSTGRES_PASSWORD}", POSTGRES_DB: pc}
+    volumes: [standalone-postgres-data:/var/lib/postgresql/data]
+    networks: [standalone]
+    healthcheck: {test: [CMD-SHELL, pg_isready -U pc -d pc], interval: 3s, timeout: 3s, retries: 40}
+  ee-api:
+    image: real-ee-closure-app:ffd0114
+    build: {context: ../.., dockerfile: integration/real-ee-closure/app.Dockerfile, args: {BASE_IMAGE: "${RC_BASE_IMAGE:?pinned image}"}}
+    command: [python, ee_fixture.py, serve]
+    environment: *ee
+    volumes: ["${RC_EE_ROOT:?explicit dev09a root}:/ee:ro", ee-bootstrap:/demo-bootstrap]
+    networks: [control, browser]
+    ports: [127.0.0.1:18792:5000]
+    depends_on: {ee-mysql: {condition: service_healthy}}
+    healthcheck: {test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/health')"], interval: 3s, timeout: 3s, retries: 50}
+  ee-mcp-adapter:
+    image: real-ee-closure-app:ffd0114
+    command: [python, -m, ee_mcp_adapter]
+    environment:
+      <<: *ee
+      EE_MCP_HOST: 0.0.0.0
+      EE_MCP_PORT: "5011"
+      EE_MCP_SERVICE_VERSION: 0.2.0-real-ee-isolated
+      EE_APP_BASE_URL: http://ee-api:5000
+      EE_MCP_ADAPTER_SECRET: ${RC_MCP_SECRET:?runtime only}
+    volumes: ["${RC_EE_ROOT}:/ee:ro"]
+    networks: [control, browser]
+    ports: [127.0.0.1:18793:5011]
+    depends_on: {ee-api: {condition: service_healthy}}
+    healthcheck: {test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5011/health')"], interval: 3s, timeout: 3s, retries: 35}
+  pc-api:
+    image: real-ee-closure-app:ffd0114
+    command: [node, main.mjs]
+    environment:
+      <<: *pc
+      PC_LOGIN_MODE: ee
+      PC_GATEWAY_STORE: postgres
+      PC_GATEWAY_PROVIDER: ee_mcp
+      EECLAW_ADAPTER_URL: http://ee-api:5000
+      EECLAW_ADAPTER_SECRET: ${RC_EE_SECRET}
+      EE_MCP_ADAPTER_URL: http://ee-mcp-adapter:5011/mcp
+      EE_MCP_ADAPTER_SECRET: ${RC_MCP_SECRET}
+    volumes: [pc-data:/data]
+    networks: [control]
+    depends_on: {pc-postgres: {condition: service_healthy}, ee-mcp-adapter: {condition: service_healthy}}
+  pc-runtime:
+    image: real-ee-closure-app:ffd0114
+    command: [node, runtime.mjs]
+    environment:
+      <<: *runtime
+      PC_RUNTIME_ID: rc-runtime-template
+    volumes: [pc-data:/data, runtime-data:/runtime-state]
+    networks: [control, model]
+  user-runtime-manager:
+    image: real-ee-closure-app:ffd0114
+    command: [python, runtime-manager.py]
+    environment: {PC_LOCAL_DEMO: "1", PC_RUNTIME_TENANT: rc_ee_integration_01, PC_RUNTIME_SERVICE_SECRET: "${RC_RUNTIME_SECRET}"}
+    volumes: [/var/run/docker.sock:/var/run/docker.sock, pc-data:/pc-data, "./runtime-manager.py:/app/demo/runtime-manager.py:ro"]
+    networks: [control]
+  standalone-api:
+    image: real-ee-closure-app:ffd0114
+    command: [node, main.mjs]
+    environment:
+      <<: *pc
+      DATABASE_URL: postgresql://pc:${RC_POSTGRES_PASSWORD}@standalone-postgres:5432/pc
+      PC_LOGIN_MODE: local
+      PC_GATEWAY_STORE: disabled
+      PC_PILOT_ACCOUNT_KEY: rc.personal
+      PC_PILOT_ACCOUNT_SECRET: ${RC_PERSONAL_PASSWORD:?runtime only}
+      PC_WORKBENCH_RUNTIME_URL: http://standalone-runtime:3100
+      PC_USER_RUNTIME_MANAGER_URL: ""
+    volumes: [standalone-data:/data]
+    networks:
+      standalone: {aliases: [pc-api]}
+    depends_on: {standalone-postgres: {condition: service_healthy}}
+  standalone-runtime:
+    image: real-ee-closure-app:ffd0114
+    command: [node, runtime.mjs]
+    environment:
+      <<: *runtime
+      DATABASE_URL: postgresql://pc:${RC_POSTGRES_PASSWORD}@standalone-postgres:5432/pc
+      PC_RUNTIME_ID: rc-standalone-runtime
+      PC_RUNTIME_TOOL_URL: http://standalone-api:3000/v1/internal/runtime-tools/execute
+      PC_EVENT_INGEST_URL: http://standalone-api:3000/v1/events/ingest
+    volumes: [standalone-data:/data, standalone-runtime-data:/runtime-state]
+    networks: [standalone, model]
+  web:
+    image: real-ee-closure-web:ffd0114
+    build: {context: ../.., dockerfile: integration/real-ee-closure/web.Dockerfile, args: {NGINX_IMAGE: "${RC_NGINX_IMAGE:?pinned image}"}}
+    ports: [127.0.0.1:18791:80]
+    networks: [control, browser]
+    depends_on: [pc-api]
+  standalone-web:
+    image: real-ee-closure-web:ffd0114
+    ports: [127.0.0.1:18790:80]
+    networks: [standalone, standalone-browser]
+    depends_on: [standalone-api]
+networks:
+  browser: {}
+  standalone-browser: {}
+  control: {internal: true}
+  standalone: {internal: true}
+  model: {}
+volumes:
+  ee-mysql-data:
+  pc-postgres-data:
+  standalone-postgres-data:
+  ee-bootstrap:
+  pc-data:
+  standalone-data:
+  runtime-data:
+  standalone-runtime-data:

@@ -176,7 +176,8 @@ class FakeIdentity implements GatewayIdentityPort {
   readonly principals = new Map<string, PCPrincipal>();
   authorizationRevision = 2;
 
-  verifyPrincipalEnvelope(envelope: PrincipalEnvelope): Promise<PCPrincipal> {
+  verifyPrincipalEnvelope(envelope: PrincipalEnvelope, audience?: string): Promise<PCPrincipal> {
+    if (audience && audience !== envelope.audience) throw new Error("Principal Envelope target mismatch");
     const value = this.principals.get(envelope.subject_principal_id);
     if (value === undefined) throw new Error("principal missing");
     return Promise.resolve(value);
@@ -417,6 +418,27 @@ function envelope(input: {
 }
 
 describe("DEV-07 Controlled Gateway", () => {
+  it("selects the exact envelope Connector when a reload retains the same Tool on an older Connector", async () => {
+    const context = await fixture();
+    const next = await context.service.registerConnector({ ...context.connector }, { registration_key: "bundle:next-generation" });
+    expect(next.connector_id).not.toBe(context.connector.connector_id);
+    const { assignment: currentAssignment } = await addSession({ ...context, connector: next }, { principalId: "reload-owner", sessionId: "reload-session" });
+    const result = await context.service.execute(envelope({ connectorId: next.connector_id, currentAssignment, tool: READ_TOOL, operationId: "reload-read" }));
+    expect(result.status).toBe("SUCCEEDED");
+    expect((await context.service.getOperation("reload-read"))?.connector_id).toBe(next.connector_id);
+  });
+  it.each(["other-tenant", "other-tool", "wrong-audience"])("rejects an exact target with %s without dispatch", async mismatch => {
+    const context = await fixture();
+    const { assignment: currentAssignment } = await addSession(context, { principalId: "target-owner", sessionId: "target-session" });
+    const target = await context.service.registerConnector({ ...context.connector,
+      ...(mismatch === "other-tenant" ? { tenant_id: "unrelated-tenant" } : {}),
+      ...(mismatch === "other-tool" ? { tool_release_ids: [WRITE_TOOL.tool_release_id] } : {})
+    }, { registration_key: `mismatch:${mismatch}` });
+    const input = envelope({ connectorId: target.connector_id, currentAssignment, tool: READ_TOOL, operationId: "rejected-target" });
+    if (mismatch === "wrong-audience") (input.principal_envelope as { audience: string }).audience = "runtime:personal-conversation";
+    await expect(context.service.execute(input)).rejects.toMatchObject({ code: "PC_GATEWAY_CONNECTOR_UNAVAILABLE" });
+    expect(await context.service.getOperation("rejected-target")).toBeUndefined();
+  });
   it("retains revoked external account ownership for explicit inactive lookup", async () => {
     const context = await fixture();
     const { account } = await addSession(context, { principalId: "revoked-owner", sessionId: "revoked-session" });

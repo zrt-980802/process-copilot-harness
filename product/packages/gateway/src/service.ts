@@ -567,7 +567,8 @@ export class ControlledExecutionGatewayService {
     }
     const connector = await this.requireConnectorForTool(
       envelope.principal_envelope.tenant_id,
-      tool.tool_release_id
+      tool.tool_release_id,
+      envelope.principal_envelope.audience
     );
     const principal = await this.identity.verifyPrincipalEnvelope(
       envelope.principal_envelope,
@@ -1331,13 +1332,15 @@ export class ControlledExecutionGatewayService {
 
   private async requireConnectorForTool(
     tenantId: string,
-    toolReleaseId: string
+    toolReleaseId: string,
+    audience?: string
   ): Promise<ConnectorRegistration> {
-    const connector = await this.repository.findConnectorForTool(
-      tenantId,
-      toolReleaseId
-    );
-    if (connector === undefined || connector.state !== "ACTIVE") {
+    // The signed execution target is exact; historical registrations may share a Tool.
+    const connector = audience === undefined
+      ? await this.repository.findConnectorForTool(tenantId, toolReleaseId)
+      : audience.startsWith("gateway:") ? await this.repository.getConnector(audience.slice("gateway:".length)) : undefined;
+    if (connector === undefined || connector.state !== "ACTIVE" || connector.tenant_id !== tenantId
+      || !connector.tool_release_ids.includes(toolReleaseId)) {
       throw new GatewayError(
         "PC_GATEWAY_CONNECTOR_UNAVAILABLE",
         "No active Connector Registration provides this Tool Release"
