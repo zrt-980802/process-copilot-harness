@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { ArrowRight, Check, ChevronRight, CircleAlert, FileText, FolderOpen, MessageSquare, RefreshCw, Search, ShieldCheck, X } from "lucide-vue-next";
-import { request } from "./api";
+import { useExperience } from "./experience-context";
+import type { ExperienceProjection, ExperienceSnapshot } from "./experience-policy";
 import PersonalCapabilities from "./PersonalCapabilities.vue";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -19,7 +20,8 @@ interface Execution {
 }
 const props = defineProps<{ token: string; principal: Principal; accountName: string; tasks: Workspace[];
   projects: Array<{ project_code: string; project_name: string }>;
-  providerMode: "standalone" | "ee-connected"; initialTab?: string; initialProject?: string }>();
+  experience: ExperienceProjection; snapshot: ExperienceSnapshot; initialTab?: string; initialProject?: string }>();
+const { request } = useExperience(() => props.snapshot.selectedProject);
 const emit = defineEmits<{ openTask: [id: string, target: string]; openProject: [code: string]; refresh: [] }>();
 const tasks = ref<Workspace[]>([]);
 const projections = ref<TaskProjection[]>([]);
@@ -39,8 +41,9 @@ const taskFilter = ref("active");
 const detail = ref<Approval>();
 const deciding = ref(false);
 const decisionError = ref("");
-const tabs = [{ id: "home", label: "总览" }, { id: "tasks", label: "我的任务" },
+const tabDefinitions = [{ id: "home", label: "总览" }, { id: "tasks", label: "我的任务" },
   { id: "conversations", label: "最近对话" }, { id: "approvals", label: "审批" }, { id: "artifacts", label: "最近成果" }, { id: "capabilities", label: "我的能力" }];
+const tabs = computed(() => tabDefinitions.filter(item => item.id !== "approvals" || props.experience.showApprovals));
 const labels: Record<string, string> = { CREATED: "新建", INPUT_INCOMPLETE: "资料待补齐", READY: "可生成", CONVERSING: "对话中",
   GENERATING: "生成中", HUMAN_REVIEW: "待评审", ACCEPTED: "已接受", REJECTED: "已驳回", GENERATION_FAILED: "生成失败", ARCHIVED: "已归档",
   PENDING: "待审批", APPROVED: "已批准", CONSUMED: "已执行", EXPIRED: "已过期", REVOKED: "已撤销" };
@@ -84,14 +87,16 @@ async function refresh() {
   busy.value = true; failure.value = ""; warnings.value = [];
   try {
     const [owned, visible] = await Promise.allSettled([
-      request<{ tasks: Workspace[] }>("/v1/ssts-tasks", token, { signal }),
-      props.providerMode === "ee-connected"
+      Promise.resolve({ tasks: props.tasks }),
+      props.experience.showApprovals && tab.value === "approvals"
         ? request<{ items: Approval[] }>("/v1/workbench/approvals", token, { signal })
         : Promise.resolve({ items: [] })]);
     if (version !== generation) return;
     if (owned.status === "rejected") throw owned.reason;
     tasks.value = [...owned.value.tasks].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
-    approvals.value = visible.status === "fulfilled" ? visible.value.items.sort((a, b) => b.requested_at.localeCompare(a.requested_at)) : [];
+    approvals.value = visible.status === "fulfilled" ? visible.value.items.filter(item => item.resource_scope_refs?.includes(`project:${props.snapshot.selectedProject}`)
+      && props.experience.tools.some(tool => tool.tool_release_id === (item as Approval & { tool_release_id?: string }).tool_release_id))
+      .sort((a, b) => b.requested_at.localeCompare(a.requested_at)) : [];
     if (visible.status === "rejected") warnings.value.push("审批暂时无法读取");
     const rows = await loadHomeRecords(tasks.value, signal, async (task, activeSignal) => ({ task,
       results: await Promise.allSettled([
@@ -114,7 +119,7 @@ async function refresh() {
   } catch (error) { if (version === generation) failure.value = error instanceof Error ? error.message : String(error); }
   finally { if (version === generation) busy.value = false; }
 }
-function refreshAll() { emit("refresh"); void refresh(); }
+function refreshAll() { emit("refresh"); }
 function openApproval(item: Approval) { detail.value = item; decisionError.value = ""; }
 async function decide(decision: "APPROVE" | "REJECT") {
   const item = detail.value;
@@ -127,27 +132,27 @@ async function decide(decision: "APPROVE" | "REJECT") {
   } catch (error) { decisionError.value = error instanceof Error ? error.message : String(error); }
   finally { deciding.value = false; }
 }
-watch(() => [props.token, props.tasks.map((task) => `${task.workspace_id}:${task.version}`).join("|")], () => { void refresh(); }, { immediate: true });
+watch(() => [props.token, props.tasks.map((task) => `${task.workspace_id}:${task.version}`).join("|"), tab.value], () => { void refresh(); }, { immediate: true });
 </script>
 
 <template>
   <main class="personal-home" :aria-busy="busy">
-    <header class="personal-heading"><div><span class="page-eyebrow">{{ greeting }}</span><h1>我的首页</h1><p>{{ principal.ee_account?.display_name || accountName }} · 个人范围</p></div><button class="icon-button" title="刷新我的首页" :disabled="busy" @click="refreshAll"><RefreshCw :size="18" :class="{ spin: busy }" /></button></header>
+    <header class="personal-heading"><div><span class="page-eyebrow">{{ greeting }}</span><h1>我的首页</h1><p>{{ accountName }} · 个人范围</p></div><button class="icon-button" title="刷新我的首页" :disabled="busy" @click="refreshAll"><RefreshCw :size="18" :class="{ spin: busy }" /></button></header>
     <div v-if="failure" class="home-error" role="alert"><CircleAlert :size="17" /><span>{{ failure }}</span><button class="icon-button" title="重试首页" @click="refreshAll"><RefreshCw :size="16" /></button></div>
     <p v-if="busy && !updatedAt" class="home-loading" role="status">正在读取个人工作记录</p>
     <div v-if="warnings.length" class="home-warning" role="alert"><p v-for="item in warnings" :key="item">{{ item }}</p></div>
     <div class="personal-metrics">
-      <button @click="tab = 'home'"><FolderOpen :size="18" /><span>我的项目</span><strong>{{ projects.length }}</strong></button>
+      <button v-if="experience.showProjectSurface" @click="tab = 'home'"><FolderOpen :size="18" /><span>我的项目</span><strong>{{ projects.length }}</strong></button>
       <button @click="tab = 'tasks'; taskFilter = 'active'"><FileText :size="18" /><span>进行中任务</span><strong>{{ ongoing.length }}</strong></button>
       <button @click="tab = 'conversations'"><MessageSquare :size="18" /><span>最近对话</span><strong>{{ chats.length }}</strong></button>
-      <button @click="tab = 'approvals'"><ShieldCheck :size="18" /><span>待我审批</span><strong>{{ pending.length }}</strong></button>
+      <button v-if="experience.showApprovals" @click="tab = 'approvals'"><ShieldCheck :size="18" /><span>待我审批</span><strong>{{ pending.length }}</strong></button>
       <button @click="tab = 'artifacts'"><Check :size="18" /><span>生成成果</span><strong>{{ artifacts.length }}</strong></button>
     </div>
-    <div class="home-viewbar"><nav class="home-tabs" aria-label="个人首页视图"><button v-for="item in tabs" :key="item.id" :aria-current="tab === item.id ? 'page' : undefined" @click="tab = item.id">{{ item.label }}</button></nav><label class="home-project-filter"><select v-model="selectedProject" aria-label="筛选首页项目"><option value="">全部范围</option><option v-for="item in props.projects" :key="item.project_code" :value="item.project_code">{{ item.project_code }} · {{ item.project_name }}</option></select></label></div>
+    <div class="home-viewbar"><nav class="home-tabs" aria-label="个人首页视图"><button v-for="item in tabs" :key="item.id" :aria-current="tab === item.id ? 'page' : undefined" @click="tab = item.id">{{ item.label }}</button></nav><label v-if="experience.showProjectSurface" class="home-project-filter"><select v-model="selectedProject" aria-label="筛选首页项目"><option value="">全部范围</option><option v-for="item in props.projects" :key="item.project_code" :value="item.project_code">{{ item.project_code }} · {{ item.project_name }}</option></select></label></div>
     <div class="home-searchbar"><label class="search-field"><Search :size="16" /><input v-model="query" aria-label="搜索个人工作" placeholder="搜索项目、任务或成果" /></label><span v-if="updatedAt" class="muted">更新于 {{ date(updatedAt) }}</span></div>
     <div class="home-columns" :class="{ 'single-column': tab !== 'home' }">
       <div class="home-main">
-        <PersonalCapabilities v-if="tab === 'capabilities'" :token="token" :projects="props.projects" :tasks="tasks" :project="selectedProject" :query="query" />
+        <PersonalCapabilities v-if="tab === 'capabilities'" :snapshot="snapshot" :experience="experience" :token="token" :projects="props.projects" :tasks="tasks" :project="selectedProject" :query="query" />
         <section v-if="tab === 'home' && resume" class="home-resume"><MessageSquare :size="24" /><div><small>继续上次对话 · {{ scopeLabel(resume.task.project_code) }}</small><h2>{{ resume.task.title }}</h2><p>{{ resume.preview }}</p></div><button class="icon-button primary" title="继续最近对话" @click="emit('openTask', resume.task.workspace_id, 'conversation')"><ArrowRight :size="19" /></button></section>
         <section v-if="tab === 'home' || tab === 'tasks'" class="home-section" aria-label="我的任务">
           <div class="section-title"><h2>我的任务 <small>{{ filteredTasks.length }}</small></h2><select v-if="tab === 'tasks'" v-model="taskFilter" aria-label="任务状态筛选"><option value="active">进行中</option><option value="all">全部状态</option></select><button v-else class="text-link" @click="tab = 'tasks'">全部 <ArrowRight :size="14" /></button></div>
@@ -164,7 +169,7 @@ watch(() => [props.token, props.tasks.map((task) => `${task.workspace_id}:${task
           <button v-for="item in (tab === 'home' ? artifacts.slice(0, 4) : artifacts)" :key="item.draft.draft_id" class="home-row home-artifact-row" @click="emit('openTask', item.task.workspace_id, 'workspace')"><FileText :size="19" /><div><strong>{{ item.task.title }}</strong><small>{{ item.task.project_code }} · 修订 {{ item.draft.revision }} · {{ date(item.draft.created_at) }}</small></div><span class="pill">{{ item.draft.validation.status === 'PASSED' ? '校验通过' : '校验失败' }}</span><ChevronRight :size="15" /></button>
           <p v-if="!busy && !artifacts.length" class="home-empty">暂无生成成果</p>
         </section>
-        <section v-if="tab === 'approvals'" class="home-section" aria-label="我的审批">
+        <section v-if="tab === 'approvals' && experience.showApprovals" class="home-section" aria-label="我的审批">
           <div class="section-title"><h2>待我审批 <small>{{ pending.length }}</small></h2></div>
           <button v-for="item in pending" :key="item.approval_id" class="home-row home-approval-row" @click="openApproval(item)"><ShieldCheck :size="19" /><div><strong>{{ item.arguments?.ssts_code || '受控请求' }}</strong><small>{{ approvalProject(item) }} · {{ date(item.requested_at) }}</small></div><span class="pill controlled">待审批</span><ChevronRight :size="15" /></button>
           <p v-if="!busy && !pending.length" class="home-empty">暂无待我审批的请求</p>
@@ -174,8 +179,8 @@ watch(() => [props.token, props.tasks.map((task) => `${task.workspace_id}:${task
         </section>
       </div>
       <aside v-if="tab === 'home'" class="home-aside">
-        <section class="home-section"><div class="section-title"><h2>我的项目 <small>{{ projects.length }}</small></h2></div><button v-for="item in projects" :key="item.project_code" class="home-project" :data-project="item.project_code" @click="emit('openProject', item.project_code)"><img src="/assets/project-car.jpg" alt="" /><div><small>{{ item.project_code }}</small><strong>{{ item.project_name }}</strong><span>{{ tasks.filter(task => task.project_code === item.project_code).length }} 个我的任务</span></div><ChevronRight :size="15" /></button><p v-if="!busy && !projects.length" class="home-empty">暂无匹配项目</p></section>
-        <section class="home-section home-attention"><div class="section-title"><h2>需要关注</h2></div><button class="home-row" @click="tab = 'approvals'"><ShieldCheck :size="18" /><div><strong>{{ pending.length }} 项待我审批</strong><small>{{ awaiting.length }} 项等待他人审批</small></div><ChevronRight :size="14" /></button><button v-for="task in ongoing.filter(item => ['INPUT_INCOMPLETE', 'HUMAN_REVIEW', 'GENERATION_FAILED'].includes(item.state))" :key="task.workspace_id" class="home-row" @click="emit('openTask', task.workspace_id, 'workspace')"><CircleAlert :size="18" /><div><strong>{{ task.title }}</strong><small>{{ label(task.state) }} · {{ task.project_code }}</small></div><ChevronRight :size="14" /></button></section>
+        <section v-if="experience.showProjectSurface" class="home-section"><div class="section-title"><h2>我的项目 <small>{{ projects.length }}</small></h2></div><button v-for="item in projects" :key="item.project_code" class="home-project" :data-project="item.project_code" @click="emit('openProject', item.project_code)"><div><small>{{ item.project_code }}</small><strong>{{ item.project_name }}</strong><span>{{ tasks.filter(task => task.project_code === item.project_code).length }} 个我的任务</span></div><ChevronRight :size="15" /></button><p v-if="!busy && !projects.length" class="home-empty">暂无匹配项目</p></section>
+        <section class="home-section home-attention"><div class="section-title"><h2>需要关注</h2></div><button v-if="experience.showApprovals" class="home-row" @click="tab = 'approvals'"><ShieldCheck :size="18" /><div><strong>{{ pending.length }} 项待我审批</strong><small>{{ awaiting.length }} 项等待他人审批</small></div><ChevronRight :size="14" /></button><button v-for="task in ongoing.filter(item => ['INPUT_INCOMPLETE', 'HUMAN_REVIEW', 'GENERATION_FAILED'].includes(item.state))" :key="task.workspace_id" class="home-row" @click="emit('openTask', task.workspace_id, 'workspace')"><CircleAlert :size="18" /><div><strong>{{ task.title }}</strong><small>{{ label(task.state) }} · {{ task.project_code }}</small></div><ChevronRight :size="14" /></button></section>
       </aside>
     </div>
     <aside v-if="detail" class="detail-drawer" aria-label="审批详情"><header><div><small>{{ approvalProject(detail) }} · 受控评审</small><h2>{{ detail.arguments?.ssts_code || '审批请求' }}</h2><code>{{ detail.approval_id }}</code></div><button class="icon-button" title="关闭审批详情" :disabled="deciding" @click="detail = undefined"><X :size="19" /></button></header><div class="detail-content"><span class="pill">{{ label(detail.status) }}</span><h3>提交参数</h3><pre>{{ JSON.stringify(detail.arguments, null, 2) }}</pre><p>有效期至 {{ date(detail.expires_at) }}</p><p v-if="detail.requested_by === principal.principal_id && detail.status === 'PENDING'">等待其他审批人处理</p><p v-if="decisionError" class="home-error" role="alert">{{ decisionError }}</p><div v-if="canDecide(detail)" class="approval-actions"><button :disabled="deciding" @click="decide('APPROVE')"><Check :size="16" />批准</button><button class="secondary-button danger" :disabled="deciding" @click="decide('REJECT')"><X :size="16" />拒绝</button></div><button v-if="tasks.some(task => task.workspace_id === detail?.command_context?.workspace_id)" class="drawer-action" @click="emit('openTask', detail.command_context!.workspace_id, 'workspace')"><ArrowRight :size="16" />进入任务工作台</button></div></aside>

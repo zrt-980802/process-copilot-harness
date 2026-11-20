@@ -1,7 +1,7 @@
 # FRONTEND-PROVIDER-ISOLATION-01：Provider 中立前端与 EE 场景隔离任务书
 
 - 任务编号：`FRONTEND-PROVIDER-ISOLATION-01`
-- 状态：`READY / NOT STARTED`
+- 状态：`FRONTEND-PROVIDER-ISOLATION-01 DEVELOPER VERIFIED`
 - 日期：2026-11-20（Asia/Shanghai）
 - 实现基线：`main@efadcd3`（D4A 独立复验通过后的本地基线）
 - 主工作仓库：`E:/shanzi_workspace/process-copilot-harness`

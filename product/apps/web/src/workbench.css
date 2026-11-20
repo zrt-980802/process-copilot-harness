@@ -1,5 +1,10 @@
 .desktop-workbench { min-height: 100vh; display: grid; grid-template-columns: 78px minmax(0,1fr); background: #fff; color: #293630; }
 .desktop-workbench button { cursor: pointer; }
+@media (min-width: 801px) {
+  .relationship-map.without-specifications .map-head,.relationship-map.without-requirements .map-head { grid-template-columns: 1fr 1fr; }
+  .relationship-map.without-specifications .relation-row,.relationship-map.without-requirements .relation-row { grid-template-columns: minmax(0,1fr) 32px minmax(0,1fr); }
+  .relationship-map.without-specifications.without-requirements .map-head,.relationship-map.without-specifications.without-requirements .relation-row { grid-template-columns: minmax(0,1fr); }
+}
 .desktop-workbench .conversation-launcher { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; align-items: end; }
 .conversation-launcher label { display: grid; gap: 5px; min-width: 0; font-size: 11px; color: #53685e; }
 .conversation-launcher label input,.conversation-launcher label select { width: 100%; min-width: 0; max-width: none; box-sizing: border-box; font-size: 12px; }

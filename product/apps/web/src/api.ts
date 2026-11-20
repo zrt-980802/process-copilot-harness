@@ -65,9 +65,9 @@ function base64url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
-async function eeAuth(path: string, body?: unknown): Promise<Record<string, any>> {
+async function eeAuth(path: string, body?: unknown, signal?: AbortSignal): Promise<Record<string, any>> {
   const csrf = document.cookie.split("; ").find((part) => part.startsWith("eea_csrf="))?.slice(9);
-  const response = await fetch(`/api/ee-auth/${path}`, { credentials: "same-origin", cache: "no-store",
+  const response = await fetch(`/api/ee-auth/${path}`, { credentials: "same-origin", cache: "no-store", ...(signal ? { signal } : {}),
     ...(body === undefined ? {} : json("POST", body)),
     headers: { "content-type": "application/json", ...(csrf ? { "x-csrf-token": decodeURIComponent(csrf) } : {}) } });
   if (!response.ok) throw await parseError(response);
@@ -90,8 +90,8 @@ export const api = {
     return request("/health");
   },
 
-  async accountPresentation(): Promise<EEAccountPresentation> {
-    return await eeAuth("me") as unknown as EEAccountPresentation;
+  async accountPresentation(signal?: AbortSignal): Promise<EEAccountPresentation> {
+    return await eeAuth("me", undefined, signal) as unknown as EEAccountPresentation;
   },
   async signIn(accountKey: string | undefined, secret: string | undefined,
     providerMode: SystemCapabilities["provider_mode"]): Promise<SignInResult> {
@@ -129,10 +129,11 @@ export const api = {
     return { ...result.principal, ...(result.account ? { ee_account: result.account } : {}) };
   },
 
-  async listTasks(token: string): Promise<Workspace[]> {
+  async listTasks(token: string, personalOnly = false, signal?: AbortSignal): Promise<Workspace[]> {
     const result = await request<{ tasks: Workspace[] }>(
-      "/v1/ssts-tasks",
-      token
+      personalOnly ? "/v1/ssts-tasks?scope=personal" : "/v1/ssts-tasks",
+      token,
+      signal ? { signal } : {}
     );
     return result.tasks;
   },
@@ -142,8 +143,8 @@ export const api = {
       ...(functionCode ? { function_code: functionCode } : {}), mode }));
   },
 
-  getTask(token: string, workspaceId: string): Promise<TaskProjection> {
-    return request(`/v1/ssts-tasks/${workspaceId}`, token);
+  getTask(token: string, workspaceId: string, signal?: AbortSignal): Promise<TaskProjection> {
+    return request(`/v1/ssts-tasks/${workspaceId}`, token, signal ? { signal } : {});
   },
 
   async upload(

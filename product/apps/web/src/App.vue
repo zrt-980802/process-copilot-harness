@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, provide, ref, shallowRef, watch } from "vue";
 import {
   Check,
   ChevronRight,
@@ -18,6 +18,10 @@ import {
   X
 } from "lucide-vue-next";
 import { api, ApiClientError, request } from "./api";
+import { emptyExperience, experiencePolicy, visibleTasks } from "./experience-policy";
+import { ExperienceSession } from "./experience-session";
+import { experienceKey } from "./experience-context";
+import { providerState, taskScene } from "./provider-view-adapter";
 import ExecutionWorkbench from "./ExecutionWorkbench.vue";
 import WorkbenchShell from "./WorkbenchShell.vue";
 import type {
@@ -34,76 +38,28 @@ import type {
 const TOKEN_KEY = "pc.minimum-test.token";
 const TASK_KEY = "pc.minimum-test.task";
 const ACCOUNT_KEY = "pc.minimum-test.account";
-const accountName = ref(sessionStorage.getItem(ACCOUNT_KEY) ?? "");
+const accountName = ref("");
 
-const slotDefinitions: Array<{
-  slot: InputSlot;
-  label: string;
-  required: boolean;
-  sampleName: string;
-  sampleContent: string;
-}> = [
-  {
-    slot: "PRD",
-    label: "PRD",
-    required: true,
-    sampleName: "sample-power-monitoring-prd.md",
-    sampleContent: `# Power Monitoring PRD
-
-## Goal
-Monitor ECU supply voltage and report power-state transitions for FN-EP37-001.
-
-## Required behavior
-- Detect invalid supply voltage within 100ms (REQ-000001).
-- Publish voltage and power-state transitions over CAN.
-- Diagnose stale signals and debounce transient noise.
-- Preserve diagnostic transition logs and explicit recovery criteria.
-
-## Acceptance
-- Diagnostic latency is measured at the ECU boundary.
-- Every invalid voltage event has a reason code.
-- No enterprise baseline is published automatically.
-`
-  },
-  {
-    slot: "ARCHITECTURE",
-    label: "架构说明",
-    required: true,
-    sampleName: "sample-power-monitoring-architecture.md",
-    sampleContent: `# Power Monitoring Architecture
-
-## Boundaries
-- The power control ECU samples supply voltage and publishes CAN status.
-- The diagnostic monitor tracks stale data, thresholds and debounce state.
-- The system controller consumes voltage and transition events.
-- Voltage thresholds remain open until the electrical design is confirmed.
-
-## Components
-- Voltage sampling input
-- Power-state monitor
-- CAN publisher and consumer
-- Diagnostic event log
-`
-  },
-  {
-    slot: "COMMUNICATION_MATRIX",
-    label: "通信矩阵",
-    required: false,
-    sampleName: "sample-communication-matrix.md",
-    sampleContent: `# Communication Matrix
-
-| Producer | Consumer | Protocol | Purpose |
-|---|---|---|---|
-| Power ECU | System controller | CAN | Voltage and power-state status |
-| Power-state monitor | Diagnostic log | Internal event | Transition and recovery evidence |
-`
-  }
+const slotDefinitions: Array<{ slot: InputSlot; label: string; required: boolean }> = [
+  { slot: "PRD", label: "PRD", required: true },
+  { slot: "ARCHITECTURE", label: "架构说明", required: true },
+  { slot: "COMMUNICATION_MATRIX", label: "通信矩阵", required: false }
 ];
 
 const token = ref(sessionStorage.getItem(TOKEN_KEY) ?? "");
 const principal = ref<Principal>();
-const tasks = ref<Workspace[]>([]);
-const projects = ref<Array<{ project_code: string; project_name: string }>>([]);
+const rawTasks = ref<Workspace[]>([]);
+const snapshot = shallowRef(emptyExperience());
+const experience = computed(() => experiencePolicy(snapshot.value));
+const tasks = computed(() => visibleTasks(rawTasks.value, snapshot.value));
+const projects = computed(() => experience.value.showProjectSurface ? snapshot.value.projects : []);
+const session = new ExperienceSession((path, accessToken, signal) => request(path, accessToken, { signal }),
+  value => { snapshot.value = value; });
+function invalidateExternal(caught?: unknown) {
+  session.invalidate(caught instanceof ApiClientError && caught.status === 403 ? "denied" : "unavailable",
+    caught instanceof ApiClientError ? caught.code : undefined);
+}
+provide(experienceKey, { snapshot, signal: () => session.signal, fail: invalidateExternal });
 const projectCode = ref("");
 const functionCode = ref("");
 const taskMode = ref("READ");
@@ -117,17 +73,20 @@ const system = ref<SystemCapabilities>();
 
 const accountKey = ref("");
 const secret = ref("");
-const taskTitle = ref("电源监测 SSTS 草稿");
+const taskTitle = ref("新的工作任务");
 const conversationTitle = ref("新对话");
 const conversationProject = ref("");
-const conversationWorkspace = computed(() => workspace.value?.profile_release_id.startsWith("profile:conversation:") ?? false);
+const conversationWorkspace = computed(() => workspace.value ? taskScene(workspace.value.profile_release_id) !== "ssts" : true);
 const messageText = ref("请重点检查恢复边界、输入版本和人工评审约束。");
 const reviewComment = ref("请补充异常恢复和验证要求。");
 
 const authenticated = computed(() =>
   token.value !== "" && principal.value !== undefined
 );
-const workspace = computed(() => projection.value?.workspace);
+const workspace = computed(() => {
+  const value = projection.value?.workspace;
+  return value && tasks.value.some(task => task.workspace_id === value.workspace_id) ? value : undefined;
+});
 const inputs = computed(() => projection.value?.inputs ?? []);
 const messages = computed(() => projection.value?.messages ?? []);
 const drafts = computed(() => projection.value?.drafts ?? []);
@@ -198,9 +157,10 @@ function showError(caught: unknown, fallback: string): void {
       };
       return;
     }
+    if (experience.value.showProjectSurface && (caught.status === 403 || caught.code.includes("PROVIDER") || caught.code.includes("AUTHORIZATION"))) invalidateExternal(caught);
     error.value = {
       title: caught.code,
-      message: caught.message,
+      message: caught.code.includes("PROVIDER") || caught.code.includes("WORKBENCH") ? "当前能力或项目范围不可用，请刷新能力状态。" : caught.message,
       retryable: caught.retryable
     };
     return;
@@ -222,6 +182,7 @@ async function run<T>(
   try {
     return await operation();
   } catch (caught) {
+    if (caught instanceof DOMException && caught.name === "AbortError") return undefined;
     showError(caught, "请稍后重试。");
     return undefined;
   } finally {
@@ -244,13 +205,13 @@ async function signIn(): Promise<void> {
     token.value = signedIn.access_token;
     sessionStorage.setItem(TOKEN_KEY, signedIn.access_token);
     principal.value = await api.me(signedIn.access_token);
-    accountName.value = principal.value.ee_account?.username ?? submittedAccount;
+    accountName.value = submittedAccount || "我的账号";
     sessionStorage.setItem(ACCOUNT_KEY, accountName.value);
     await loadTasks();
     const remembered = sessionStorage.getItem(TASK_KEY);
     const target = tasks.value.find((task) => task.workspace_id === remembered)
       ?? tasks.value[0];
-    if (target !== undefined) await selectTask(target.workspace_id);
+    if (target !== undefined && !target.project_code) await selectTask(target.workspace_id);
   });
   if (result !== undefined) notice.value = "已进入本地验收环境";
 }
@@ -258,7 +219,8 @@ async function signIn(): Promise<void> {
 function clearSession(): void {
   token.value = "";
   principal.value = undefined;
-  tasks.value = [];
+  session.invalidate("unconfigured");
+  rawTasks.value = [];
   projection.value = undefined;
   draftContent.value = "";
   sessionStorage.removeItem(TOKEN_KEY);
@@ -279,63 +241,79 @@ async function logout(): Promise<void> {
 
 async function restoreSession(): Promise<void> {
   await run("restore", async () => {
-    if (token.value) {
-      try { principal.value = await api.me(token.value); }
-      catch (caught) { if (!(caught instanceof ApiClientError) || caught.status !== 401) throw caught; clearSession(); }
-    }
     if (!token.value) {
-      if (system.value?.provider_mode === "standalone") return;
-      let signedIn;
-      try { signedIn = await api.signIn(undefined, undefined, "ee-connected"); }
-      catch (caught) { if (caught instanceof ApiClientError && caught.status === 401) return; throw caught; }
-      token.value = signedIn.access_token;
-      sessionStorage.setItem(TOKEN_KEY, signedIn.access_token);
+      if (system.value?.provider_mode === "standalone" || !system.value || providerState(system.value) !== "READY") return;
+      try {
+        const signedIn = await api.signIn(undefined, undefined, "ee-connected");
+        token.value = signedIn.access_token;
+        sessionStorage.setItem(TOKEN_KEY, signedIn.access_token);
+      } catch (caught) { if (caught instanceof ApiClientError && caught.status === 401) return; throw caught; }
     }
     principal.value = await api.me(token.value);
-    accountName.value = principal.value.ee_account?.username ?? accountName.value;
-    sessionStorage.setItem(ACCOUNT_KEY, accountName.value);
+    accountName.value = "我的账号";
     await loadTasks();
     const remembered = sessionStorage.getItem(TASK_KEY);
-    const target = tasks.value.find((task) => task.workspace_id === remembered)
-      ?? tasks.value[0];
-    if (target !== undefined) await selectTask(target.workspace_id);
+    const target = tasks.value.find(task => !task.project_code && task.workspace_id === remembered);
+    if (target) await selectTask(target.workspace_id);
   });
 }
 
-async function loadTasks(): Promise<void> {
-  if (token.value === "") return;
-  tasks.value = await api.listTasks(token.value);
-  projects.value = ["available", "degraded"].includes(
-    system.value?.capabilities.project_workbench ?? "unavailable"
-  )
-    ? (await request<{ items: Array<{ project_code: string; project_name: string }> }>("/v1/workbench/projects", token.value)).items
-    : [];
-  if (!projects.value.some((item) => item.project_code === projectCode.value)) projectCode.value = projects.value[0]?.project_code ?? "";
+async function loadTasks(selected = snapshot.value.selectedProject): Promise<void> {
+  if (!token.value || !principal.value) return;
+  await session.refresh(token.value, principal.value, selected);
+  system.value = snapshot.value.health ?? system.value;
+  await refreshTaskList();
 }
 
+async function refreshTaskList(): Promise<void> {
+  const generation = snapshot.value.generation;
+  try {
+    const rows = await api.listTasks(token.value, !experience.value.showProjectSurface, session.signal);
+    if (!session.isCurrent(generation)) return;
+    rawTasks.value = rows;
+    projectCode.value = snapshot.value.selectedProject;
+  } catch (caught) {
+    if (session.isCurrent(generation)) { invalidateExternal(caught); showError(caught, "读取任务失败"); }
+  }
+}
+
+async function selectProject(code: string): Promise<void> {
+  if (!projects.value.some(project => project.project_code === code)) return;
+  await loadTasks(code);
+}
 async function createTask(): Promise<void> {
-  if (taskTitle.value.trim() === "") return;
+  if (!experience.value.showSstsExperience || taskTitle.value.trim() === "") return;
   await run("create-task", async () => {
     const created = await api.createTask(token.value, taskTitle.value.trim(), projectCode.value, functionCode.value.trim(), taskMode.value);
-    await loadTasks();
+    await refreshTaskList();
     await selectTask(created.workspace_id);
     notice.value = "任务已创建";
   });
 }
 
 async function createConversation(): Promise<void> {
+  if (conversationProject.value && !projects.value.some(project => project.project_code === conversationProject.value)) return;
   await run("create-conversation", async () => {
     const created = await api.createTask(token.value, conversationTitle.value.trim() || "新对话", conversationProject.value, "", "CHAT");
-    await loadTasks();
+    await refreshTaskList();
     await selectTask(created.workspace_id);
     conversationTitle.value = "新对话";
   });
 }
 
+let taskSelection = 0;
 async function selectTask(workspaceId: string): Promise<void> {
+  const selection = ++taskSelection;
   await run("load-task", async () => {
-    projection.value = await api.getTask(token.value, workspaceId);
-    projectCode.value = projection.value.workspace.project_code ?? projectCode.value;
+    const expected = tasks.value.find(task => task.workspace_id === workspaceId);
+    if (!expected) return;
+    const generation = snapshot.value.generation;
+    const value = await api.getTask(token.value, workspaceId, session.signal);
+    if (!session.isCurrent(generation) || selection !== taskSelection || value.workspace.workspace_id !== expected.workspace_id
+      || value.workspace.project_code !== expected.project_code || value.workspace.owner_principal_id !== principal.value?.principal_id
+      || value.workspace.tenant_id !== principal.value?.tenant_id) return;
+    projection.value = value;
+    projectCode.value = value.workspace.project_code ?? "";
     sessionStorage.setItem(TASK_KEY, workspaceId);
     await loadDraftContent();
   });
@@ -343,8 +321,9 @@ async function selectTask(workspaceId: string): Promise<void> {
 
 async function refreshTask(): Promise<void> {
   try {
-    if (workspace.value !== undefined) await selectTask(workspace.value.workspace_id);
-    await loadTasks();
+    const id = workspace.value?.workspace_id;
+    await refreshTaskList();
+    if (id && tasks.value.some(task => task.workspace_id === id)) await selectTask(id);
   } catch (caught) { showError(caught, "刷新任务失败"); }
 }
 
@@ -352,26 +331,33 @@ async function loadDraftContent(): Promise<void> {
   draftContent.value = "";
   draftFilename.value = "";
   if (workspace.value === undefined || currentDraft.value === undefined) return;
+  const generation = snapshot.value.generation;
+  const id = workspace.value.workspace_id;
+  const draftId = currentDraft.value.draft_id;
   const result = await api.draftContent(
     token.value,
     workspace.value.workspace_id,
     currentDraft.value.draft_id
   );
+  if (!session.isCurrent(generation) || !experience.value.showSstsExperience || workspace.value?.workspace_id !== id || currentDraft.value?.draft_id !== draftId) return;
   draftContent.value = result.content;
   draftFilename.value = result.filename;
 }
 
 async function uploadInput(slot: InputSlot, file: File): Promise<void> {
   if (principal.value === undefined || workspace.value === undefined) return;
+  const id = workspace.value.workspace_id;
+  const generation = snapshot.value.generation;
   await run(`upload-${slot}`, async () => {
     const uploaded = await api.upload(
       token.value,
       principal.value as Principal,
       file
     );
+    if (!session.isCurrent(generation) || workspace.value?.workspace_id !== id) return;
     await api.attachInput(
       token.value,
-      workspace.value?.workspace_id ?? "",
+      id,
       slot,
       uploaded
     );
@@ -385,16 +371,6 @@ async function fileSelected(slot: InputSlot, event: Event): Promise<void> {
   const file = input.files?.[0];
   if (file !== undefined) await uploadInput(slot, file);
   input.value = "";
-}
-
-async function useSample(slot: InputSlot): Promise<void> {
-  const definition = slotDefinitions.find((item) => item.slot === slot);
-  if (definition === undefined) return;
-  await uploadInput(slot, new File(
-    [definition.sampleContent],
-    definition.sampleName,
-    { type: "text/markdown" }
-  ));
 }
 
 async function checkInputs(): Promise<void> {
@@ -472,13 +448,36 @@ async function initialize(): Promise<void> {
 async function retryProvider(): Promise<void> {
   await run("retry-provider", async () => {
     await request("/v1/providers/eeclaw/retry", undefined, { method: "POST" });
-    system.value = await api.capabilities();
     await loadTasks();
-    notice.value = "EE 项目能力已重新检查";
+    notice.value = "企业项目能力已重新检查";
   });
 }
 
-onMounted(initialize);
+let expiryTimer: ReturnType<typeof setTimeout> | undefined;
+watch(() => snapshot.value.generation, () => {
+  rawTasks.value = rawTasks.value.filter(task => !task.project_code);
+  if (projection.value?.workspace.project_code) projection.value = undefined;
+  draftContent.value = ""; draftFilename.value = ""; functionCode.value = "";
+  projectCode.value = ""; conversationProject.value = ""; error.value = undefined; notice.value = "";
+  sessionStorage.removeItem(TASK_KEY);
+  history.replaceState(null, "", location.pathname);
+}, { flush: "sync" });
+watch(snapshot, value => {
+  clearTimeout(expiryTimer);
+  if (value.phase === "ready") expiryTimer = setTimeout(() => session.invalidate("expired"), Math.max(0, value.expiresAt - Date.now()));
+});
+const refreshExperience = () => { if (token.value && principal.value) void loadTasks(); };
+onMounted(() => {
+  void initialize();
+  window.addEventListener("focus", refreshExperience);
+  window.addEventListener("popstate", refreshExperience);
+});
+onBeforeUnmount(() => {
+  clearTimeout(expiryTimer);
+  session.invalidate();
+  window.removeEventListener("focus", refreshExperience);
+  window.removeEventListener("popstate", refreshExperience);
+});
 </script>
 
 <template>
@@ -491,11 +490,11 @@ onMounted(initialize);
           <h1>Process Copilot</h1>
         </div>
       </div>
-      <span class="environment-badge">{{ system?.provider_mode === 'standalone' ? 'STANDALONE · DSH' : 'EE CONNECTED · MCP · DSH' }}</span>
+
 
       <form class="login-form" @submit.prevent="signIn">
         <label>
-          {{ system?.provider_mode === 'standalone' ? '本地账号' : 'EE 账号' }}
+          账号
           <input v-model="accountKey" autocomplete="username" required />
         </label>
         <label>
@@ -525,22 +524,18 @@ onMounted(initialize);
   </main>
 
   <WorkbenchShell v-else-if="principal" :token="token" :principal="principal" :tasks="tasks" :projects="projects"
-    :provider-mode="system?.provider_mode ?? 'ee-connected'"
-    :project-provider-unavailable="system?.provider_mode === 'ee-connected' && system.capabilities.project_workbench === 'unavailable'"
-    :account-name="accountName" :projection="projection" @open-task="selectTask" @refresh="refreshTask" @logout="logout">
+    :snapshot="snapshot" :experience="experience"
+    :account-name="accountName" :projection="projection" @open-task="selectTask" @select-project="selectProject" @refresh="refreshExperience" @logout="logout">
     <template #provider-status>
-    <div v-if="system?.provider_mode === 'ee-connected' && system.capabilities.project_workbench === 'unavailable'"
+    <div v-if="experience.showProviderStatus"
       class="global-error provider-unavailable" role="status">
       <CircleAlert :size="18" />
       <div>
-        <strong>EE 项目能力暂不可用</strong>
-        <span>个人对话仍可继续；恢复后刷新页面即可重新装配项目能力。</span>
+        <strong>企业项目能力暂不可用</strong>
+        <span>请重新检查当前能力状态。</span>
       </div>
       <button class="secondary-button" type="button" :disabled="busy !== ''" @click="retryProvider">重试</button>
     </div>
-    </template>
-    <template #default="{ mode, project: activeProject }">
-
     <div v-if="error" class="global-error" role="alert">
       <CircleAlert :size="18" />
       <div>
@@ -568,7 +563,8 @@ onMounted(initialize);
         <X :size="16" />
       </button>
     </div>
-
+    </template>
+    <template #default="{ mode, project: activeProject }">
     <form v-if="mode === 'conversation'" class="conversation-launcher" @submit.prevent="createConversation">
       <label><span>新对话名称</span><input v-model="conversationTitle" aria-label="对话名称" maxlength="200" /></label>
       <label><span>新对话范围</span><select v-model="conversationProject" aria-label="对话范围"><option value="">个人范围</option><option v-for="project in projects" :key="project.project_code" :value="project.project_code">项目 · {{ project.project_code }} · {{ project.project_name }}</option></select></label>
@@ -582,12 +578,12 @@ onMounted(initialize);
             <strong>{{ tasks.length }}</strong>
           </div>
         </div>
-        <div v-if="mode !== 'conversation'" class="project-fields">
-          <label>项目<select v-model="projectCode" aria-label="项目"><option v-for="project in projects" :key="project.project_code" :value="project.project_code">{{ project.project_code }} · {{ project.project_name }}</option></select></label>
+        <div v-if="mode !== 'conversation' && experience.showSstsExperience" class="project-fields">
+          <label>项目<select v-model="projectCode" aria-label="项目" @change="selectProject(projectCode)"><option v-for="project in projects" :key="project.project_code" :value="project.project_code">{{ project.project_code }} · {{ project.project_name }}</option></select></label>
           <label>Function<input v-model="functionCode" aria-label="Function 编码" /></label>
           <label>任务类型<select v-model="taskMode"><option value="READ">SSTS 草稿</option><option value="REVIEW">SSTS 草稿与受控评审</option></select></label>
         </div>
-        <form v-if="mode !== 'conversation'" class="new-task" @submit.prevent="createTask">
+        <form v-if="mode !== 'conversation' && experience.showSstsExperience" class="new-task" @submit.prevent="createTask">
           <input v-model="taskTitle" aria-label="新任务标题" />
           <button
             data-test="create-task"
@@ -618,7 +614,7 @@ onMounted(initialize);
         </div>
       </aside>
 
-      <section v-if="workspace" class="workbench">
+      <section v-if="workspace && (workspace.project_code ?? '') === activeProject" class="workbench">
         <header class="workspace-header">
           <div>
             <div class="workspace-title-row">
@@ -638,9 +634,9 @@ onMounted(initialize);
             PostgreSQL Authority
           </div>
         </header>
-        <ExecutionWorkbench :token="token" :project="workspace.project_code ?? ''" :workspace-id="workspace.workspace_id" :conversation-mode="mode === 'conversation' || conversationWorkspace" @changed="refreshTask" />
+        <ExecutionWorkbench :key="workspace.workspace_id" :experience="experience" :token="token" :project="workspace.project_code ?? ''" :workspace-id="workspace.workspace_id" :conversation-mode="mode === 'conversation' || conversationWorkspace" @changed="refreshTask" />
 
-        <section v-if="!conversationWorkspace" class="conversation-band">
+        <section v-if="!conversationWorkspace && experience.showSstsExperience" class="conversation-band">
           <div class="band-heading">
             <div>
               <MessageSquare :size="18" />
@@ -666,7 +662,7 @@ onMounted(initialize);
             <textarea
               v-model="messageText"
               rows="3"
-              placeholder="补充本次 SSTS 的关注点"
+              placeholder="补充本次任务的关注点"
               :disabled="workspace.state === 'ACCEPTED'"
             />
             <button
@@ -681,7 +677,7 @@ onMounted(initialize);
           </form>
         </section>
 
-        <section v-if="!conversationWorkspace" class="draft-band">
+        <section v-if="!conversationWorkspace && experience.showSstsExperience" class="draft-band">
           <div class="band-heading">
             <div>
               <FileCheck2 :size="18" />
@@ -747,7 +743,7 @@ onMounted(initialize);
         </section>
       </section>
 
-      <aside v-if="workspace && !conversationWorkspace" class="evidence-sidebar">
+      <aside v-if="workspace && !conversationWorkspace && experience.showSstsExperience" class="evidence-sidebar">
         <section class="evidence-section">
           <div class="band-heading">
             <div>
@@ -793,15 +789,6 @@ onMounted(initialize);
                     @change="fileSelected(definition.slot, $event)"
                   />
                 </label>
-                <button
-                  :data-test="`sample-${definition.slot}`"
-                  type="button"
-                  class="text-button"
-                  :disabled="busy !== ''"
-                  @click="useSample(definition.slot)"
-                >
-                  使用样例
-                </button>
               </div>
             </article>
           </div>
@@ -895,8 +882,8 @@ onMounted(initialize);
         </section>
       </aside>
 
-      <section v-if="tasks.length === 0" class="no-task">
-        <ExecutionWorkbench :token="token" :project="projectCode" />
+      <section v-if="!workspace || (workspace.project_code ?? '') !== activeProject" class="no-task">
+        <ExecutionWorkbench :token="token" :project="activeProject" :experience="experience" :conversation-mode="true" />
       </section>
     </section>
     </template>

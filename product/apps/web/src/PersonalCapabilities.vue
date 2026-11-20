@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { Activity, BadgeCheck, Boxes, ChevronRight, PlugZap, RefreshCw, ShieldCheck, UserRound, Wrench, X } from "lucide-vue-next";
-import { request } from "./api";
+import { useExperience } from "./experience-context";
+import type { ExperienceProjection, ExperienceSnapshot } from "./experience-policy";
 import type { CapabilityChain, Workspace } from "./types";
 
 interface Tool {
@@ -11,15 +12,17 @@ interface Tool {
 }
 type Project = { project_code: string; project_name: string };
 type Capability = Tool & { projects: Project[] };
-const props = defineProps<{ token: string; projects: Project[]; tasks: Workspace[]; project: string; query: string }>();
-const tools = ref<Capability[]>([]);
+const props = defineProps<{ token: string; projects: Project[]; tasks: Workspace[]; project: string; query: string; experience: ExperienceProjection; snapshot: ExperienceSnapshot }>();
+const { request } = useExperience(() => props.snapshot.selectedProject);
+const tools = computed<Capability[]>(() => props.experience.tools.map(tool => ({ ...tool, input_schema: tool.input_schema ?? {},
+  approval_policy: tool.approval_policy ?? "", recovery_class: tool.recovery_class ?? "", projects: props.projects.filter(project => project.project_code === props.snapshot.selectedProject) })));
 const chain = ref<CapabilityChain>();
 const busy = ref(false);
 const errors = ref<string[]>([]);
 const detail = ref<Capability>();
 const domains: Record<string, string> = { projects: "项目", requirements: "需求", functions: "功能",
   specifications: "技术规范", traceability: "追溯关系", controlled_commands: "受控命令", other: "其他" };
-const chainProject = computed(() => props.project || props.projects[0]?.project_code || "");
+const chainProject = computed(() => props.snapshot.selectedProject);
 const chainTask = computed(() => [...props.tasks]
   .filter((task) => task.project_code === chainProject.value)
   .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0]);
@@ -52,28 +55,16 @@ const chainNodes = computed(() => chain.value ? [
     state: recent.value ? "ready" : "idle",
     value: recent.value ? `${recent.value.tool_name ?? recent.value.operation_kind} · ${recent.value.state}` : "暂无调用记录",
     meta: recent.value?.trace_refs[0] ?? "执行工具后记录可追溯证据" },
-  { key: "authority", title: "EE 业务权威", icon: ShieldCheck,
+  { key: "authority", title: "源系统判权", icon: ShieldCheck,
     state: chain.value.tool_set.length ? "ready" : "empty",
     value: chain.value.tool_set.length ? "项目成员与工具权限均已通过" : "没有项目 Tool Set",
-    meta: "EE 逐请求重新判权" }
+    meta: "源系统逐请求判权" }
 ] : []);
 let generation = 0;
 async function refresh() {
   const version = ++generation;
-  tools.value = []; chain.value = undefined; detail.value = undefined; errors.value = []; busy.value = true;
-  const results = await Promise.allSettled(props.projects.map(async (project) => ({ project,
-    catalog: await request<{ tools: Tool[] }>(`/v1/workbench/catalog?project_code=${encodeURIComponent(project.project_code)}`, props.token) })));
-  if (version !== generation) return;
-  const merged = new Map<string, Capability>();
-  for (const [index, result] of results.entries()) {
-    if (result.status === "rejected") { errors.value.push(`${props.projects[index]?.project_code}：能力暂时无法读取`); continue; }
-    for (const tool of result.value.catalog.tools) {
-      const existing = merged.get(tool.tool_release_id);
-      if (existing) existing.projects.push(result.value.project);
-      else merged.set(tool.tool_release_id, { ...tool, projects: [result.value.project] });
-    }
-  }
-  tools.value = [...merged.values()];
+  chain.value = undefined; detail.value = undefined; errors.value = []; busy.value = true;
+  if (!props.experience.showProjectSurface) { busy.value = false; return; }
   if (chainProject.value) {
     const query = new URLSearchParams({ project_code: chainProject.value });
     if (chainTask.value) query.set("workspace_id", chainTask.value.workspace_id);
@@ -97,7 +88,7 @@ watch(() => props.query, () => { detail.value = undefined; });
 </script>
 
 <template>
-  <section class="home-section personal-capabilities" aria-label="我的能力" :aria-busy="busy">
+  <section v-if="experience.showProjectSurface" class="home-section personal-capabilities" aria-label="我的能力" :aria-busy="busy">
     <div class="section-title"><h2>能力调用链</h2><div class="capability-heading-actions"><span class="source-tag"><ShieldCheck :size="13" />只读视图</span><button class="icon-button" title="刷新能力调用链" :disabled="busy" @click="refresh"><RefreshCw :size="16" :class="{ spin: busy }" /></button></div></div>
     <p class="capability-explanation">展示当前账号在项目中的真实授权链。读取本页不会准备 Runtime、调用模型或执行 MCP。</p>
     <div v-if="errors.length" class="home-warning" role="alert"><p v-for="error in errors" :key="error">{{ error }}</p></div>
@@ -119,4 +110,5 @@ watch(() => props.query, () => { detail.value = undefined; });
     <p v-if="!busy && !visible.length" class="home-empty">{{ errors.length ? '未能读取匹配的能力，请重试' : '暂无匹配的授权能力' }}</p>
     <aside v-if="detail" class="detail-drawer" aria-label="能力详情"><header><div><small>我的能力 · MCP 工具</small><h2>{{ detail.compatibility.display_name || detail.tool_definition_id }}</h2><code>{{ detail.tool_definition_id }}</code></div><button class="icon-button" title="关闭能力详情" @click="detail = undefined"><X :size="19" /></button></header><div class="detail-content"><p>{{ detail.compatibility.description }}</p><h3>授权项目</h3><p v-for="item in detail.projects" :key="item.project_code">{{ item.project_code }} · {{ item.project_name }}</p><dl><dt>操作</dt><dd>{{ detail.risk_manifest.action_class }}</dd><dt>审批策略</dt><dd>{{ detail.approval_policy }}</dd><dt>恢复策略</dt><dd>{{ detail.recovery_class }}</dd></dl><details><summary>参数与协议</summary><pre>{{ JSON.stringify(detail.input_schema, null, 2) }}</pre><code>{{ detail.tool_release_id }}</code></details></div></aside>
   </section>
+  <section v-else class="home-section personal-capabilities"><div class="section-title"><h2>个人能力</h2></div><p>个人对话</p></section>
 </template>

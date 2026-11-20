@@ -245,3 +245,12 @@ rollback_plan
 - 验证：`product/packages/contracts/tests/provider-bundle.test.ts`、`product/apps/api/tests/ee-provider-bundle.test.ts`、`product/apps/api/tests/ee-provider-bundle-startup.test.ts`。
 - 结论仅为 `D4A COMPLETE / D4B NOT STARTED`，不是独立验收或发布资格；完整结果见 `product/docs/decoupling-d4a-verification.md`。
 
+## 12. Frontend Experience Projection
+
+- FRONTEND-PROVIDER-ISOLATION-01 consumes existing C61-C66; no schema or authority semantics change.
+- Additive `/v1/ssts-tasks?scope=personal` returns only the authenticated owner's local personal tasks. Default mixed discovery retains its current source directory check.
+- Generic profiles are not assumed to be SSTS. Current Catalog/C65 assemble the existing EE scene; task bookmarks, assets and `provider_mode` grant no presentation capability.
+- Source request-time PC/source authorization, exact approval and Gateway recovery remain unchanged.
+- Synthetic production-build desktop/mobile fixtures verify frontend compatibility, not live EE/Runtime/model execution or production qualification.
+- Design and retest entry: `frontend-provider-neutral-experience-v1.md`, `../product/docs/frontend-provider-isolation-01-verification.md`.
+

@@ -43,6 +43,13 @@ the persistent personal Workbench continues. Architecture and developer evidence
 `architecture/external-provider-decoupling-d4a-provider-bundle-v1.md` and
 `product/docs/decoupling-d4a-verification.md`.
 
+The frontend projects current availability, authorized project discovery and the
+selected Catalog into one neutral experience. Personal-only states do not mount
+project/scenario navigation or fetch provider account details. Current EE/SSTS
+capabilities retain their vertical views. Design and local developer evidence:
+`architecture/frontend-provider-neutral-experience-v1.md` and
+`product/docs/frontend-provider-isolation-01-verification.md`.
+
 ## Verify
 
 Prerequisites: Node.js 22 or later and pnpm 11.21.0.

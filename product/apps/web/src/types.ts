@@ -25,6 +25,7 @@ export interface SignInResult {
 }
 
 export interface SystemCapabilities {
+  provider_bundle?: { bundle_state: string; bundle_generation: string; catalog_revision: string; expires_at: string; registration_revision: number };
   provider_mode: "standalone" | "ee-connected";
   capabilities: {
     core: "configured" | "not-configured";

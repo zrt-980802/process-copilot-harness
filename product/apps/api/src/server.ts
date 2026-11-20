@@ -1162,7 +1162,7 @@ export function buildApiServer(
     return reply.status(201).send(workspace);
   });
 
-  server.get("/v1/ssts-tasks", async (request) => {
+  server.get<{ Querystring: { scope?: string } }>("/v1/ssts-tasks", async (request) => {
     const authenticated = await identityFrom(dependencies).authenticate(
       bearerToken(request.headers.authorization)
     );
@@ -1170,6 +1170,7 @@ export function buildApiServer(
         authenticated.principal.tenant_id,
         authenticated.principal.principal_id
       );
+    if (request.query.scope === "personal") return { tasks: tasks.filter(task => task.project_code === undefined) };
     if (!dependencies.workbench) return { tasks };
     if (!dependencies.workbench.hasProjectProvider()) {
       return { tasks: tasks.filter((task) => task.project_code === undefined) };

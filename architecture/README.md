@@ -97,3 +97,5 @@
 - DECOUPLING D3 开发者验证：`../product/docs/decoupling-d3-verification.md`
 - 外部 Provider 解耦 D4A Bundle 生命周期：`external-provider-decoupling-d4a-provider-bundle-v1.md`
 - DECOUPLING D4A 开发者验证：`../product/docs/decoupling-d4a-verification.md`
+- Provider 中立前端体验：`frontend-provider-neutral-experience-v1.md`
+- 前端 Provider 隔离开发者验证：`../product/docs/frontend-provider-isolation-01-verification.md`

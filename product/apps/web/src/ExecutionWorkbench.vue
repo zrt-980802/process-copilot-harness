@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { Check, ExternalLink, FileSearch, MessageSquare, Play, RefreshCw, Send, ShieldCheck, Square, Wrench, X } from "lucide-vue-next";
-import { request } from "./api";
+import { useExperience } from "./experience-context";
+import type { ExperienceProjection } from "./experience-policy";
+import { sourceLinks, sourceCommand, type Row } from "./provider-view-adapter";
 import SchemaField from "./SchemaField.vue";
 import MarkdownMessage from "./MarkdownMessage.vue";
 interface Tool { tool_release_id: string; tool_definition_id: string; schema_digest: string;
@@ -18,7 +20,8 @@ interface Execution { session?: { assignment: { runtime_id: string; runtime_epoc
   ledger: Array<{ operation: { operation_id: string; state: string; approval_id?: string };
     external?: { tool_release_id: string; outcome_state: string; result?: { result: Record<string, unknown>; external_evidence_refs: string[] } } }> }
 interface ChatMessage { message_id: string; role: "user" | "assistant"; content: string; sequence: number; occurred_at: string }
-const props = defineProps<{ token: string; project: string; workspaceId?: string; conversationMode?: boolean }>();
+const props = defineProps<{ token: string; project: string; workspaceId?: string; conversationMode?: boolean; experience: ExperienceProjection }>();
+const { request } = useExperience(() => props.project);
 const emit = defineEmits<{ changed: [] }>();
 const tab = ref("run");
 const tools = ref<Tool[]>([]);
@@ -39,8 +42,10 @@ const runningWorkspace = ref("");
 const pendingPrompt = ref("");
 const messagesElement = ref<HTMLElement>();
 const running = computed(() => runningWorkspace.value === props.workspaceId);
-const tabs = [{ key: "run", label: "对话", icon: MessageSquare }, { key: "tools", label: "工具", icon: Wrench },
+const tabDefinitions = [{ key: "run", label: "对话", icon: MessageSquare }, { key: "tools", label: "工具", icon: Wrench },
   { key: "evidence", label: "证据与追溯", icon: FileSearch }, { key: "approvals", label: "审批", icon: ShieldCheck }];
+const tabs = computed(() => tabDefinitions.filter(item => item.key !== "tools" || !!props.project && tools.value.length > 0)
+  .filter(item => item.key !== "approvals" || !!props.project && props.experience.showApprovals));
 const answer = computed(() => typeof (result.value as { content?: unknown })?.content === "string"
   ? (result.value as { content: string }).content : "");
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -56,14 +61,16 @@ async function refresh() {
   const generation = ++refreshGeneration;
   const { project, workspaceId, token } = props;
   const [catalog, state, pending] = await Promise.all([
-    project ? request<{ tools: Tool[] }>(`/v1/workbench/catalog?project_code=${encodeURIComponent(project)}`, token) : Promise.resolve({ tools: [] }),
+    Promise.resolve({ tools: project ? props.experience.tools as Tool[] : [] }),
     workspaceId ? request<Execution>(`/v1/workbench/tasks/${workspaceId}/execution`, token) : Promise.resolve(undefined),
-    request<{ items: Approval[] }>("/v1/workbench/approvals", token)
+    project && props.experience.showApprovals && tab.value === "approvals"
+      ? request<{ items: Approval[] }>("/v1/workbench/approvals", token) : Promise.resolve({ items: [] })
   ]);
   if (generation !== refreshGeneration || workspaceId !== props.workspaceId || project !== props.project || token !== props.token) return;
   tools.value = state ? catalog.tools.filter(tool => state.tool_release_ids.includes(tool.tool_release_id)) : catalog.tools;
   if (selected.value && !tools.value.some(tool => tool.tool_release_id === selected.value?.tool_release_id)) selected.value = undefined;
-  execution.value = state; approvals.value = pending.items;
+  execution.value = state; approvals.value = pending.items.filter(item => item.resource_scope_refs?.includes(`project:${project}`)
+    && tools.value.some(tool => tool.tool_release_id === item.tool_release_id));
 }
 function choose(tool: Tool) { selected.value = tool; args.value = {}; result.value = undefined; }
 async function invoke() {
@@ -115,25 +122,16 @@ async function cancel() {
 async function reconcile(operationId: string) {
   await perform(async () => { result.value = await post(`/v1/workbench/tasks/${props.workspaceId}/operations/${operationId}/reconcile`, {}); await refresh(); });
 }
-function ownerLinks(payload?: Record<string, unknown>) {
-  const links = [{ uri: `eea://projects/${props.project}`, name: `EE Project ${props.project}` }];
-  const data = payload?.data as { result?: { document?: { ssts_code?: string } } } | undefined;
-  if (data?.result?.document?.ssts_code) links.push({ uri: `eea://projects/${props.project}/ssts/${encodeURIComponent(data.result.document.ssts_code)}`, name: data.result.document.ssts_code });
-  return links;
-}
+function ownerLinks(payload?: Record<string, unknown>) { return sourceLinks(props.project, payload, props.experience.tools); }
 async function openOwner(uri: string) {
-  if (!props.workspaceId) return;
-  const prefix = `eea://projects/${props.project}`;
-  if (uri !== prefix && !uri.startsWith(`${prefix}/ssts/`)) return;
-  const sstsCode = uri === prefix ? undefined : decodeURIComponent(uri.slice(`${prefix}/ssts/`.length));
-  const tool = tools.value.find((entry) => entry.tool_definition_id === (sstsCode ? "ee.get_ssts" : "ee.get_project_context"));
-  if (!tool) return;
+  if (!props.workspaceId || !props.experience.showProjectSurface) return;
+  const command = sourceCommand(props.project, uri);
+  const tool = command && tools.value.find(entry => entry.tool_definition_id === command.name);
+  if (!tool || !command) return;
   await perform(async () => {
-    ownerResult.value = await post(`/v1/workbench/tasks/${props.workspaceId}/tools`, {
-      tool_release_id: tool.tool_release_id, arguments: sstsCode ? { ssts_code: sstsCode } : {}, call_id: crypto.randomUUID() });
-    ownerUri.value = uri;
-    history.replaceState(null, "", `#owner=${encodeURIComponent(uri)}`);
-    await refresh();
+    ownerResult.value = await post<Row>(`/v1/workbench/tasks/${props.workspaceId}/tools`, {
+      tool_release_id: tool.tool_release_id, arguments: command.arguments, call_id: crypto.randomUUID() });
+    ownerUri.value = uri; history.replaceState(null, "", `#owner=${encodeURIComponent(uri)}`); await refresh();
   });
 }
 function closeOwner() { ownerUri.value = ""; history.replaceState(null, "", location.pathname); }
@@ -163,8 +161,8 @@ watch(() => [props.workspaceId, props.project, props.token], () => {
   void loadConversation();
   void perform(refresh);
 }, { immediate: true });
-const timer = setInterval(() => { void refresh().catch((caught: unknown) => { error.value = caught instanceof Error ? caught.message : String(caught); }); }, 5000);
-onBeforeUnmount(() => clearInterval(timer));
+watch(tab, () => { if (tab.value === "approvals" && props.experience.showApprovals) void perform(refresh); });
+onBeforeUnmount(() => { refreshGeneration++; chatGeneration++; });
 </script>
 <template>
   <section class="execution-workbench">
@@ -180,7 +178,7 @@ onBeforeUnmount(() => clearInterval(timer));
       <pre>{{ JSON.stringify(ownerResult, null, 2) }}</pre>
     </section>
     <div v-if="tab === 'tools'" class="tools-layout">
-      <nav class="tool-roster" aria-label="EE 工具">
+      <nav class="tool-roster" aria-label="当前工具">
         <button v-for="tool in tools" :key="tool.tool_release_id" type="button" :class="{ selected: selected?.tool_release_id === tool.tool_release_id }" @click="choose(tool)">
           <span>{{ tool.compatibility?.display_name || tool.tool_definition_id }}<code>{{ tool.tool_definition_id }}</code></span><small>{{ tool.risk_manifest.action_class === 'READ' ? '只读' : '审批' }}</small>
         </button>
@@ -232,7 +230,7 @@ onBeforeUnmount(() => clearInterval(timer));
     </div>
     <div v-if="tab === 'approvals'" class="approval-list">
       <article v-for="approval in approvals" :key="approval.approval_id" class="approval-row">
-        <div><strong>{{ tools.find(t => t.tool_release_id === approval.tool_release_id)?.tool_definition_id || 'EE SSTS review' }}</strong><span>{{ approval.status }}</span></div>
+        <div><strong>{{ tools.find(t => t.tool_release_id === approval.tool_release_id)?.tool_definition_id || '受控请求' }}</strong><span>{{ approval.status }}</span></div>
         <code>{{ approval.approval_id }}</code><span>{{ approval.resource_scope_refs?.join(', ') }}</span>
         <pre>{{ JSON.stringify(approval.arguments, null, 2) }}</pre>
         <div v-if="approval.status === 'PENDING'" class="approval-actions">
