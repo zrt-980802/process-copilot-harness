@@ -120,10 +120,13 @@ export class EeProviderBundle {
   }) {
     this.now = options.now ?? Date.now;
     this.health = options.health ?? new ProviderHealthRegistry(() => new Date(this.now()));
-    this.health.register("provider:eeclaw", ["identity", "enterprise_authorization", "project_directory", "business_capability", "workbench_projection"]);
+    this.health.register("provider:eeclaw", ["identity", "enterprise_authorization", "project_directory", "business_capability", "workbench_projection"], this.registrationRevision);
     this.digest = configurationDigest(options.environment());
     this.checkedAt = this.now();
   }
+
+  // Revision 1 describes bootstrap; every reload detaches that generation's health record.
+  private get registrationRevision(): number { return this.sequence + 1; }
 
   descriptor(): EeBundleDescriptor {
     const health = this.health.observation("provider:eeclaw");
@@ -131,7 +134,7 @@ export class EeProviderBundle {
     const degraded = this.state === "READY" && health.provider_state === "DEGRADED";
     return {
       contract_name: "pc.provider-bundle/1", contract_version: 1, provider_id: "provider:eeclaw", bundle_version: "1.0.0",
-      registration_revision: Math.max(1, this.sequence), compatibility_status: this.compatibility,
+      registration_revision: this.registrationRevision, compatibility_status: this.compatibility,
       catalog_revision: this.current?.catalog.connector.capability_digest ?? this.previous?.catalog_revision ?? "catalog-unavailable",
       configuration_digest: this.digest, bundle_generation: `${this.epoch}.${this.sequence}`,
       bundle_state: degraded ? "DEGRADED" : expired ? "UNAVAILABLE" : this.state,
@@ -159,7 +162,8 @@ export class EeProviderBundle {
 
   metadata() { return this.previous; }
   automaticRecoveryAllowed(): boolean {
-    return this.failure === undefined || ["TRANSPORT", "TIMEOUT"].includes(this.failure);
+    return this.sequence === 0 || this.state === "READY"
+      || this.state === "UNAVAILABLE" && this.failure !== undefined && ["TRANSPORT", "TIMEOUT"].includes(this.failure);
   }
   active() {
     return this.descriptor().bundle_state === "READY" ? this.current : undefined;
@@ -199,8 +203,11 @@ export class EeProviderBundle {
 
   reload(options: { manual?: boolean } = {}): Promise<void> {
     if (this.inFlight) return this.inFlight;
-    if ((!options.manual && !this.automaticRecoveryAllowed()) || this.now() < this.nextProbeAt) {
-      return Promise.reject(new IdentityAuthorizationError("PC_PROVIDER_RETRY_BLOCKED", "EE bundle retry requires intervention or bounded backoff", true));
+    if (!options.manual && !this.automaticRecoveryAllowed()) {
+      return Promise.reject(new IdentityAuthorizationError("PC_PROVIDER_RETRY_BLOCKED", "EE bundle retry requires explicit intervention", false));
+    }
+    if (this.now() < this.nextProbeAt) {
+      return Promise.reject(new IdentityAuthorizationError("PC_PROVIDER_RETRY_BLOCKED", "EE bundle retry is waiting for bounded backoff", true));
     }
     // Close execution before any await; only diagnostics from the previous generation survive.
     this.retainMetadata();
@@ -210,7 +217,7 @@ export class EeProviderBundle {
     this.checkedAt = this.now();
     this.sequence++;
     // Old router attempts update only their detached health record.
-    this.health.register("provider:eeclaw", ["identity", "enterprise_authorization", "project_directory", "business_capability", "workbench_projection"], this.sequence + 1);
+    this.health.register("provider:eeclaw", ["identity", "enterprise_authorization", "project_directory", "business_capability", "workbench_projection"], this.registrationRevision);
     const generation = `${this.epoch}.${this.sequence}`;
     const task = this.build(generation).finally(() => { if (this.inFlight === task) this.inFlight = undefined; });
     this.inFlight = task;
@@ -225,7 +232,7 @@ export class EeProviderBundle {
     }
     let configuration: ProviderConfiguration;
     try { configuration = classifyProviderConfiguration(environment); }
-    catch { this.recordFailure("CONFIGURATION"); return; }
+    catch { this.configurationFailure(); }
     if (!configuration.ee.configured) {
       this.state = "UNCONFIGURED"; this.compatibility = "NOT_APPLICABLE"; this.reasons = ["bundle_unconfigured"]; return;
     }
@@ -236,7 +243,7 @@ export class EeProviderBundle {
       catch { return false; }
     };
     if (!tenant?.trim() || !validUrl(authorization_url!) || !validUrl(mcp_url!)) {
-      this.recordFailure("CONFIGURATION"); return;
+      this.configurationFailure();
     }
     try {
       const candidate = await this.options.build({ authorization_url: authorization_url!, authorization_secret: authorization_secret!, mcp_url: mcp_url!, mcp_secret: mcp_secret!, tenant }, generation);
@@ -286,6 +293,11 @@ export class EeProviderBundle {
       this.recordFailure(failure);
       throw new IdentityAuthorizationError(`PC_PROVIDER_BUNDLE_${failure}`, "EE provider bundle assembly failed", ["TRANSPORT", "TIMEOUT"].includes(failure));
     }
+  }
+
+  private configurationFailure(): never {
+    this.recordFailure("CONFIGURATION");
+    throw new IdentityAuthorizationError("PC_PROVIDER_BUNDLE_CONFIGURATION", "EE provider configuration is invalid or incomplete", false);
   }
 
   private retainMetadata(): void {

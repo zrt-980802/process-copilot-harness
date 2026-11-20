@@ -164,6 +164,7 @@ function sstsFrom(dependencies: ApiServerDependencies): SstsDraftService {
 }
 
 function identityStatus(error: IdentityAuthorizationError): number {
+  if (["PC_PROVIDER_BUNDLE_UNCONFIGURED", "PC_PROVIDER_BUNDLE_DISABLED"].includes(error.code)) return 409;
   if (
     error.code === "PC_AUTHENTICATION_REQUIRED"
     || error.code === "PC_PILOT_AUTHENTICATION_FAILED"
@@ -455,8 +456,14 @@ export function buildApiServer(
   if (dependencies.retryEeProvider !== undefined) {
     server.post("/v1/providers/eeclaw/retry", async () => {
       await dependencies.retryEeProvider!();
+      const descriptor = dependencies.eeBundle?.descriptor();
+      if (descriptor && descriptor.bundle_state !== "READY") {
+        const inactive = ["UNCONFIGURED", "DISABLED"].includes(descriptor.bundle_state);
+        throw new IdentityAuthorizationError(inactive ? `PC_PROVIDER_BUNDLE_${descriptor.bundle_state}` : "PC_PROVIDER_BUNDLE_NOT_READY",
+          "EE provider bundle is not ready for execution", !inactive);
+      }
       return {
-        ...(dependencies.eeBundle ? { provider_bundle: dependencies.eeBundle.descriptor() } : {}),
+        ...(descriptor ? { provider_bundle: descriptor } : {}),
         provider_health: dependencies.eeBundle?.observation() ?? dependencies.identityAuthorization?.providerHealth(
           "provider:eeclaw"
         )

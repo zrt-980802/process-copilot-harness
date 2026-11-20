@@ -31,7 +31,9 @@ describe("D4A aggregate EE bundle contract", () => {
     const build = vi.fn();
     for (const [env, state] of [[{}, "UNCONFIGURED"], [{ EECLAW_ADAPTER_URL: environment.EECLAW_ADAPTER_URL }, "UNAVAILABLE"]] as const) {
       const bundle = new EeProviderBundle({ environment: () => env, build });
-      await bundle.reload({ manual: true });
+      if (state === "UNAVAILABLE") {
+        await expect(bundle.reload({ manual: true })).rejects.toMatchObject({ code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false });
+      } else await bundle.reload({ manual: true });
       expect(bundle.descriptor().bundle_state).toBe(state);
       expect(bundle.active()).toBeUndefined();
     }
@@ -299,5 +301,146 @@ describe("D4A aggregate EE bundle contract", () => {
     expect(() => bundle.identity.bindings()).toThrow();
     expect(raw.directory.listProjects).not.toHaveBeenCalled();
     expect(raw.identity.bindings).not.toHaveBeenCalled();
+  });
+});
+
+describe("D4A acceptance remediation contracts", () => {
+  function expectRevision(bundle: EeProviderBundle, expected: number) {
+    expect(bundle.descriptor().registration_revision).toBe(expected);
+    expect(bundle.observation().configuration_revision).toBe(expected);
+    expect(bundle.health.observation("provider:eeclaw").configuration_revision).toBe(expected);
+  }
+
+  it("keeps first and consecutive reload revisions identical and detaches bootstrap health results", async () => {
+    const bundle = new EeProviderBundle({ environment: () => environment, build: async (_, generation) => candidate(generation) });
+    expectRevision(bundle, 1);
+    const bootstrap = bundle.health.beginAttempt("provider:eeclaw", "enterprise_authorization");
+    await bundle.reload();
+    expectRevision(bundle, 2);
+    bootstrap.failure("INCOMPATIBLE", "late-bootstrap-result");
+    expect(bundle.descriptor().bundle_state).toBe("READY");
+    const oldFailure = bundle.health.beginAttempt("provider:eeclaw", "enterprise_authorization");
+    const oldSuccess = bundle.health.beginAttempt("provider:eeclaw", "project_directory");
+    await bundle.reload({ manual: true });
+    expectRevision(bundle, 3);
+    oldFailure.failure("INCOMPATIBLE", "late-old-failure");
+    oldSuccess.success("late-old-success");
+    expect(bundle.health.observation("provider:eeclaw").reason_codes).not.toContain("late-old-success");
+    expect(bundle.descriptor().bundle_state).toBe("READY");
+    await bundle.reload({ manual: true });
+    expectRevision(bundle, 4);
+  });
+
+  it("preserves revision consistency through failure and a single-flight recovery", async () => {
+    const build = vi.fn(async (_, generation: string) => candidate(generation));
+    const bundle = new EeProviderBundle({ environment: () => environment, build });
+    await bundle.reload();
+    const old = bundle.health.beginAttempt("provider:eeclaw", "enterprise_authorization");
+    build.mockRejectedValueOnce(Object.assign(new Error("contract"), { code: "PC_MCP_INVALID_RESPONSE" }));
+    await expect(bundle.reload({ manual: true })).rejects.toThrow();
+    expectRevision(bundle, 3);
+    old.success("stale-success-after-failure");
+    expect(bundle.active()).toBeUndefined();
+    let complete: ((value: EeBundleCandidate) => void) | undefined;
+    let nextGeneration = "";
+    build.mockImplementationOnce(async (_, generation) => {
+      nextGeneration = generation;
+      return new Promise(resolve => { complete = resolve; });
+    });
+    const first = bundle.reload({ manual: true });
+    const second = bundle.reload({ manual: true });
+    expect(first).toBe(second);
+    expectRevision(bundle, 4);
+    expect(bundle.descriptor().bundle_state).toBe("STARTING");
+    complete!(candidate(nextGeneration));
+    await Promise.all([first, second]);
+    expectRevision(bundle, 4);
+    expect(build).toHaveBeenCalledTimes(3);
+    expect(bundle.descriptor().bundle_state).toBe("READY");
+  });
+
+  it.each([
+    ["partial", { EECLAW_ADAPTER_URL: environment.EECLAW_ADAPTER_URL }],
+    ["invalid authorization URL", { ...environment, EECLAW_ADAPTER_URL: "invalid" }],
+    ["invalid MCP URL", { ...environment, EE_MCP_ADAPTER_URL: "file:///invalid" }],
+    ["URL credentials", { ...environment, EE_MCP_ADAPTER_URL: "https://user:synthetic@invalid.test/mcp" }],
+    ["missing tenant", { ...environment, PC_PILOT_TENANT_ID: undefined }],
+    ["blank tenant", { ...environment, PC_PILOT_TENANT_ID: " " }]
+  ])("returns a stable nonretryable HTTP400 for %s configuration", async (_label, config) => {
+    const build = vi.fn();
+    const bundle = new EeProviderBundle({ environment: () => config, build });
+    const server = buildApiServer({ eeBundle: bundle, retryEeProvider: () => bundle.reload({ manual: true }) });
+    try {
+      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false } });
+      expect(bundle.descriptor()).toMatchObject({ bundle_state: "UNAVAILABLE", reason_codes: ["bundle_failure:configuration"] });
+      expectRevision(bundle, 2);
+      expect(bundle.active()).toBeUndefined();
+      expect(bundle.automaticRecoveryAllowed()).toBe(false);
+      await expect(bundle.reload()).rejects.toMatchObject({ code: "PC_PROVIDER_RETRY_BLOCKED", retryable: false });
+      expectRevision(bundle, 2);
+      expect(() => bundle.directory.listProjects({} as never)).toThrow();
+      expect(build).not.toHaveBeenCalled();
+    } finally { await server.close(); }
+  });
+
+  it("keeps all revisions consistent after configuration correction and explicit reload", async () => {
+    let config: Record<string, string | undefined> = { ...environment, PC_PILOT_TENANT_ID: undefined };
+    const bundle = new EeProviderBundle({ environment: () => config, build: async (_, generation) => candidate(generation) });
+    await expect(bundle.reload()).rejects.toMatchObject({ code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false });
+    expectRevision(bundle, 2);
+    const stale = bundle.health.beginAttempt("provider:eeclaw", "enterprise_authorization");
+    config = environment;
+    await bundle.reload({ manual: true });
+    expectRevision(bundle, 3);
+    stale.failure("INCOMPATIBLE", "old-config-failure");
+    expect(bundle.descriptor().bundle_state).toBe("READY");
+  });
+
+  it.each([
+    ["UNCONFIGURED", {}, "PC_PROVIDER_BUNDLE_UNCONFIGURED"],
+    ["DISABLED", { ...environment, PC_EE_PROVIDER_DISABLED: "true" }, "PC_PROVIDER_BUNDLE_DISABLED"]
+  ])("keeps %s startup safe but returns HTTP409 for an explicit retry", async (state, config, code) => {
+    const build = vi.fn();
+    const bundle = new EeProviderBundle({ environment: () => config, build });
+    await bundle.reload();
+    expect(bundle.descriptor().bundle_state).toBe(state);
+    expect(bundle.automaticRecoveryAllowed()).toBe(false);
+    const server = buildApiServer({ eeBundle: bundle, retryEeProvider: () => bundle.reload({ manual: true }) });
+    try {
+      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ error: { code, retryable: false } });
+      expectRevision(bundle, 3);
+      expect(bundle.active()).toBeUndefined();
+      expect(build).not.toHaveBeenCalled();
+    } finally { await server.close(); }
+  });
+
+  it.each([
+    ["PC_PROVIDER_AUTHENTICATION_FAILED", "AUTHENTICATION", 400, false],
+    ["PC_MCP_INVALID_RESPONSE", "PROTOCOL", 400, false],
+    ["PC_PROVIDER_INCOMPATIBLE", "COMPATIBILITY", 400, false],
+    ["PC_MCP_TRANSPORT_FAILED", "TRANSPORT", 503, true],
+    ["PC_MCP_TIMEOUT", "TIMEOUT", 503, true]
+  ])("keeps %s distinct from successful retry and generic HTTP500", async (code, failure, status, retryable) => {
+    const build = vi.fn(async () => { throw Object.assign(new Error("synthetic-failure"), { code }); });
+    const bundle = new EeProviderBundle({ environment: () => environment, build });
+    const server = buildApiServer({ eeBundle: bundle, retryEeProvider: () => bundle.reload({ manual: true }) });
+    try {
+      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+      expect(response.statusCode).toBe(status);
+      expect(response.json()).toMatchObject({ error: { code: `PC_PROVIDER_BUNDLE_${failure}`, retryable } });
+      expect(bundle.active()).toBeUndefined();
+      expectRevision(bundle, 2);
+      if (retryable) {
+        const blocked = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+        expect(blocked.statusCode).toBe(503);
+        expect(blocked.json()).toMatchObject({ error: { code: "PC_PROVIDER_RETRY_BLOCKED", retryable: true } });
+        expect(build).toHaveBeenCalledTimes(1);
+        expectRevision(bundle, 2);
+      }
+    } finally { await server.close(); }
   });
 });

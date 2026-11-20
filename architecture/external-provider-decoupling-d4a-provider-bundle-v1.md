@@ -1,12 +1,14 @@
 # EE Provider Bundle lifecycle v1
 
-Date: 2026-11-20. Authority: ADR-0024. Phase: D4A COMPLETE / D4B NOT STARTED. Local developer verification only; not independent acceptance or production qualification.
+Date: 2026-11-20. Authority: ADR-0024. Status: READY FOR INDEPENDENT RETEST (D4A-ACCEPTANCE-REMEDIATION-01). Local developer verification only; not independent acceptance or production qualification. D4B remains NOT STARTED.
 
 ## Contract Boundary
 
 C61 remains registration, C62 remains a short-lived process-local health observation (HEALTHY is its existing spelling), C63 remains the unique request-time authority route, C65 remains discovery/availability, never authorization. New C66 `pc.provider-bundle/1` describes the lifecycle boundary because the existing strict schemas cannot express a bundle version and generation. C66 READY maps to C62 HEALTHY; existing contracts are not silently redefined. C65 references the bundle generation and registration revision through evidence_refs and retains its catalog_revision and stable reason_codes.
 
 Minimum descriptor: provider_id, bundle_version, registration_revision, compatibility_status, catalog_revision, configuration_digest, bundle_generation, bundle_state, reason_codes, observed_at, expires_at. A generation includes a fresh process epoch, so API restart cannot make an old Connector current. The configuration digest covers only nonsecret configuration: sanitized endpoint identity, tenant and configuration flags, never URL userinfo/query/fragment, tokens or shared-secret bytes. Credentials are private inputs, never descriptor/diagnostic values. Every reload creates a new generation even if only a secret changed.
+
+One revision getter supplies C66 registration_revision, Bundle C62 configuration_revision and the shared Registry C62 configuration_revision. Bootstrap has revision 1 / generation suffix 0; the first reload has revision 2 / suffix 1. Every reload advances revision, including failed assembly. Single-flight joiners share the same revision. Replacing the Registry record at every new revision detaches old attempts, including bootstrap results; generation suffix and registration revision are distinct values with this explicit offset.
 
 ## Lifecycle And Fault Matrix
 
@@ -27,6 +29,23 @@ States: UNCONFIGURED, STARTING, READY, DEGRADED, UNAVAILABLE, DISABLED. PC Core 
 | Health expired | UNAVAILABLE / HEALTH_EXPIRED | Bounded reload | If persistent | Yes | No |
 
 Business calls cannot recover an unavailable bundle. Startup and the existing retry endpoint may run lifecycle probes; no background timer or administrative console is introduced. Manual retry does not bypass the bounded transport backoff, compatibility checks, current authentication or request-time authorization. Unknown assembly failures are protocol failures, not generic HTTP500 or optimistic readiness.
+
+### Explicit Retry Response Contract
+
+| Bundle outcome | POST retry HTTP | Error code | retryable / automatic recovery |
+| --- | --- | --- | --- |
+| UNCONFIGURED | 409 | PC_PROVIDER_BUNDLE_UNCONFIGURED | false; configure then explicitly retry |
+| DISABLED | 409 | PC_PROVIDER_BUNDLE_DISABLED | false; explicit intervention required |
+| CONFIGURATION | 400 | PC_PROVIDER_BUNDLE_CONFIGURATION | false; fix partial config, URL or tenant |
+| AUTHENTICATION | 400 | PC_PROVIDER_BUNDLE_AUTHENTICATION | false; fix adapter credentials |
+| PROTOCOL | 400 | PC_PROVIDER_BUNDLE_PROTOCOL | false; fix contract |
+| COMPATIBILITY | 400 | PC_PROVIDER_BUNDLE_COMPATIBILITY | false; compatible adapter required |
+| TRANSPORT / TIMEOUT | 503 | PC_PROVIDER_BUNDLE_TRANSPORT / PC_PROVIDER_BUNDLE_TIMEOUT | true; bounded backoff |
+| Backoff not elapsed | 503 | PC_PROVIDER_RETRY_BLOCKED | true; no new build or revision |
+| Automatic attempt requires intervention | rejected reload promise | PC_PROVIDER_RETRY_BLOCKED | false; no new build or revision |
+| READY | 200 | none | complete active generation only |
+
+Startup reload may resolve safely for UNCONFIGURED/DISABLED; that is a Core startup no-op, not recovery. The explicit HTTP retry endpoint rejects those non-ready outcomes. Configuration failures reject reload itself after recording fail-closed state. Failed browser retry retains the unavailable indication and exits before refreshing health/tasks/projects or showing a success notification. These rules do not add administrative retry operations, cross-instance coordination or permission changes.
 
 ## Atomic Publication And Safety
 

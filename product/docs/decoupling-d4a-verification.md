@@ -1,9 +1,54 @@
 # DECOUPLING D4A Provider Bundle Verification
 
 Date: 2026-11-20 (Asia/Shanghai).
-Result: **D4A COMPLETE / D4B NOT STARTED**.
+Result: **READY FOR INDEPENDENT RETEST**.
 Classification: local developer verification, not independent acceptance or production qualification.
 Task authority: `../../governance/DECOUPLING-D4A-EE-PROVIDER-BUNDLE-LIFECYCLE-TASK.md`.
+
+## D4A-ACCEPTANCE-REMEDIATION-01
+
+Remediation baseline: `main@2fb37ae8bbddb5b2e3230faa7cf67a2ed13add13`, initially clean. Scope: the two reported P2 contracts only. D4B and MEMORY-01B remain unstarted. This section supersedes the affected original developer conclusions below; historical results are preserved.
+
+### Reproduction Before Fix
+
+1. Construct a configured Bundle and reload once. Observe C66 registration_revision=1 and Bundle C62 configuration_revision=1, but shared Registry C62 configuration_revision=2. Every further reload retains the one-revision mismatch.
+2. Construct a Bundle with only EECLAW_ADAPTER_URL, inject its manual reload into the actual Fastify retry handler, then POST `/v1/providers/eeclaw/retry`. Observe HTTP200 while C66 is UNAVAILABLE with `bundle_failure:configuration`. The same path applies to invalid URLs and missing/blank tenant.
+3. Initial added regression matrix was run against the unchanged implementation with `pnpm exec vitest run apps/api/tests/ee-provider-bundle.test.ts -t 'D4A acceptance remediation contracts'`: 15 failed / 19 existing tests filtered out (20:26:59 Asia/Shanghai). The recorded failures included revision mismatches and HTTP200 instead of HTTP400/409.
+
+### Fix And Final Retry Behavior
+
+- A single `registrationRevision` getter supplies all three observations: bootstrap revision 1, first reload revision 2, then 3/4/etc. Generation suffix remains 0/1/2/etc. The existing Registry replacement/detached-attempt mechanism is preserved. Tests check bootstrap late failure, old success/failure, initial/consecutive reloads, failed assembly, explicit correction and concurrent single-flight recovery, including STARTING state.
+- Partial configuration, invalid authorization/MCP URL (including URL credentials) and missing/blank tenant now record CONFIGURATION and reject reload with `PC_PROVIDER_BUNDLE_CONFIGURATION`, retryable=false. The existing typed API error handler returns HTTP400; no raw exception or HTTP500 is introduced.
+- UNCONFIGURED/DISABLED startup remains safe for PC Core. Explicit retry returns HTTP409 with `PC_PROVIDER_BUNDLE_UNCONFIGURED` or `PC_PROVIDER_BUNDLE_DISABLED`, retryable=false, instead of reporting recovery. Other non-ready results cannot fall through as successful retry.
+- AUTHENTICATION, PROTOCOL and COMPATIBILITY return their distinct `PC_PROVIDER_BUNDLE_*` code, HTTP400, retryable=false. They require explicit intervention. TRANSPORT/TIMEOUT return HTTP503, retryable=true. Backoff returns `PC_PROVIDER_RETRY_BLOCKED`, HTTP503, retryable=true without building or advancing revision. An automatic attempt requiring intervention rejects with the same blocked code and retryable=false.
+- No automatic attempt is permitted for a previously observed UNCONFIGURED/DISABLED/CONFIGURATION/AUTHENTICATION/PROTOCOL/COMPATIBILITY outcome. Initial startup remains permitted. Business requests never recover a failed Bundle.
+- The existing frontend awaited request/error handling already aborts the success path on non-2xx. Browser assertions now prove both HTTP400 configuration and HTTP503 transport failures retain the banner, show the error, show no success notice and make no health/task/project refresh calls; a subsequent successful retry still refreshes normally. No frontend production change was necessary.
+
+### Verification And Evidence
+
+```text
+From product/:
+pnpm exec vitest run apps/api/tests/ee-provider-bundle.test.ts apps/api/tests/ee-provider-bundle-startup.test.ts
+  2 files / 41 tests passed
+pnpm exec node apps/web/tests/decoupling-d4a.e2e.mjs
+  6 browser checks passed; no page errors
+pnpm check
+  generated inventory, architecture, lint, typecheck and builds passed
+  24 ADR / 66 contracts
+  41 files passed / 7 conditional suites skipped
+  276 tests passed / 8 conditional tests skipped (284 total)
+git diff --check
+  passed
+```
+
+The 41 directed tests include six real local HTTP/API startup smoke tests: actual `main.ts` subprocesses, isolated memory stores, dynamically allocated then closed loopback ports, an explicit ECONNREFUSED check, health/ready HTTP200, partial retry exactly HTTP400/nonretryable, transport retry HTTP503/retryable, and fail-closed health after retry. Registry consistency, single-flight, generation fencing, PC-only zero EE calls and PC Policy + current EE authorization intersection passed. Existing shared-DB test variables were unset; conditional PostgreSQL tests remained skipped.
+
+Full gate log: `reports/d4a-acceptance-remediation-01/2026-11-20T12-29-22-982Z/pnpm-check.log` (20:29:40 test start, exit 0).
+Browser evidence: `reports/decoupling-d4a/2026-11-20T12-28-53-751Z/`, including `result.json`, `retry-failed-configuration.png` and `retry-failed-transport.png`. The configuration-failure screenshot was visually checked. Browser API responses are explicitly synthetic fixtures; this is frontend compatibility evidence, not real EE business acceptance.
+
+All task API/HTTP/browser processes closed via awaited cleanup; a final OS process check found zero node main.ts smoke processes and zero Puppeteer headless browser processes. No demo environment or shared database was contacted. No EE, DSH Core, schema, .env, old Product/EE worktree, push, deployment, D4B or MEMORY-01B change. Current status is READY FOR INDEPENDENT RETEST; independent retest remains the user's next decision.
+
+## Original D4A Developer Evidence (Historical)
 
 ## Baseline And Sequence
 

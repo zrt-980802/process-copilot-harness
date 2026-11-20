@@ -83,14 +83,27 @@ async function apiStartup(mode: "unreachable" | "partial" | "standalone") {
     if (!url) throw new Error(`Isolated API startup timed out: ${output}`);
     const response = await fetch(`${url}/health`);
     expect(response.status).toBe(200);
-    const health = await response.json() as { provider_bundle: { bundle_state: string; reason_codes: string[]; bundle_generation: string }; capabilities: Record<string, string> };
+    const health = await response.json() as { provider_bundle: { bundle_state: string; reason_codes: string[]; bundle_generation: string; registration_revision: number };
+      provider_health: { configuration_revision: number }; capabilities: Record<string, string> };
     expect(health.provider_bundle.bundle_state).toBe(mode === "standalone" ? "UNCONFIGURED" : "UNAVAILABLE");
     expect(health.provider_bundle.reason_codes).toContain(mode === "unreachable" ? "bundle_failure:transport" : mode === "partial" ? "bundle_failure:configuration" : "bundle_unconfigured");
     expect(health.capabilities).toMatchObject({ core: "configured", personal_workbench: "available", project_workbench: "unavailable" });
+    expect(health.provider_health.configuration_revision).toBe(health.provider_bundle.registration_revision);
     expect((await fetch(`${url}/ready`)).status).toBe(200);
     if (mode !== "standalone") {
       const retry = await fetch(`${url}/v1/providers/eeclaw/retry`, { method: "POST" });
-      expect(retry.status).not.toBe(500);
+      const body = await retry.json();
+      if (mode === "partial") {
+        expect(retry.status).toBe(400);
+        expect(body).toMatchObject({ error: { code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false } });
+      } else {
+        expect(retry.status).toBe(503);
+        expect(body.error.code).toMatch(/^PC_PROVIDER_(BUNDLE_TRANSPORT|RETRY_BLOCKED)$/u);
+        expect(body.error.retryable).toBe(true);
+      }
+      const after = await (await fetch(`${url}/health`)).json();
+      expect(after.provider_bundle.bundle_state).toBe("UNAVAILABLE");
+      expect(after.capabilities.project_workbench).toBe("unavailable");
     }
     return health;
   } finally {
