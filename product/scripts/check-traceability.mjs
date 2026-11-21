@@ -19,6 +19,12 @@ const requirementIds = new Set(
   entries.map((entry) => entry.requirement_id)
 );
 const errors = [];
+if (entries.length !== 25 || requirementIds.size !== 25) errors.push("Expected exactly 25 unique ADR entries");
+if (schemaFiles.length !== 69 || schemaIds.size !== 69) errors.push("Expected exactly 69 unique contract schemas");
+const sessionEntry = entries.find((entry) => entry.requirement_id === "ADR-0025");
+for (const id of ["C41", "C42", "C67", "C68", "C69"]) {
+  if (!sessionEntry?.contracts.includes(id)) errors.push(`ADR-0025 must trace ${id}`);
+}
 
 for (const adr of expectedAdrs) {
   if (!requirementIds.has(adr)) errors.push(`Traceability is missing ${adr}`);
@@ -45,7 +51,7 @@ for (const entry of entries) {
   }
 }
 
-for (const contractId of Array.from({ length: 66 }, (_, index) =>
+for (const contractId of Array.from({ length: 69 }, (_, index) =>
   `C${String(index + 1).padStart(2, "0")}`
 )) {
   if (!schemaIds.has(contractId)) errors.push(`Generated schema is missing ${contractId}`);

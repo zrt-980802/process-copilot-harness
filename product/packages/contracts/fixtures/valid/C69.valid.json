@@ -1,0 +1,30 @@
+{
+  "contract_name": "pc.provider-compatibility-mapping/1",
+  "contract_version": 1,
+  "mapping_release_id": "mapping:ee-v1:1",
+  "provider_registration_id": "provider:eeclaw",
+  "provider_type": "eeclaw",
+  "compatibility_version": "ee-v1",
+  "pc_action_pattern": "ssts.read",
+  "resource_authority": "eeclaw",
+  "provider_permission_mapping": {
+    "permission_keys": [
+      "page:architecture"
+    ],
+    "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+  },
+  "provider_action_mapping": {
+    "action_keys": [
+      "ssts.read"
+    ]
+  },
+  "provider_tool_mapping": {
+    "tool_keys": [
+      "ee.get_ssts_document"
+    ]
+  },
+  "decision_mode": "PC_AND_PROVIDER",
+  "artifact_digest": "sha256:78724d13d6c3bb7f107cbc12cc5ad8a384e064a5ec6f8c2c61773cbfb1db2f04",
+  "status": "ACTIVE",
+  "effective_from": "2026-11-21T00:00:00.000Z"
+}

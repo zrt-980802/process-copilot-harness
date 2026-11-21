@@ -2,6 +2,12 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
+  sessionAuthoritySchemaOverrides,
+  sessionAuthorityRootSchemaOverrides,
+  sessionAuthorityFixtureOverrides,
+  sessionAuthorityFixtureOmissions
+} from "./session-authority-contract-definitions.mjs";
+import {
   memoryEnumOverrides,
   memoryFixtureOverrides,
   memorySchemaOverrides
@@ -965,6 +971,7 @@ const schemaOverrides = {
 };
 Object.assign(schemaOverrides, memorySchemaOverrides);
 Object.assign(schemaOverrides, externalProviderSchemaOverrides);
+Object.assign(schemaOverrides, sessionAuthoritySchemaOverrides);
 
 const compatibilityBaseline = {
   sourceCommit: "cefa7432f966e17b41c1638e128de652b934fd20",
@@ -1516,6 +1523,7 @@ const fixtureOverrides = {
 };
 Object.assign(fixtureOverrides, memoryFixtureOverrides);
 Object.assign(fixtureOverrides, externalProviderFixtureOverrides);
+Object.assign(fixtureOverrides, sessionAuthorityFixtureOverrides);
 
 function fieldSchema(contractId, field) {
   const schemaOverride = schemaOverrides[contractId]?.[field];
@@ -1594,8 +1602,8 @@ for (const [source, catalog] of catalogSources) {
   }
 }
 
-if (contracts.length !== 66) {
-  throw new Error(`Expected 66 contracts, parsed ${contracts.length}`);
+if (contracts.length !== 69 || new Set(contracts.map(({ id }) => id)).size !== 69) {
+  throw new Error(`Expected 69 unique contracts, parsed ${contracts.length}`);
 }
 
 const outputDirectories = [
@@ -1653,7 +1661,8 @@ for (const contract of contracts) {
     required,
     properties,
     $comment: `${contract.id}; source=architecture/${contract.source}`,
-    ...(externalProviderRootSchemaOverrides[contract.id] ?? {})
+    ...(externalProviderRootSchemaOverrides[contract.id] ?? {}),
+    ...(sessionAuthorityRootSchemaOverrides[contract.id] ?? {})
   };
   const valid = Object.fromEntries(
     Object.entries(properties).map(([field, propertySchema]) => [
@@ -1661,6 +1670,16 @@ for (const contract of contracts) {
       fixtureValue(contract.id, field, propertySchema)
     ])
   );
+  for (const field of sessionAuthorityFixtureOmissions[contract.id] ?? []) delete valid[field];
+  if (Number(contract.id.slice(1)) >= 67) {
+    const digestField = { C67: "assurance_digest", C68: "decision_digest", C69: "artifact_digest" }[contract.id];
+    const canonical = (value) => Array.isArray(value) ? value.map(canonical)
+      : value && typeof value === "object"
+        ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])])) : value;
+    const content = { ...valid };
+    delete content[digestField];
+    valid[digestField] = `sha256:${digest(canonical(content))}`;
+  }
   const missingField = required.find(
     (field) => field !== "contract_name" && field !== "contract_version"
   );

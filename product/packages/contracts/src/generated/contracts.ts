@@ -1255,3 +1255,81 @@ export interface C66Contract {
   expires_at: string;
   [key: string]: unknown;
 }
+
+export interface C67Contract {
+  contract_name: string;
+  contract_version: number;
+  session_assurance_id: string;
+  pc_session_id: string;
+  principal_id: string;
+  tenant_id: string;
+  authentication_method: "LOCAL" | "STANDALONE" | "PROVIDER";
+  identity_provider_ref: string;
+  identity_link_id?: string;
+  authentication_evidence_expires_at?: string;
+  identity_revision: number;
+  authorization_revision: number;
+  assurance_level: "LOCAL_VERIFIED" | "PROVIDER_VERIFIED";
+  issued_at: string;
+  idle_expires_at?: string;
+  pc_absolute_limit_at: string;
+  absolute_expires_at: string;
+  revoked_at?: string;
+  session_state: "ACTIVE" | "EXPIRED" | "REVOKED";
+  evidence_refs: unknown[];
+  assurance_digest: string;
+  [key: string]: unknown;
+}
+
+export interface C68Contract {
+  contract_name: string;
+  contract_version: number;
+  decision_id: string;
+  principal_id: string;
+  pc_session_id: string;
+  tenant_id: string;
+  logical_request_id: string;
+  turn_id?: string;
+  tool_call_id?: string;
+  action: string;
+  resource_ref: string;
+  resource_authority: string;
+  decision_mode: "PC_ONLY" | "PC_AND_PROVIDER" | "DENY_UNKNOWN";
+  pc_policy_revision: number;
+  identity_revision: number;
+  pc_decision: "ALLOW" | "DENY" | "UNKNOWN";
+  pc_scope_decision: "ALLOW" | "DENY" | "UNKNOWN";
+  provider_registration_id?: string;
+  provider_bundle_generation?: string;
+  provider_mapping_release_id?: string;
+  provider_decision_ref?: string;
+  provider_decision?: "ALLOW" | "DENY" | "UNKNOWN";
+  provider_decision_observed_at?: string;
+  decision: "ALLOW" | "DENY";
+  reason_codes: unknown[];
+  evidence_refs: unknown[];
+  observed_at: string;
+  expires_at: string;
+  decision_digest: string;
+  [key: string]: unknown;
+}
+
+export interface C69Contract {
+  contract_name: string;
+  contract_version: number;
+  mapping_release_id: string;
+  provider_registration_id: string;
+  provider_type: string;
+  compatibility_version: string;
+  pc_action_pattern: string;
+  resource_authority: string;
+  provider_permission_mapping: Record<string, unknown>;
+  provider_action_mapping: Record<string, unknown>;
+  provider_tool_mapping: Record<string, unknown>;
+  decision_mode: string;
+  artifact_digest: string;
+  status: "DRAFT" | "ACTIVE" | "SUPERSEDED" | "REVOKED";
+  effective_from: string;
+  supersedes_release_id?: string;
+  [key: string]: unknown;
+}

@@ -1,0 +1,59 @@
+{
+  "contract_scope": "ADR-0025 T0 pure fixture oracle, not live integration",
+  "baseline_page_keys_v1": [
+    "page:architecture-configuration", "page:vehicle-platform", "page:requirements",
+    "page:project-management", "page:projects", "page:dictionaries", "page:functions",
+    "page:regulations", "page:architecture", "page:safety", "page:ota", "page:knowledge",
+    "page:wiring-principle", "page:guide", "page:management-tools", "page:unmapped"
+  ],
+  "session": [
+    {"name":"provider issue within evidence and PC bounds","patch":{},"context":{},"expected":"ALLOW"},
+    {"name":"absolute equal issuance","patch":{"absolute_expires_at":"2026-11-21T00:00:00.000Z"},"context":{},"expected":"DENY"},
+    {"name":"absolute before issuance","patch":{"absolute_expires_at":"2026-11-20T23:59:00.000Z"},"context":{},"expected":"DENY"},
+    {"name":"evidence bound wins","patch":{"absolute_expires_at":"2026-11-21T01:01:00.000Z"},"context":{},"expected":"DENY"},
+    {"name":"PC bound wins","patch":{"pc_absolute_limit_at":"2026-11-21T00:59:00.000Z"},"context":{},"expected":"DENY"},
+    {"name":"idle beyond absolute","patch":{"idle_expires_at":"2026-11-21T01:01:00.000Z"},"context":{},"expected":"DENY"},
+    {"name":"source unavailable cannot issue","patch":{},"context":{"providerAvailable":false},"expected":"DENY"},
+    {"name":"source unavailable cannot idle renew","patch":{},"context":{"providerAvailable":false,"event":"IDLE_RENEW"},"expected":"DENY"},
+    {"name":"source unavailable valid observation remains bounded","patch":{},"context":{"providerAvailable":false,"event":"OBSERVE"},"expected":"ALLOW"},
+    {"name":"absolute boundary is expired","patch":{"idle_expires_at":"2026-11-21T01:00:00.000Z"},"context":{"now":"2026-11-21T01:00:00.000Z","event":"OBSERVE"},"expected":"DENY"},
+    {"name":"idle boundary is expired","patch":{},"context":{"now":"2026-11-21T00:30:00.000Z"},"expected":"DENY"},
+    {"name":"revoked session","patch":{"session_state":"REVOKED","revoked_at":"2026-11-21T00:00:01.000Z"},"context":{},"expected":"DENY"},
+    {"name":"expired state","patch":{"session_state":"EXPIRED"},"context":{},"expected":"DENY"},
+    {"name":"identity revision changed","patch":{},"context":{"identityRevision":2},"expected":"DENY"},
+    {"name":"authorization revision changed","patch":{},"context":{"authorizationRevision":2},"expected":"DENY"}
+  ],
+  "decision": [
+    {"name":"current intersection","patch":{},"context":{},"expected":"ALLOW"},
+    {"name":"PC deny cannot be covered by source allow","patch":{"pc_decision":"DENY"},"context":{},"expected":"DENY"},
+    {"name":"PC unknown","patch":{"pc_decision":"UNKNOWN"},"context":{},"expected":"DENY"},
+    {"name":"scope deny","patch":{"pc_scope_decision":"DENY"},"context":{},"expected":"DENY"},
+    {"name":"PC allow cannot cover source deny","patch":{"provider_decision":"DENY"},"context":{},"expected":"DENY"},
+    {"name":"source unknown","patch":{"provider_decision":"UNKNOWN"},"context":{},"expected":"DENY"},
+    {"name":"provider unavailable","patch":{},"context":{"providerAvailable":false},"expected":"DENY"},
+    {"name":"new generation","patch":{},"context":{"generation":"epoch.2"},"expected":"DENY"},
+    {"name":"stale PC policy","patch":{"pc_policy_revision":2},"context":{},"expected":"DENY"},
+    {"name":"missing mapping","patch":{},"context":{"mappings":[]},"expected":"DENY"},
+    {"name":"missing provider evidence","remove":["provider_decision_ref"],"patch":{},"context":{},"expected":"DENY"},
+    {"name":"missing mapping release","remove":["provider_mapping_release_id"],"patch":{},"context":{},"expected":"DENY"},
+    {"name":"missing generation","remove":["provider_bundle_generation"],"patch":{},"context":{},"expected":"DENY"},
+    {"name":"missing PC allow","remove":["pc_decision"],"patch":{},"context":{},"expected":"DENY"},
+    {"name":"unknown mode cannot allow","patch":{"decision_mode":"DENY_UNKNOWN"},"context":{},"expected":"DENY"},
+    {"name":"expired receipt","patch":{"expires_at":"2026-11-21T00:00:10.000Z"},"context":{},"expected":"DENY"},
+    {"name":"unknown authority","patch":{"resource_authority":"unknown"},"context":{},"expected":"DENY"}
+  ],
+  "legacy": [
+    {"name":"baseline wildcard","page":"page:architecture","effects":{"page:*":"allow"},"expected":{"decision":"ALLOW","source":"baseline"}},
+    {"name":"unmapped baseline preserved","page":"page:unmapped","effects":{"page:*":"allow"},"expected":{"decision":"ALLOW","source":"baseline"}},
+    {"name":"access control excluded","page":"page:access-control","effects":{"page:*":"allow"},"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"new page","page":"page:future","effects":{"page:*":"allow"},"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"new action","page":"ssts.future","effects":{"page:*":"allow"},"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"new capability","page":"capability:future","effects":{"page:*":"allow"},"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"exact allow","page":"page:architecture","effects":{"page:architecture":"allow"},"expected":{"decision":"ALLOW","source":"role"}},
+    {"name":"explicit deny beats wildcard","page":"page:architecture","effects":{"page:*":"allow","page:architecture":"deny"},"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"wildcard deny beats exact","page":"page:architecture","effects":{"page:*":"deny","page:architecture":"allow"},"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"project membership required","page":"page:architecture","effects":{"page:*":"allow"},"member":false,"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"business object denial","page":"page:architecture","effects":{"page:*":"allow"},"objectAllow":false,"expected":{"decision":"DENY","source":"deny"}},
+    {"name":"tool denial","page":"page:architecture","effects":{"page:*":"allow"},"toolAllow":false,"expected":{"decision":"DENY","source":"deny"}}
+  ]
+}

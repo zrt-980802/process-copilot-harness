@@ -1,6 +1,6 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0-D4A COMPLETE / ADR-0025 ACCEPTED / ADR-0025 T0 PLANNED / D4B NOT STARTED`
+> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0-D4A COMPLETE / ADR-0025 ACCEPTED / ADR-0025 T0 COMPLETE / T1 NOT STARTED / D4B NOT STARTED`
 > 日期：2026-11-21（Asia/Shanghai）
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
@@ -109,11 +109,14 @@ D4 总计划见 `governance/DECOUPLING-D4-EE-PROVIDER-BUNDLE-PLAN.md`；D4-2 至
 
 ### 3.6 ADR-0025：薄 Session、薄授权与旧 Provider 权限兼容
 
-状态：`ADR ACCEPTED / T0 PLANNED / T1-T3 NOT STARTED`。
+状态：`ADR ACCEPTED / T0 COMPLETE / T1 NOT STARTED / T2-T3 NOT STARTED`。
 
 ADR-0025 已明确 PC Session 的固定绝对到期、PC-owned Action 独立授权、Provider-owned Action 的 PC 与当前 Provider 交集授权，以及 EE V1 零迁移兼容。当前只允许先执行 T0 合同与兼容 fixture 冻结，不修复 RCI-02、不改变 Session 运行行为，也不处理 RCI-03。
 
 唯一 T0 任务书：`governance/ADR-0025-T0-CONTRACT-AND-COMPATIBILITY-FIXTURE-TASK.md`。T0 完成后必须停止；T1 Session 验证拆分需要新的明确授权。
+
+T0 已冻结 C67-C69、Session/Decision/Mapping golden matrix 和兼容门禁；本地开发者验证见
+`product/docs/adr-0025-t0-verification.md`。运行行为未变，RCI-02/RCI-03 均未修复。
 
 ## 4. DECOUPLING-CORE-01：PC 独立控制面
 

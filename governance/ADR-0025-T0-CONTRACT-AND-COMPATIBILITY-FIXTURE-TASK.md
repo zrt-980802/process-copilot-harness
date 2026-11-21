@@ -1,7 +1,7 @@
 # ADR-0025 T0：Session、薄授权与 Provider 兼容合同冻结任务书
 
 - 任务编号：`ADR-0025-T0-CONTRACT-AND-COMPATIBILITY-FIXTURE`
-- 状态：`PLANNED / NOT STARTED`
+- 状态：`T0 COMPLETE / T1 NOT STARTED`（本地合同开发者验证；证据见 `product/docs/adr-0025-t0-verification.md`）
 - 日期：2026-11-21（Asia/Shanghai）
 - 架构依据：`architecture/ADR-0025-thin-session-authorization-legacy-provider-compatibility.md`（Accepted）
 - 前置基线：`5ad4a094306921300811298c07f3e77e4d850b7b`；本任务书提交会位于该基线之后，不得为匹配基线而回退任务书

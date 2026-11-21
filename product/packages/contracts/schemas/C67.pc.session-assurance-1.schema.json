@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C67.schema.json",
+  "title": "C67 pc.session-assurance/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "session_assurance_id",
+    "pc_session_id",
+    "principal_id",
+    "tenant_id",
+    "authentication_method",
+    "identity_provider_ref",
+    "identity_revision",
+    "authorization_revision",
+    "assurance_level",
+    "issued_at",
+    "pc_absolute_limit_at",
+    "absolute_expires_at",
+    "session_state",
+    "evidence_refs",
+    "assurance_digest"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.session-assurance/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "session_assurance_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authentication_method": {
+      "type": "string",
+      "enum": [
+        "LOCAL",
+        "STANDALONE",
+        "PROVIDER"
+      ]
+    },
+    "identity_provider_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "identity_link_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authentication_evidence_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "identity_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authorization_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "assurance_level": {
+      "type": "string",
+      "enum": [
+        "LOCAL_VERIFIED",
+        "PROVIDER_VERIFIED"
+      ]
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "idle_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pc_absolute_limit_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "absolute_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "EXPIRED",
+        "REVOKED"
+      ]
+    },
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^pc:[a-zA-Z0-9._:-]+$"
+      },
+      "minItems": 1
+    },
+    "assurance_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "$comment": "C67; source=architecture/external-provider-contract-catalog-v1.md",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "authentication_method": {
+            "const": "PROVIDER"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "identity_link_id",
+          "authentication_evidence_expires_at"
+        ],
+        "properties": {
+          "identity_link_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authentication_evidence_expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assurance_level": {
+            "const": "PROVIDER_VERIFIED"
+          },
+          "identity_provider_ref": {
+            "not": {
+              "enum": [
+                "local",
+                "standalone"
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "identity_link_id": false,
+          "authentication_evidence_expires_at": false,
+          "assurance_level": {
+            "const": "LOCAL_VERIFIED"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "authentication_method": {
+                "const": "LOCAL"
+              },
+              "identity_provider_ref": {
+                "const": "local"
+              }
+            }
+          },
+          {
+            "properties": {
+              "authentication_method": {
+                "const": "STANDALONE"
+              },
+              "identity_provider_ref": {
+                "const": "standalone"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "session_state": {
+            "const": "REVOKED"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "revoked_at"
+        ],
+        "properties": {
+          "revoked_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "revoked_at": false
+        }
+      }
+    }
+  ]
+}

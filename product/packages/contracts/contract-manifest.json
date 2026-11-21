@@ -528,6 +528,30 @@
       "schema": "schemas/C66.pc.provider-bundle-1.schema.json",
       "valid_fixture": "fixtures/valid/C66.valid.json",
       "invalid_fixture": "fixtures/invalid/C66.missing-provider_id.invalid.json"
+    },
+    {
+      "id": "C67",
+      "contract_name": "pc.session-assurance/1",
+      "contract_version": 1,
+      "schema": "schemas/C67.pc.session-assurance-1.schema.json",
+      "valid_fixture": "fixtures/valid/C67.valid.json",
+      "invalid_fixture": "fixtures/invalid/C67.missing-session_assurance_id.invalid.json"
+    },
+    {
+      "id": "C68",
+      "contract_name": "pc.authority-decision/1",
+      "contract_version": 1,
+      "schema": "schemas/C68.pc.authority-decision-1.schema.json",
+      "valid_fixture": "fixtures/valid/C68.valid.json",
+      "invalid_fixture": "fixtures/invalid/C68.missing-decision_id.invalid.json"
+    },
+    {
+      "id": "C69",
+      "contract_name": "pc.provider-compatibility-mapping/1",
+      "contract_version": 1,
+      "schema": "schemas/C69.pc.provider-compatibility-mapping-1.schema.json",
+      "valid_fixture": "fixtures/valid/C69.valid.json",
+      "invalid_fixture": "fixtures/invalid/C69.missing-mapping_release_id.invalid.json"
     }
   ]
 }

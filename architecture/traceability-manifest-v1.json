@@ -22,7 +22,8 @@
     "TS-DEPLOY": "Isolation, capacity, health, telemetry, rollout and disaster recovery",
     "TS-ARCH": "Contract compatibility, traceability, forbidden dependency and ADR consistency",
     "TS-LEGACY": "EE Claw V1 contract freeze, baseline wildcard, no-migration rollback and immediate revocation",
-    "TS-DECOUPLING": "PC standalone startup, provider routing, capability-local degradation, authority intersection and revocation"
+    "TS-DECOUPLING": "PC standalone startup, provider routing, capability-local degradation, authority intersection and revocation",
+    "TS-SESSION-CONTRACT": "ADR-0025 pure Session/Decision/Mapping fixtures; no runtime or real integration claim"
   },
   "entries": [
     {
@@ -196,10 +197,10 @@
       "status": "accepted",
       "modules": ["M01", "M03", "M08", "M11", "M14", "M16", "M21", "M22"],
       "external_authorities": ["E01", "E04"],
-      "contracts": ["C01", "C02", "C03", "C04", "C15", "C21", "C22", "C23", "C32", "C33", "C41", "C42", "C61", "C62", "C63", "C65", "C66"],
-      "test_refs": ["TS-DECOUPLING-002", "TS-DECOUPLING-003", "TS-DECOUPLING-004", "TS-LEGACY-003", "TS-LEGACY-004", "TS-SECURITY-012"],
-      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-ROLE-001", "REF-ROLE-003", "architecture/ADR-0024-pc-core-external-business-provider-decoupling.md", "product/docs/real-ee-integration-closure-01.md"],
-      "implementation_status": "accepted-t0-contracts-not-started"
+      "contracts": ["C01", "C02", "C03", "C04", "C15", "C21", "C22", "C23", "C32", "C33", "C41", "C42", "C61", "C62", "C63", "C65", "C66", "C67", "C68", "C69"],
+      "test_refs": ["TS-DECOUPLING-002", "TS-DECOUPLING-003", "TS-DECOUPLING-004", "TS-LEGACY-003", "TS-LEGACY-004", "TS-SECURITY-012", "TS-SESSION-CONTRACT-001", "product/packages/contracts/tests/adr0025-t0.test.ts"],
+      "evidence_refs": ["REF-IAM-001", "REF-IAM-002", "REF-ROLE-001", "REF-ROLE-003", "architecture/ADR-0024-pc-core-external-business-provider-decoupling.md", "product/docs/real-ee-integration-closure-01.md", "architecture/adr-0025-t0-contract-and-compatibility-v1.md", "product/docs/adr-0025-t0-verification.md"],
+      "implementation_status": "t0-contracts-complete-t1-not-started"
     }
   ]
 }

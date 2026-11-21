@@ -7,6 +7,10 @@
 
 > 2026-11-16 Accepted Extension：长期记忆 C43-C60 定义于 `memory-contract-catalog-v1.md`，并由 `memory-contract-review-v1.md` 完成评审。C01-C42 的既有语义不变。
 
+> ADR-0025 T0 extension: C67-C69 Session Assurance, Authority Decision and immutable
+> Provider Compatibility Mapping are defined in `external-provider-contract-catalog-v1.md`.
+> Total: 69 contracts. C01-C66 remain unchanged; no runtime implementation is implied.
+
 ## 1. Contract 规则
 
 ### 1.1 稳定性

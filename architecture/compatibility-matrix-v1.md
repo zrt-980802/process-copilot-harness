@@ -254,3 +254,28 @@ rollback_plan
 - Synthetic production-build desktop/mobile fixtures verify frontend compatibility, not live EE/Runtime/model execution or production qualification.
 - Design and retest entry: `frontend-provider-neutral-experience-v1.md`, `../product/docs/frontend-provider-isolation-01-verification.md`.
 
+## 13. ADR-0025 T0 Contract Compatibility
+
+Contract inventory: 25 ADR / 69 Contract. C67 `pc.session-assurance/1`, C68
+`pc.authority-decision/1`, C69 `pc.provider-compatibility-mapping/1` supplement
+unchanged C01-C66. C41/C42 remain the EE V1 authority and zero-migration baseline.
+
+| Contract | Frozen invariant | Gate |
+| --- | --- | --- |
+| C67 | fixed absolute expiry at issue, no sliding, earlier external evidence/PC limit | schema + session golden matrix |
+| C68 | PC_ONLY zero Provider evidence/calls; PC_AND_PROVIDER current intersection; DENY_UNKNOWN fail closed | decision golden matrix |
+| C69 | immutable release/digest, exact authority and unique mapping | mapping golden matrix |
+| C41/C42 | page:* fixed V1 baseline, explicit Deny, request-time revocation, zero migration | pinned artifact audit + legacy golden matrix |
+
+Allow is reusable only in the same `logical_request_id`, Turn, Tool Call, subject,
+resource and Provider generation. Missing/ambiguous/unknown/expired/revoked inputs
+deny. Mapping is a protocol artifact, never a Grant or cached Allow.
+
+Evidence: `adr-0025-t0-contract-and-compatibility-v1.md`,
+`../product/packages/contracts/fixtures/adr0025-golden-matrix.json`,
+`../product/packages/contracts/tests/adr0025-t0.test.ts`,
+`../product/docs/adr-0025-t0-verification.md`.
+
+T0 contracts do not change runtime behavior. **T1 NOT STARTED**. RCI-02 and RCI-03
+remain unfixed blockers. Fixture verification is not real EE integration acceptance.
+

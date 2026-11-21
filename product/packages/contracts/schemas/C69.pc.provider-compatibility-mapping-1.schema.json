@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.process-copilot.local/v1/C69.schema.json",
+  "title": "C69 pc.provider-compatibility-mapping/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_name",
+    "contract_version",
+    "mapping_release_id",
+    "provider_registration_id",
+    "provider_type",
+    "compatibility_version",
+    "pc_action_pattern",
+    "resource_authority",
+    "provider_permission_mapping",
+    "provider_action_mapping",
+    "provider_tool_mapping",
+    "decision_mode",
+    "artifact_digest",
+    "status",
+    "effective_from"
+  ],
+  "properties": {
+    "contract_name": {
+      "const": "pc.provider-compatibility-mapping/1"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "mapping_release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_registration_id": {
+      "type": "string",
+      "pattern": "^provider:[a-z0-9][a-z0-9._-]*$"
+    },
+    "provider_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "compatibility_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pc_action_pattern": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:[.:][a-z0-9_-]+)*(?:[.:](?:[a-z0-9_-]+|\\*))$"
+    },
+    "resource_authority": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_permission_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permission_keys",
+        "baseline_page_keys_version"
+      ],
+      "properties": {
+        "permission_keys": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.:-]*(?:\\*)?$"
+          },
+          "minItems": 1
+        },
+        "baseline_page_keys_version": {
+          "type": "string",
+          "enum": [
+            "BASELINE_PAGE_KEYS_V1",
+            "NOT_APPLICABLE"
+          ]
+        }
+      }
+    },
+    "provider_action_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_keys"
+      ],
+      "properties": {
+        "action_keys": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.:-]*(?:\\*)?$"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "provider_tool_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_keys"
+      ],
+      "properties": {
+        "tool_keys": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.:-]*(?:\\*)?$"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "decision_mode": {
+      "type": "string",
+      "const": "PC_AND_PROVIDER"
+    },
+    "artifact_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "SUPERSEDED",
+        "REVOKED"
+      ]
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "supersedes_release_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$comment": "C69; source=architecture/external-provider-contract-catalog-v1.md",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "provider_type": {
+            "const": "eeclaw"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "resource_authority": {
+            "const": "eeclaw"
+          },
+          "compatibility_version": {
+            "const": "ee-v1"
+          },
+          "provider_permission_mapping": {
+            "type": "object",
+            "properties": {
+              "baseline_page_keys_version": {
+                "const": "BASELINE_PAGE_KEYS_V1"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

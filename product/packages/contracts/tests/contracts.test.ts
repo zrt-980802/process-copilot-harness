@@ -16,11 +16,11 @@ const manifest = JSON.parse(
   }>;
 };
 
-describe("C01-C66 contract fixtures", () => {
-  it("contains exactly 66 schemas and fixture pairs", async () => {
-    await expect(readdir(path.join(packageRoot, "schemas"))).resolves.toHaveLength(66);
-    await expect(readdir(path.join(packageRoot, "fixtures", "valid"))).resolves.toHaveLength(66);
-    await expect(readdir(path.join(packageRoot, "fixtures", "invalid"))).resolves.toHaveLength(66);
+describe("C01-C69 contract fixtures", () => {
+  it("contains exactly 69 schemas and fixture pairs", async () => {
+    await expect(readdir(path.join(packageRoot, "schemas"))).resolves.toHaveLength(69);
+    await expect(readdir(path.join(packageRoot, "fixtures", "valid"))).resolves.toHaveLength(69);
+    await expect(readdir(path.join(packageRoot, "fixtures", "invalid"))).resolves.toHaveLength(69);
   });
 
   for (const contract of manifest.contracts) {

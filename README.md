@@ -56,6 +56,13 @@ VERIFYING. A bounded Gateway Connector-target repair is locally verified;
 the task is not complete. Evidence and retest limits:
 `product/docs/real-ee-integration-closure-01.md`.
 
+ADR-0025 T0 freezes C67-C69 Session Assurance, Authority Decision and immutable
+Provider Compatibility Mapping, with 69 total contracts and pure golden tests.
+**T0 COMPLETE / T1 NOT STARTED**. Session/login/authorization behavior is unchanged;
+RCI-02 and RCI-03 remain unfixed. Contract-only evidence:
+`architecture/adr-0025-t0-contract-and-compatibility-v1.md` and
+`product/docs/adr-0025-t0-verification.md`.
+
 ## Verify
 
 Prerequisites: Node.js 22 or later and pnpm 11.21.0.

@@ -1,0 +1,37 @@
+{
+  "contract_name": "pc.authority-decision/1",
+  "contract_version": 1,
+  "decision_id": "decision:contract",
+  "principal_id": "principal:contract",
+  "pc_session_id": "pc-session:contract",
+  "tenant_id": "tenant:contract",
+  "logical_request_id": "request:1",
+  "turn_id": "turn:1",
+  "tool_call_id": "call:1",
+  "action": "ssts.read",
+  "resource_ref": "eeclaw:project:synthetic",
+  "resource_authority": "eeclaw",
+  "decision_mode": "PC_AND_PROVIDER",
+  "pc_policy_revision": 1,
+  "identity_revision": 1,
+  "pc_decision": "ALLOW",
+  "pc_scope_decision": "ALLOW",
+  "provider_registration_id": "provider:eeclaw",
+  "provider_bundle_generation": "epoch.1",
+  "provider_mapping_release_id": "mapping:ee-v1:1",
+  "provider_decision_ref": "provider-decision:contract",
+  "provider_decision": "ALLOW",
+  "provider_decision_observed_at": "2026-11-21T00:00:00.000Z",
+  "decision": "ALLOW",
+  "reason_codes": [
+    "intersection_allowed"
+  ],
+  "evidence_refs": [
+    "pc:policy:1",
+    "provider-call:request:1",
+    "provider-decision:contract"
+  ],
+  "observed_at": "2026-11-21T00:00:00.000Z",
+  "expires_at": "2026-11-21T00:01:00.000Z",
+  "decision_digest": "sha256:1227a4386460363f9cceba13c1c46367ae5f80db19d35b002933355cfc9a7823"
+}

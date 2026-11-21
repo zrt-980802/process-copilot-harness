@@ -15,7 +15,12 @@ const requiredStatements = [
   "BASELINE_PAGE_KEYS_V1",
   "ADR-0015",
   "ADR-0016",
-  "ADR-0017"
+  "ADR-0017",
+  "ADR-0025",
+  "C67", "C68", "C69",
+  "T1 NOT STARTED",
+  "no sliding",
+  "logical_request_id"
 ];
 const missing = requiredStatements.filter((statement) => !matrix.includes(statement));
 
@@ -25,3 +30,4 @@ if (missing.length > 0) {
 }
 
 console.log("Compatibility baseline assertions passed.");
+await import("./check-adr0025-t0.mjs");

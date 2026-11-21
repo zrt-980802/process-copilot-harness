@@ -2,8 +2,8 @@
 
 - 状态：Accepted Extension
 - 日期：2026-11-20
-- 编号：延续 C01-C60，使用 C61-C66（D4A 新增 C66）
-- 依据：ADR-0024、`external-provider-decoupling-d0-inventory-v1.md`
+- 编号：延续 C01-C60，使用 C61-C69（D4A 新增 C66；ADR-0025 T0 新增 C67-C69）
+- 依据：ADR-0024、ADR-0025、`external-provider-decoupling-d0-inventory-v1.md`
 - 边界：冻结 Provider 注册、健康、路由、目录与可用性；不改变当前运行行为
 
 ## 1. 通用规则
@@ -144,6 +144,95 @@ expires_at
 ```
 
 Lifecycle/failure semantics: `external-provider-decoupling-d4a-provider-bundle-v1.md`.
+
+### C67 `pc.session-assurance/1`
+
+ADR-0025 T0: PC-owned authentication assurance, fixed issue-time bounds and revisions.
+No Provider Session ID, Cookie, Token or Secret. Cross-field invariants and golden
+matrix: `adr-0025-t0-contract-and-compatibility-v1.md`.
+
+```text
+session_assurance_id
+pc_session_id
+principal_id
+tenant_id
+authentication_method
+identity_provider_ref
+identity_link_id?
+authentication_evidence_expires_at?
+identity_revision
+authorization_revision
+assurance_level
+issued_at
+idle_expires_at?
+pc_absolute_limit_at
+absolute_expires_at
+revoked_at?
+session_state
+evidence_refs[]
+assurance_digest
+```
+
+### C68 `pc.authority-decision/1`
+
+ADR-0025 T0: complete decision receipt, supplemental to C03/C41. PC_ONLY forbids
+Provider fields/call evidence; PC_AND_PROVIDER Allow requires both explicit Allows,
+the current generation, immutable mapping release and source decision. DENY_UNKNOWN
+always denies. All reuse is bounded to one logical HTTP request, Turn and Tool Call.
+
+```text
+decision_id
+principal_id
+pc_session_id
+tenant_id
+logical_request_id
+turn_id?
+tool_call_id?
+action
+resource_ref
+resource_authority
+decision_mode
+pc_policy_revision
+identity_revision
+pc_decision
+pc_scope_decision
+provider_registration_id?
+provider_bundle_generation?
+provider_mapping_release_id?
+provider_decision_ref?
+provider_decision?
+provider_decision_observed_at?
+decision
+reason_codes[]
+evidence_refs[]
+observed_at
+expires_at
+decision_digest
+```
+
+### C69 `pc.provider-compatibility-mapping/1`
+
+ADR-0025 T0: immutable protocol mapping artifact, never a Grant or Provider Allow
+cache. ACTIVE changes require a new release/digest. Permission/action/tool objects
+only hold exact protocol keys, not editable EE roles, members, endpoints or credentials.
+EE V1 page wildcard expands only BASELINE_PAGE_KEYS_V1. No database migration.
+
+```text
+mapping_release_id
+provider_registration_id
+provider_type
+compatibility_version
+pc_action_pattern
+resource_authority
+provider_permission_mapping
+provider_action_mapping
+provider_tool_mapping
+decision_mode
+artifact_digest
+status
+effective_from
+supersedes_release_id?
+```
 
 ## 3. Port Catalog
 
