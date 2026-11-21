@@ -28,6 +28,7 @@ export interface SessionContext {
 }
 
 export function sessionOutcome(session: C67Contract, context: SessionContext): "ALLOW" | "DENY" {
+  if (seal(session, "assurance_digest").assurance_digest !== session.assurance_digest) return "DENY";
   const issued = Date.parse(session.issued_at);
   const absolute = Date.parse(session.absolute_expires_at);
   const limit = Date.parse(session.pc_absolute_limit_at);
@@ -98,6 +99,7 @@ export function mappingOutcome(mapping: C69Contract, previous?: C69Contract): "A
 }
 
 export function decisionOutcome(decision: C68Contract, context: DecisionContext): "ALLOW" | "DENY" {
+  if (seal(decision, "decision_digest").decision_digest !== decision.decision_digest) return "DENY";
   if (![context.now, context.requestStartedAt, context.session.issued_at,
     context.session.absolute_expires_at, decision.observed_at, decision.expires_at]
     .every((value) => Number.isFinite(Date.parse(value)))) return "DENY";
@@ -120,6 +122,7 @@ export function decisionOutcome(decision: C68Contract, context: DecisionContext)
     return decision.resource_authority === "pc" && context.providerCallCount === 0
       && pcActions.includes(decision.action)
       && Object.keys(decision).every((key) => !key.startsWith("provider_"))
+      && decision.evidence_refs.length > 0
       && decision.evidence_refs.every((ref) => typeof ref === "string" && ref.startsWith("pc:")) ? "ALLOW" : "DENY";
   }
   const candidates = context.mappings.filter((mapping) => mapping.status === "ACTIVE"

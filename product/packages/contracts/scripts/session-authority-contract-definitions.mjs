@@ -6,7 +6,7 @@ const outcome = { type: "string", enum: ["ALLOW", "DENY", "UNKNOWN"] };
 const strings = { type: "array", uniqueItems: true, items: text };
 const protocolKey = { type: "string", pattern: "^[a-z][a-z0-9_.:-]*(?:\\*)?$" };
 const providerId = { type: "string", pattern: "^provider:[a-z0-9][a-z0-9._-]*$" };
-const evidence = { ...strings, items: { type: "string", pattern: "^(pc|provider-call|provider-decision):[a-zA-Z0-9._:-]+$" } };
+const evidence = { ...strings, minItems: 1, items: { type: "string", pattern: "^(pc|provider-call|provider-decision):[a-zA-Z0-9._:-]+$" } };
 const providerFields = ["provider_registration_id", "provider_bundle_generation",
   "provider_mapping_release_id", "provider_decision_ref", "provider_decision",
   "provider_decision_observed_at"];
@@ -83,7 +83,7 @@ export const sessionAuthorityRootSchemaOverrides = {
       if: { properties: { decision_mode: { const: "PC_ONLY" } } },
       then: { properties: {
         ...forbidden(providerFields), resource_authority: { const: "pc" },
-        evidence_refs: { ...strings, items: { type: "string", pattern: "^pc:[a-zA-Z0-9._:-]+$" } }
+        evidence_refs: { ...strings, minItems: 1, items: { type: "string", pattern: "^pc:[a-zA-Z0-9._:-]+$" } }
       } }
     }, {
       if: { properties: { decision_mode: { const: "DENY_UNKNOWN" } } },

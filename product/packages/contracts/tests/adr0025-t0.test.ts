@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import Ajv from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { C67Contract, C68Contract, C69Contract } from "../src/generated/contracts.js";
 import { canonical, decisionOutcome, legacyOutcome, mappingOutcome, seal, sessionOutcome,
   type DecisionContext, type SessionContext } from "./support/adr0025-oracle.js";
@@ -44,12 +44,16 @@ function context(): DecisionContext {
       mappingReleaseId: mapping.mapping_release_id, binding: structuredClone(binding) }, mappings: [mapping]
   });
 }
+// Domain-matrix mutations are deliberately re-signed so denial tests still exercise
+// their original invariants. Digest-integrity tests call the raw Oracle directly.
 function checkSession(value: C67Contract, input = sessionContext) {
-  return validSession!(value) ? sessionOutcome(value, input) : "DENY";
+  const signed = seal(value, "assurance_digest");
+  return validSession!(signed) ? sessionOutcome(signed, input) : "DENY";
 }
 function checkDecision(value: C68Contract, input = context()) {
-  return validDecision!(value) && input.mappings.every((item) => validMapping!(item))
-    ? decisionOutcome(value, input) : "DENY";
+  const signed = seal(value, "decision_digest");
+  return validDecision!(signed) && input.mappings.every((item) => validMapping!(item))
+    ? decisionOutcome(signed, input) : "DENY";
 }
 
 it("T0 inventory exposes C67-C69 and all 69 generated contracts", async () => {
@@ -65,6 +69,24 @@ it("T0 inventory exposes C67-C69 and all 69 generated contracts", async () => {
 });
 
 describe("C67 fixed assurance golden matrix", () => {
+  it("accepts the original C67 fixture without re-signing", () => {
+    expect(validSession!(session)).toBe(true);
+    expect(sessionOutcome(session, sessionContext)).toBe("ALLOW");
+  });
+
+  it("rejects changed C67 evidence with the old assurance digest", () => {
+    const tampered = { ...session, evidence_refs: ["pc:authentication-proof:changed"] };
+    expect(validSession!(tampered)).toBe(true);
+    expect(sessionOutcome(tampered, sessionContext)).toBe("DENY");
+  });
+
+  it("accepts legal C67 evidence changes after explicitly re-signing", () => {
+    const changed = seal({ ...session, evidence_refs: ["pc:authentication-proof:changed"] }, "assurance_digest");
+    expect(changed.assurance_digest).not.toBe(session.assurance_digest);
+    expect(validSession!(changed)).toBe(true);
+    expect(sessionOutcome(changed, sessionContext)).toBe("ALLOW");
+  });
+
   it.each(golden.session)("$name", ({ patch, context: override, expected }) => {
     expect(checkSession({ ...session, ...patch }, { ...sessionContext, ...override })).toBe(expected);
   });
@@ -116,6 +138,24 @@ describe("C67 fixed assurance golden matrix", () => {
 });
 
 describe("C68 intersection and request-bound evidence golden matrix", () => {
+  it("accepts the original C68 fixture without re-signing", () => {
+    expect(validDecision!(decision)).toBe(true);
+    expect(decisionOutcome(decision, context())).toBe("ALLOW");
+  });
+
+  it("rejects changed C68 reasons with the old decision digest", () => {
+    const tampered = { ...decision, reason_codes: ["changed_reason"] };
+    expect(validDecision!(tampered)).toBe(true);
+    expect(decisionOutcome(tampered, context())).toBe("DENY");
+  });
+
+  it("accepts legal C68 reason changes after explicitly re-signing", () => {
+    const changed = seal({ ...decision, reason_codes: ["current_intersection_confirmed"] }, "decision_digest");
+    expect(changed.decision_digest).not.toBe(decision.decision_digest);
+    expect(validDecision!(changed)).toBe(true);
+    expect(decisionOutcome(changed, context())).toBe("ALLOW");
+  });
+
   it.each(golden.decision)("$name", ({ patch, remove, context: override, expected }) => {
     const value = { ...decision, ...patch };
     for (const field of remove ?? []) delete value[field];
@@ -185,6 +225,47 @@ describe("C68 intersection and request-bound evidence golden matrix", () => {
     current.providerCallCount = 0;
     return { receipt, current };
   }
+
+  it("rejects PC_ONLY empty evidence in the schema even with a fresh digest", () => {
+    const { receipt } = personal();
+    const empty = seal({ ...receipt, evidence_refs: [] }, "decision_digest");
+    expect(validDecision!(empty)).toBe(false);
+  });
+
+  it("rejects PC_ONLY empty evidence in the Oracle even with a fresh digest", () => {
+    const { receipt, current } = personal();
+    const empty = seal({ ...receipt, evidence_refs: [] }, "decision_digest");
+    expect(decisionOutcome(empty, current)).toBe("DENY");
+  });
+
+  it("keeps nonempty evidence required in both base and PC_ONLY schema definitions", () => {
+    expect(schemas[1].properties.evidence_refs.minItems).toBe(1);
+    expect(schemas[1].allOf[0].then.properties.evidence_refs.minItems).toBe(1);
+  });
+
+  it("accepts PC_ONLY evidence and legal reason changes with a fresh digest", () => {
+    const { receipt, current } = personal();
+    const changed = seal({ ...receipt, reason_codes: ["pc_policy_scope_confirmed"] }, "decision_digest");
+    expect(validDecision!(changed)).toBe(true);
+    expect(decisionOutcome(changed, current)).toBe("ALLOW");
+  });
+
+  it.each(["PC_ONLY", "PC_AND_PROVIDER", "DENY_UNKNOWN"] as const)(
+    "%s checks digest integrity before mode-specific decisions", (mode) => {
+      const personalInput = personal();
+      const receipt = mode === "PC_AND_PROVIDER" ? decision
+        : seal<C68Contract>({ ...personalInput.receipt, decision_mode: mode,
+          decision: mode === "DENY_UNKNOWN" ? "DENY" : "ALLOW" }, "decision_digest");
+      const tampered = { ...receipt, reason_codes: ["changed_reason"] };
+      const digestRead = vi.fn(() => receipt.decision_digest);
+      Object.defineProperty(tampered, "decision_digest", { enumerable: true, get: digestRead });
+      expect(validDecision!(tampered)).toBe(true);
+      digestRead.mockClear();
+      expect(decisionOutcome(tampered, mode === "PC_AND_PROVIDER" ? context() : personalInput.current)).toBe("DENY");
+      // Even an always-denied mode must inspect integrity before short-circuiting.
+      expect(digestRead).toHaveBeenCalled();
+    }
+  );
 
   it("Standalone PC_ONLY uses no EE mapping, decision or calls during outage", () => {
     const { receipt, current } = personal();

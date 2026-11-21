@@ -157,7 +157,8 @@
       "items": {
         "type": "string",
         "pattern": "^(pc|provider-call|provider-decision):[a-zA-Z0-9._:-]+$"
-      }
+      },
+      "minItems": 1
     },
     "observed_at": {
       "type": "string",
@@ -199,7 +200,8 @@
             "items": {
               "type": "string",
               "pattern": "^pc:[a-zA-Z0-9._:-]+$"
-            }
+            },
+            "minItems": 1
           }
         }
       }

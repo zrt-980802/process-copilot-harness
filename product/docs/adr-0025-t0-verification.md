@@ -1,6 +1,8 @@
 # ADR-0025 T0 Verification
 
-Date: 2026-11-21 (Asia/Shanghai). Status: **T0 COMPLETE / T1 NOT STARTED**.
+Date: 2026-11-21 (Asia/Shanghai). Status: **T0 COMPLETE（digest remediation verified）/ T1 NOT STARTED**.
+The original T0 results below describe commit `788b097`; the digest-remediation
+section at the end records the subsequent independent-retest fixes and latest gate.
 Repository: `E:/shanzi_workspace/process-copilot-harness`, main.
 Baseline: `894c809a0504eb7424274135c30c17824dd5a858`, initially clean.
 Remote: `git@github.com:zrt-980802/process-copilot-harness.git` (no push).
@@ -135,3 +137,104 @@ No EE/DSH/schema/.env/runtime/production changes, push or deployment.
 One local commit is created after the final checks, containing this report;
 its hash is reported in the delivery message (`git log -1` resolves it).
 Worktree expected clean after that commit. No automatic T1 execution.
+
+## ADR-0025-T0-DIGEST-INTEGRITY-REMEDIATION-01
+
+Baseline: `main@788b0973457522b222388e5d07eb0a687d0df59a`, initially clean.
+Local `origin/main` remains `f9d0f26917df990bb6a657b52ab4208dfbac0b76`;
+no fetch, push, deployment or environment operations. Final validation passed.
+
+### Reproduction Before Repair
+
+Only four negative tests were added before changing the Oracle or definition source.
+The run returned **4 failed / 127 passed / 0 skipped**:
+
+| Negative case | Expected | Before repair |
+| --- | --- | --- |
+| Change C67 evidence_refs, keep old assurance_digest | Oracle DENY | ALLOW |
+| Change C68 reason_codes, keep old decision_digest | Oracle DENY | ALLOW |
+| PC_ONLY empty evidence_refs, freshly calculated digest | schema invalid | valid |
+| Same empty evidence, bypass schema and call Oracle | Oracle DENY | ALLOW |
+
+The nonempty tampered receipts remained structurally schema-valid; rejection
+therefore requires semantic digest validation. The empty-evidence receipts were
+explicitly re-signed so their failures isolate evidence presence, not digest mismatch.
+This summary preserves the initial failure; no temporary failure log is committed.
+
+### Repairs And Regression Coverage
+
+- `sessionOutcome()` now immediately recomputes C67 `assurance_digest` with `seal`,
+  excluding that field itself. Any mismatch returns DENY before Session decisions.
+- `decisionOutcome()` performs the same entry check for C68 `decision_digest`, before
+  PC_ONLY, PC_AND_PROVIDER or DENY_UNKNOWN branches. Tests inspect the digest read
+  even for the always-denied mode; legal nonempty PC_ONLY receipts still Allow.
+- C68 definition source requires `evidence_refs.minItems = 1` both at the base
+  property and PC_ONLY conditional; PC_ONLY keeps its `pc:` prefix restriction.
+  The Oracle separately rejects an empty array even with a valid digest.
+- C69 `mappingOutcome()` retains its existing `artifact_digest` recomputation and
+  immutable ACTIVE release checks. All three digests now use the same existing
+  canonical JSON/SHA-256 rules in the test-only semantic Oracle.
+- Direct raw-Oracle regressions prove original C67/C68 fixtures still Allow, legal
+  evidence/reason changes with freshly computed digests still Allow, and changed
+  content with old digests Denies. No wrapper re-signs the tampering tests.
+- Existing domain-matrix helpers deliberately re-sign modified fixture payloads
+  before validation so expiry, request-boundary, generation and authority Denials
+  continue to test their original semantics instead of passing on stale digests.
+- `pnpm generate:contracts` regenerated outputs; only the C68 schema changed.
+  No valid/invalid fixture, generated TypeScript, manifest, C67/C69 schema or C01-C66
+  artifact changed. The second-generation byte-drift check passed.
+
+Exact changed files (all under Product):
+
+1. `packages/contracts/tests/support/adr0025-oracle.ts`
+2. `packages/contracts/tests/adr0025-t0.test.ts`
+3. `packages/contracts/scripts/session-authority-contract-definitions.mjs`
+4. `packages/contracts/schemas/C68.pc.authority-decision-1.schema.json` (generated)
+5. `docs/adr-0025-t0-verification.md`
+
+### Remediation Validation
+
+| Check | Result |
+| --- | --- |
+| generate:contracts / check:generated | 69 contracts; passed; no second-generation drift |
+| T0 targeted tests | 140 passed / 0 skipped |
+| Whole contract package | 214 passed / 0 skipped (3 files) |
+| Runtime no-touch | passed: 358 immutable files + 198 C01-C66 artifacts unchanged |
+| runtime_imports / out_of_scope_changes | 0 / 0 |
+| JSON / sensitive scan | 209 contract JSON parsed; zero sensitive findings |
+| pnpm check | exit 0; 447 passed / 8 skipped (455 total); 46 passed files / 7 skipped files |
+| Lint / workspace typecheck / build | passed |
+| Additional test-file typecheck | passed (ESNext/Bundler, as used by Vitest) |
+| Root diff/status/stat/name-only | diff check passed; exactly the five listed files changed |
+| Task-process audit | no remaining task processes |
+
+The 8 skipped PostgreSQL tests are existing conditional cases, not passes. No test
+database variables were configured, and no database was enabled or connected.
+
+Normalized no-touch baseline/current SHA-256 both remain
+`4f9a4049c1377779566880ab52237f97b69bfaca3240fe651b2d6ca3f420f10f`;
+raw checkout SHA-256 remains
+`ba11b7a885bc203727f8e2eff38d05435a2ab985f984befc761b4dc70ef149b6`.
+The original no-touch script compares against the pre-T0 governance baseline
+`894c809`; the task-specific file-list audit additionally compares against `788b097`
+and permits exactly the five remediation files above. No-touch script unchanged.
+
+Local ignored evidence directory:
+`product/reports/adr-0025-t0-digest-remediation/20261121T161802909/`.
+Files: `no-touch.log`, `pnpm-check.log`, `final-no-touch.log`,
+`final-audit.log`, `final-contract-tests.log` and `post-commit-audit.log`.
+Initial failures are summarized above; no temporary failure log or large report
+is added to Git. Earlier T0 evidence remains untouched.
+
+This is contract-level developer verification only, not T1 runtime implementation,
+real EE integration acceptance or production qualification. RCI-02 and RCI-03 are
+not repaired. T1 remains NOT STARTED. EE/DSH/Runtime/API/Session/frontend/database,
+schema, .env, ports and shared/remote/demo environments are unchanged; no Docker,
+real EE, Runtime or model was started. The existing full unit suite may create its
+own bounded synthetic/loopback fixtures, not real integration services. PostgreSQL
+conditional cases are not enabled and must be reported as skips.
+
+Final status: **T0 COMPLETE（digest remediation verified）/ T1 NOT STARTED**.
+One local `fix(contracts): enforce ADR-0025 digest integrity` commit is created only
+after all checks; its hash and final clean status are recorded in the delivery
+message and ignored post-commit audit. No push, merge or deployment.
