@@ -40,7 +40,7 @@
 | [ADR-0022](ADR-0022-digital-impression-delegation-separation.md) | 数字印象、长期记忆与委托授权分离 | Accepted | DigitalImpression、Delegation、Digital Delegate |
 | [ADR-0023](ADR-0023-memory-context-exposure-session-rotation.md) | 记忆上下文暴露记录与 DSH Session 轮换 | Accepted | Memory Revoke、Session Persistence、Rotation |
 | [ADR-0024](ADR-0024-pc-core-external-business-provider-decoupling.md) | PC Core 与外部业务平台解耦 | Accepted | Identity、Authorization、Project Directory、Business Capability、Workbench Projection |
-| [ADR-0025](ADR-0025-thin-session-authorization-legacy-provider-compatibility.md) | 薄 Session、薄授权与旧 Provider 权限兼容 | Proposed | PC Session、PC-only Authorization、Legacy Provider Compatibility |
+| [ADR-0025](ADR-0025-thin-session-authorization-legacy-provider-compatibility.md) | 薄 Session、薄授权与旧 Provider 权限兼容 | Accepted | PC Session、PC-only Authorization、Legacy Provider Compatibility |
 
 ## 关联文档
 

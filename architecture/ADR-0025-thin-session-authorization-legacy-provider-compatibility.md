@@ -1,12 +1,13 @@
 # ADR-0025：薄 Session、薄授权与旧 Provider 权限兼容
 
-- 状态：Proposed
+- 状态：Accepted
 - 日期：2026-11-21
+- 接受确认：2026-11-21；第 14 节五项边界已评审确认
 - 范围：PC Session Authority、PC-owned Action 授权、Provider-owned Action 交集授权、Legacy Provider Compatibility Adapter
 - 前置决策：ADR-0007、ADR-0010、ADR-0014、ADR-0017、ADR-0024
 - 触发证据：`product/docs/real-ee-integration-closure-01.md` 的 RCI-02
-- 拟调整：ADR-0010 中“外部身份来源不可达时，所有关联 PC Session 请求均需实时源 Session 校验”的实现解释；不改变外部业务权限最终由源系统判定的结论
-- 实施原则：本 ADR 先冻结边界，不授权直接编码、修改 EE schema、迁移 EE 权限、进入 D4B 或建设完整 IAM
+- 调整：ADR-0010 中“外部身份来源不可达时，所有关联 PC Session 请求均需实时源 Session 校验”的实现解释；不改变外部业务权限最终由源系统判定的结论
+- 实施原则：本 ADR 冻结边界，不授权直接编码、修改 EE schema、迁移 EE 权限、进入 D4B 或建设完整 IAM
 
 ## 1. 背景
 
@@ -129,6 +130,8 @@ absolute_expires_at
 revoked_at?
 ```
 
+`absolute_expires_at` 必须在 Session 签发时固定，后续访问或空闲续活不得滑动延长。Provider-backed PC Session 的绝对到期时间不得晚于外部身份凭证到期时间与 PC 配置上限中的较早者。`idle_expires_at` 可以按 PC 策略续活，但不得越过 `absolute_expires_at`；在合同拆分完成前，现有单一 `expires_at` 必须按绝对到期语义处理。
+
 不得把 Provider Cookie、Provider Session ID 或访问令牌作为 PC Session 的主键或持续校验前提。
 
 ### 4.2 Provider 不可达
@@ -142,7 +145,7 @@ revoked_at?
 - 不把关联 Session 静默转换成 Standalone/Local 身份；
 - UI 使用 Provider 中立提示，不暴露内部 Bundle/Connector 错误。
 
-PC Session 本身的既有绝对到期时间就是离线继续的上界，不新增无限或隐藏的 `offline_allow`。Session 续期必须重新满足其 authentication method 的身份验证要求。
+PC Session 本身在签发时固定的绝对到期时间就是离线继续的上界，不新增无限或隐藏的 `offline_allow`。重新登录、重新认证或签发跨越当前绝对到期时间的新 Session，必须重新满足其 authentication method 的身份验证要求；普通访问不得滑动延长绝对到期时间。
 
 ### 4.3 撤权
 
@@ -225,7 +228,7 @@ observed_at
 expires_at
 ```
 
-Provider Decision 的 TTL 只允许覆盖单次请求或明确的极短读路径；不能跨请求续期 Provider Allow，写操作必须重新判权。
+Provider Decision 只允许在同一个逻辑请求内部复用，不得跨 HTTP 请求、Turn、Tool Call 或 Provider Health Generation 复用。Provider 不可达、Generation 变化或新逻辑请求开始时，历史 Allow 立即不可用；读写操作均必须取得当前 Provider Authorization。
 
 ## 6. Legacy Provider Compatibility
 
@@ -401,12 +404,12 @@ RCI-03 Operation Projection Closure 必须作为独立任务处理，不得把�
 - 修复 RCI-03 Business Operation Projection；
 - 生产部署、远程发布或现有演示环境迁移。
 
-## 14. 接受前必须确认
+## 14. 接受确认
 
-本 ADR 从 Proposed 转为 Accepted 前必须明确确认：
+本 ADR 转为 Accepted 时已明确确认：
 
-1. Provider-backed PC Session 在 Provider 断连时，PC-only 能力可继续到当前 PC Session 的绝对到期；
+1. Provider-backed PC Session 在 Provider 断连时，PC-only 能力可继续到签发时固定、不可滑动且不晚于外部身份凭证到期与 PC 配置上限较早者的绝对到期时间；
 2. Provider 不可达时不允许续期或新建 Provider-backed PC Session；
-3. Provider-owned Action 始终需要实时 Provider Authorization，不使用离线 Allow；
+3. Provider-owned Action 始终需要当前 Provider Authorization；Decision 只能在同一个逻辑请求内复用，不使用跨请求或离线 Allow；
 4. 首期 Compatibility Mapping 使用版本化代码 Registry/fixture，不新增 EE 表或迁移权限数据；
 5. RCI-03 由独立任务处理，不作为接受本 ADR 的前置实现。
