@@ -40,6 +40,7 @@ import type {
 import { SstsDraftError } from "@pc/ssts-draft";
 import type { RuntimeWorkbench, RuntimeToolContext } from "./workbench.js";
 import type { EeProviderBundle } from "./ee-provider-bundle.js";
+import { ReadOperationVerifier } from "./read-operation-verifier.js";
 
 export interface ApiServerDependencies {
   eeBundle?: EeProviderBundle;
@@ -1109,19 +1110,26 @@ export function buildApiServer(
       const authenticated = await identityFrom(dependencies).authenticate(
         bearerToken(request.headers.authorization)
       );
-      const body = request.body as {
-        evidence_refs: string[];
-        result_digest?: string;
-      };
-      return eventsFrom(dependencies).transitionOperation({
+      if (request.body !== undefined && request.body !== null
+        && (typeof request.body !== "object" || Array.isArray(request.body) || Object.keys(request.body).length !== 0)) {
+        throw new EventProjectionError("PC_READ_VERIFICATION_CLIENT_FACTS_DENIED", "Verification accepts no caller-supplied facts");
+      }
+      const events = eventsFrom(dependencies);
+      const operation = await events.getOperation(request.params.operationId);
+      if (!operation) throw new EventProjectionError("PC_READ_VERIFICATION_NOT_FOUND", "Operation was not found");
+      if (operation.tenant_id !== authenticated.principal.tenant_id || operation.owner_principal_id !== authenticated.principal.principal_id) {
+        throw new EventProjectionError("PC_READ_VERIFICATION_SCOPE_DENIED", "Operation is not visible to this Principal");
+      }
+      if (operation.operation_kind !== "READ") {
+        throw new EventProjectionError("PC_READ_VERIFICATION_UNSUPPORTED_KIND", "Automatic verification supports READ only");
+      }
+      const gateway = gatewayFrom(dependencies);
+      await identityFrom(dependencies).authenticateForProvider(bearerToken(request.headers.authorization));
+      await gateway.authorizeReadVerification(operation.operation_id, authenticated.principal.tenant_id, authenticated.principal.principal_id);
+      return new ReadOperationVerifier(events, gateway).verify({
         operation_id: request.params.operationId,
         tenant_id: authenticated.principal.tenant_id,
-        principal_id: authenticated.principal.principal_id,
-        state: "SUCCEEDED",
-        evidence_refs: body.evidence_refs,
-        ...(body.result_digest === undefined
-          ? {}
-          : { result_digest: body.result_digest })
+        principal_id: authenticated.principal.principal_id
       });
     }
   );

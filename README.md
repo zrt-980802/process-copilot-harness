@@ -50,25 +50,27 @@ capabilities retain their vertical views. Design and local developer evidence:
 `architecture/frontend-provider-neutral-experience-v1.md` and
 `product/docs/frontend-provider-isolation-01-verification.md`.
 
-The subsequent real EE isolation task is blocked by EE-authenticated personal
-conversation failure during source outage and Business Operations remaining
-VERIFYING. A bounded Gateway Connector-target repair is locally verified;
-the task is not complete. Evidence and retest limits:
+The real EE isolation task remains pending real retest. The Session/source
+boundary (RCI-02), READ projection closure (RCI-03), and bounded Gateway
+Connector-target repair are developer verified; the real task is not complete.
+Evidence and retest limits:
 `product/docs/real-ee-integration-closure-01.md`.
 
 ADR-0025 T0 freezes C67-C69 Session Assurance, Authority Decision and immutable
 Provider Compatibility Mapping, with 69 total contracts and pure golden tests.
-**T0 COMPLETE / T1A READY / T1B-T3 NOT STARTED**. Runtime behavior is still unchanged;
-RCI-02 and RCI-03 remain unfixed. Contract-only evidence:
+**T0 COMPLETE / T1A COMPLETE / T1B-T3 NOT STARTED**. RCI-02 is fixed at the
+deterministic PC/source boundary and remains pending real EE retest. RCI-03 READ
+projection is also fixed pending real retest. Contract and T1A evidence:
 `architecture/adr-0025-t0-contract-and-compatibility-v1.md` and
-`product/docs/adr-0025-t0-verification.md`.
+`product/docs/adr-0025-t0-verification.md`, plus
+`product/docs/adr-0025-t1a-verification.md`.
 
-The next authorized implementation slice is T1A: split PC-owned Session validation
-from live data-source validation without changing a database schema. PC owns Harness
-permissions; external systems authorize access to their data through verified identity,
-account/connector bindings and current source decisions. Final external execution is the
-intersection, never a copy of source roles or an offline Allow. Task authority:
-`governance/ADR-0025-T1A-PC-SESSION-SOURCE-VALIDATION-SPLIT-TASK.md`.
+RCI-03 verifies durable Gateway results before moving a READ Business Operation
+from VERIFYING to SUCCEEDED. Write and unknown outcomes retain their stronger
+readback/reconciliation rules. Real EE retest requires a separate task; no next
+phase starts automatically. Developer verification:
+`product/docs/rci-03-read-operation-projection-verification.md`. Task authority:
+`governance/RCI-03-READ-OPERATION-PROJECTION-CLOSURE-TASK.md`.
 
 ## Verify
 

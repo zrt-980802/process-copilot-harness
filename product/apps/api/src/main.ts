@@ -42,6 +42,7 @@ import {
 } from "./workbench.js";
 import { mcpDigest } from "@pc/gateway";
 import { buildApiServer } from "./server.js";
+import { gatewayEventPublisher } from "./gateway-event-publisher.js";
 import { EeLogin } from "./ee-login.js";
 import {
   EeClawProjectDirectoryAdapter,
@@ -389,45 +390,7 @@ if (gatewayStoreKind !== "disabled") {
     () => new Date(),
     eventProjection === undefined
       ? undefined
-      : {
-          approvalState: async (input) => {
-            const operation = await eventProjection?.getOperation(
-              input.operation_id
-            );
-            if (operation === undefined || operation.state === input.state) {
-              return;
-            }
-            await eventProjection?.transitionOperation({
-              operation_id: input.operation_id,
-              tenant_id: input.tenant_id,
-              principal_id: input.principal_id,
-              state: input.state,
-              evidence_refs: input.evidence_refs,
-              producer: "pc-gateway"
-            });
-          },
-          operationState: async (input) => {
-            const operation = await eventProjection?.getOperation(
-              input.operation_id
-            );
-            if (operation === undefined || operation.state === input.state) {
-              return;
-            }
-            await eventProjection?.transitionOperation({
-              operation_id: input.operation_id,
-              tenant_id: input.tenant_id,
-              principal_id: input.principal_id,
-              state: input.state,
-              external_operation_record_id:
-                input.external_operation_record_id,
-              ...(input.result_digest === undefined
-                ? {}
-                : { result_digest: input.result_digest }),
-              evidence_refs: input.evidence_refs,
-              producer: "pc-gateway"
-            });
-          }
-        }
+      : gatewayEventPublisher(eventProjection, repository)
   );
   await controlledGateway.initialize();
   const identity = identityAuthorization;

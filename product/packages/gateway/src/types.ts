@@ -479,6 +479,12 @@ export interface BusinessCapabilityProviderPort extends GatewayProviderPort {
 }
 
 export interface GatewayEventPublisherPort {
+  verifyReadOperation?(input: {
+    tenant_id: string;
+    principal_id: string;
+    business_task_id: string;
+    operation_id: string;
+  }): Promise<void>;
   approvalState(input: {
     tenant_id: string;
     principal_id: string;

@@ -823,14 +823,16 @@ export class RuntimeWorkbench {
 
   private async reauthorize(token: string, context: RuntimeToolContext) {
     const envelope = context.principal_envelope;
-    const { principal } = envelope.resource_scope_refs.some(ref => ref.startsWith("project:"))
-      ? await this.options.identity.authenticateForProvider(token)
-      : await this.options.identity.authenticate(token);
+    const { principal } = await this.options.identity.authenticate(token);
     if (principal.principal_id !== envelope.subject_principal_id || principal.tenant_id !== envelope.tenant_id
       || principal.authorization_revision !== envelope.authorization_revision) denied("PC_WORKBENCH_SESSION_REAUTH_REQUIRED");
-    const decision = await this.options.identity.evaluatePrincipalAuthorization({ principal_id: principal.principal_id,
+    const request = { principal_id: principal.principal_id,
       actions: envelope.allowed_actions, resource_scope_refs: envelope.resource_scope_refs,
-      tool_release_ids: context.tools.map(tool => tool.tool_release_id), policy_model_revision: 1 });
+      tool_release_ids: context.tools.map(tool => tool.tool_release_id), policy_model_revision: 1 };
+    const mode = this.options.identity.classifyAuthorization(principal, request);
+    if (mode === "DENY_UNKNOWN") denied("PC_WORKBENCH_AUTHORITY_ROUTE_DENIED");
+    if (mode === "PC_AND_PROVIDER") await this.options.identity.authenticateForProvider(token);
+    const decision = await this.options.identity.evaluatePrincipalAuthorization(request);
     if (decision.decision !== "ALLOW") denied("PC_WORKBENCH_AUTHORIZATION_DENIED");
   }
 

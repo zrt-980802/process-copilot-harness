@@ -566,12 +566,18 @@ export class IdentityAuthorizationService {
     input: IssueAuthorizationSnapshotInput
   ): Promise<AuthorizationSnapshot> {
     const { principal } = await this.authenticate(accessToken);
-    if (input.actions.some(action => this.authorityRouter.authorizationMode({ principal, action: requiredText(action, "action"),
-      resource_scope_refs: input.resource_scope_refs, tool_release_ids: input.tool_release_ids,
-      observed_at: this.now().toISOString() }) === "PC_AND_PROVIDER")) {
+    if (this.classifyAuthorization(principal, input) === "PC_AND_PROVIDER") {
       await this.authenticateForProvider(accessToken);
     }
     return this.evaluateAuthorization(principal, input);
+  }
+
+  classifyAuthorization(principal: PCPrincipal, input: IssueAuthorizationSnapshotInput) {
+    const modes = input.actions.map(action => this.authorityRouter.authorizationMode({ principal,
+      action: requiredText(action, "action"), resource_scope_refs: input.resource_scope_refs,
+      tool_release_ids: input.tool_release_ids, observed_at: this.now().toISOString() }));
+    if (!modes.length || modes.includes("DENY_UNKNOWN")) return "DENY_UNKNOWN";
+    return modes.includes("PC_AND_PROVIDER") ? "PC_AND_PROVIDER" : "PC_ONLY";
   }
 
   async evaluatePrincipalAuthorization(

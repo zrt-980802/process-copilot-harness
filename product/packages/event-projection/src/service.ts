@@ -808,6 +808,55 @@ export class EventProjectionService {
     return this.repository.getTask(businessTaskId);
   }
 
+  async recordReadVerification(input: {
+    operation: BusinessOperation;
+    state: "VERIFYING" | "SUCCEEDED";
+    result_digest: string;
+    evidence_refs: string[];
+    occurred_at: string;
+    verifier_version: string;
+  }): Promise<BusinessOperation> {
+    const current = input.operation;
+    if (current.operation_kind !== "READ" || !(input.state === "VERIFYING"
+      ? current.state === "DISPATCHED" : current.state === "VERIFYING")) {
+      throw new EventProjectionError("PC_READ_VERIFICATION_STATE_CONFLICT", "READ verification has an invalid predecessor state");
+    }
+    const event = makeEnvelope({ event_type: input.state === "SUCCEEDED" ? "pc.operation.verified" : "pc.operation.verifying",
+      producer: input.state === "SUCCEEDED" ? "pc-read-verifier" : "pc-read-verifier-recovery",
+      producer_version: input.verifier_version, tenant_id: current.tenant_id, principal_id: current.owner_principal_id,
+      stream_kind: "OPERATION", stream_id: current.operation_id, stream_sequence: 1, aggregate_revision: current.version + 1,
+      business_task_id: current.business_task_id, operation_id: current.operation_id, correlation_id: current.business_task_id,
+      payload: { result_digest: input.result_digest, external_operation_record_id: current.operation_id,
+        evidence_refs: unique(input.evidence_refs), verifier_version: input.verifier_version }, occurred_at: input.occurred_at });
+    event.event_id = `read-verification_${digest({ operation: current.operation_id, revision: current.version,
+      state: input.state, digest: input.result_digest }).slice(7)}`;
+    this.validateEnvelope(event);
+    if (this.authority && !(await this.authority.evaluate(event)).allowed) {
+      throw new EventProjectionError("PC_READ_VERIFICATION_AUTHORITY_DENIED", "System verifier event was denied");
+    }
+    const received = await this.repository.receiveEvent(event, this.now().toISOString());
+    if (received.sequence_conflict || !["PENDING", "APPLIED"].includes(received.record.status)) {
+      throw new EventProjectionError("PC_READ_VERIFICATION_EVENT_CONFLICT", "Verifier event conflicts with durable history");
+    }
+    // Resume a durable pending event as well as a fresh one. Repository CAS commits
+    // event + projection atomically; a competing verifier may already have won.
+    if (received.record.status === "PENDING") {
+      try { await this.applyRecord(received.record.envelope); }
+      catch (error) {
+        const latest = await this.requireOperation(current.operation_id);
+        if (input.state === "VERIFYING" && latest.state === "SUCCEEDED" && latest.result_digest === input.result_digest) return latest;
+        if (latest.last_event_id !== event.event_id || latest.state !== input.state
+          || latest.result_digest !== input.result_digest) throw error;
+      }
+    }
+    const latest = await this.requireOperation(current.operation_id);
+    if (input.state === "VERIFYING" && latest.state === "SUCCEEDED" && latest.result_digest === input.result_digest) return latest;
+    if (latest.state !== input.state || latest.last_event_id !== event.event_id || latest.result_digest !== input.result_digest) {
+      throw new EventProjectionError("PC_READ_VERIFICATION_STATE_CONFLICT", "Operation changed during verification");
+    }
+    return latest;
+  }
+
   listTasks(
     tenantId: string,
     ownerPrincipalId: string

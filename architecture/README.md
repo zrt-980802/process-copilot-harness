@@ -93,7 +93,9 @@
 - 薄 Session、薄授权与旧 Provider 权限兼容 ADR：`ADR-0025-thin-session-authorization-legacy-provider-compatibility.md`
 - 外部 Provider 解耦 D0 调用清单与权威路由表：`external-provider-decoupling-d0-inventory-v1.md`
 - 外部 Provider Contract C61-C66：`external-provider-contract-catalog-v1.md`
-- ADR-0025 T0 C67-C69 contract/matrix: `adr-0025-t0-contract-and-compatibility-v1.md` (69 contracts total; T1 NOT STARTED).
+- ADR-0025 T0 C67-C69 contract/matrix: `adr-0025-t0-contract-and-compatibility-v1.md` (69 contracts total; T1A complete, T1B not started).
+- ADR-0025 T1A Session/source boundary developer verification: `../product/docs/adr-0025-t1a-verification.md`.
+- RCI-03 READ projection developer verification (pending real retest): `../product/docs/rci-03-read-operation-projection-verification.md`.
 - 外部 Provider 解耦 D1 Port 拆分：`external-provider-decoupling-d1-port-split-v1.md`
 - 外部 Provider 解耦 D2 Standalone：`external-provider-decoupling-d2-standalone-v1.md`
 - 外部 Provider 解耦 D3 Authority Router：`external-provider-decoupling-d3-authority-router-v1.md`

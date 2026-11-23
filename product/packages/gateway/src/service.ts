@@ -173,6 +173,10 @@ function resultFor(
   };
 }
 
+export function toolExecutionResultDigest(result: ToolExecutionResult): string {
+  return resultFor(result.operation_id, result).result_digest;
+}
+
 export class ControlledExecutionGatewayService {
   constructor(
     private readonly repository: GatewayRepository,
@@ -683,7 +687,10 @@ export class ControlledExecutionGatewayService {
           "Idempotency key was reused with a different request digest"
         );
       }
-      if (existing.result !== undefined) return clone(existing.result);
+      if (existing.result !== undefined) {
+        await this.verifyReadProjection(existing);
+        return clone(existing.result);
+      }
       throw new GatewayError(
         "PC_GATEWAY_OPERATION_IN_PROGRESS",
         "Idempotent operation is already in progress",
@@ -846,6 +853,7 @@ export class ControlledExecutionGatewayService {
         );
       }
       if (begun.operation.result !== undefined) {
+        await this.verifyReadProjection(begun.operation);
         return clone(begun.operation.result);
       }
       throw new GatewayError(
@@ -973,6 +981,7 @@ export class ControlledExecutionGatewayService {
           evidence_refs: completed.evidence_refs
         });
       }
+      await this.verifyReadProjection(completed);
       return result;
     } catch (error) {
       if (!(error instanceof GatewayProviderError)) throw error;
@@ -1147,6 +1156,33 @@ export class ControlledExecutionGatewayService {
       });
     }
     return result;
+  }
+
+  private async verifyReadProjection(operation: ExternalOperationRecord): Promise<void> {
+    if (operation.operation_kind === "READ" && operation.outcome_state === "KNOWN_SUCCESS" && operation.business_task_id) {
+      await this.eventPublisher?.verifyReadOperation?.({ tenant_id: operation.tenant_id,
+        principal_id: operation.principal_id, business_task_id: operation.business_task_id, operation_id: operation.operation_id });
+    }
+  }
+
+  async authorizeReadVerification(operationId: string, tenantId: string, principalId: string): Promise<void> {
+    const operation = await this.requireOperation(operationId);
+    if (operation.tenant_id !== tenantId || operation.principal_id !== principalId) {
+      throw new GatewayError("PC_GATEWAY_READ_VERIFICATION_DENIED", "Operation is not visible to this Principal");
+    }
+    const tool = await this.requirePublishedTool(operation.tool_release_id);
+    const connector = await this.requireConnector(operation.connector_id);
+    const account = await this.repository.findExternalAccountBinding(tenantId, connector.connector_id, principalId);
+    const authorization = await this.identity.evaluatePrincipalAuthorization({ principal_id: principalId,
+      actions: tool.required_permissions, resource_scope_refs: operation.resource_scope_refs ?? [],
+      tool_release_ids: [tool.tool_release_id], policy_model_revision: 1 });
+    if (operation.operation_kind !== "READ" || risk(tool).operation_kind !== "READ"
+      || connector.tenant_id !== tenantId || connector.state !== "ACTIVE"
+      || !connector.tool_release_ids.includes(tool.tool_release_id) || !account || account.status !== "ACTIVE"
+      || authorization.decision !== "ALLOW"
+      || (connector.provider_key === "ee_mcp" && await this.identity.resolveExternalSubject?.(principalId, "eeclaw") !== account.external_account_id)) {
+      throw new GatewayError("PC_GATEWAY_READ_VERIFICATION_DENIED", "Current authority denies READ verification");
+    }
   }
 
   getApproval(approvalId: string): Promise<BusinessApprovalSnapshot | undefined> {

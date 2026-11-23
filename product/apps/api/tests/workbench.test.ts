@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ProfileCapabilityService, RuntimeRegistryService } from "@pc/application";
+import { IdentityAuthorizationService, ProfileCapabilityService, RuntimeRegistryService } from "@pc/application";
 import type { RuntimeCapabilityManifest } from "@pc/domain";
-import { MemoryEventProjectionRepository, MemoryProfileCapabilityRepository, MemoryRuntimeRegistryRepository } from "@pc/persistence";
+import { MemoryEventProjectionRepository, MemoryIdentityAuthorizationRepository, MemoryProfileCapabilityRepository, MemoryRuntimeRegistryRepository } from "@pc/persistence";
 import { EventProjectionService } from "@pc/event-projection";
 import type { SstsTaskWorkspace } from "@pc/ssts-draft";
 import type { SstsDraftService } from "@pc/ssts-draft";
@@ -12,6 +12,7 @@ import { EeClawWorkbenchProjectionAdapter } from "../src/ee-provider.js";
 afterEach(() => vi.unstubAllGlobals());
 
 async function fixture() {
+  const routing = new IdentityAuthorizationService(new MemoryIdentityAuthorizationRepository(), "workbench-route-test-signing-key-000000000");
   const profiles = new ProfileCapabilityService(new MemoryProfileCapabilityRepository());
   await profiles.initialize();
   const seeded = await profiles.seedFixedFoRelease();
@@ -46,7 +47,8 @@ async function fixture() {
       listProjects: async () => [{ project_code: "EP37" }]
     },
     workbenchProjection: new EeClawWorkbenchProjectionAdapter(),
-    identity: { authenticate, authenticateForProvider: authenticate, evaluatePrincipalAuthorization: async () => ({ decision: "ALLOW" }), issuePrincipalEnvelope: async () => ({}) },
+    identity: { authenticate, authenticateForProvider: authenticate, classifyAuthorization: routing.classifyAuthorization.bind(routing),
+      evaluatePrincipalAuthorization: async () => ({ decision: "ALLOW" }), issuePrincipalEnvelope: async () => ({}) },
     resources: { getResourceProjection: async () => ({ resource: { current_version_id: "version" } }),
       createBinding: async () => ({ binding_id: "binding" }), getWorkspaceView: async () => view,
       createWorkspaceView: async () => view, materialize: async () => ({}) },
@@ -389,7 +391,8 @@ describe("Workbench admission after a local Runtime rebuild", () => {
     f.workbench.options.events = events;
     const prepared = await f.prepare();
     prepared.context.principal_envelope = { ...prepared.context.principal_envelope,
-      subject_principal_id: "owner", tenant_id: "tenant", authorization_revision: 1, allowed_actions: [], resource_scope_refs: [] };
+      subject_principal_id: "owner", tenant_id: "tenant", authorization_revision: 1,
+      allowed_actions: f.seeded.tool.required_permissions, resource_scope_refs: ["project:EP37"] };
     vi.spyOn(f.workbench, "prepare").mockResolvedValue(prepared);
     await f.workbench.run(f.workspace, "token", "first prompt", [], undefined, "request-12345678");
     const operation = (await events.listTaskOperations(task.business_task_id))[0]!;
