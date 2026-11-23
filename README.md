@@ -58,10 +58,17 @@ the task is not complete. Evidence and retest limits:
 
 ADR-0025 T0 freezes C67-C69 Session Assurance, Authority Decision and immutable
 Provider Compatibility Mapping, with 69 total contracts and pure golden tests.
-**T0 COMPLETE / T1 NOT STARTED**. Session/login/authorization behavior is unchanged;
+**T0 COMPLETE / T1A READY / T1B-T3 NOT STARTED**. Runtime behavior is still unchanged;
 RCI-02 and RCI-03 remain unfixed. Contract-only evidence:
 `architecture/adr-0025-t0-contract-and-compatibility-v1.md` and
 `product/docs/adr-0025-t0-verification.md`.
+
+The next authorized implementation slice is T1A: split PC-owned Session validation
+from live data-source validation without changing a database schema. PC owns Harness
+permissions; external systems authorize access to their data through verified identity,
+account/connector bindings and current source decisions. Final external execution is the
+intersection, never a copy of source roles or an offline Allow. Task authority:
+`governance/ADR-0025-T1A-PC-SESSION-SOURCE-VALIDATION-SPLIT-TASK.md`.
 
 ## Verify
 

@@ -1,7 +1,7 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / DECOUPLING-ADR-01 ACCEPTED / D0-D4A COMPLETE / ADR-0025 ACCEPTED / ADR-0025 T0 COMPLETE / T1 NOT STARTED / D4B NOT STARTED`
-> 日期：2026-11-21（Asia/Shanghai）
+> 状态：`SOURCE-BASELINE-01 COMPLETE / D0-D4A COMPLETE / ADR-0025 T0 COMPLETE / T1A READY / T1B-T3 NOT STARTED / D4B NOT STARTED`
+> 日期：2026-11-23（Asia/Shanghai）
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
 
@@ -10,10 +10,14 @@
 ```text
 MEMORY-01A closure
   -> SOURCE-BASELINE-01
-  -> DECOUPLING-ADR-01
-  -> DECOUPLING-CORE-01
-  -> EE-PROVIDER-ADAPTER-01
-  -> STANDALONE-ACCEPTANCE-01
+  -> D0-D4A Provider decoupling
+  -> ADR-0025 T0 contracts
+  -> T1A PC Session / source validation split
+  -> T1B complete Session Assurance persistence (separate schema authorization)
+  -> RCI-03 Operation Projection closure
+  -> T2 PC authorization + external authority binding + decision intersection
+  -> T3 real outage/revocation/multi-account acceptance
+  -> evaluate D4B and MEMORY-01B
 ```
 
 不并行启动 MEMORY-01B，避免同时改动 Memory Authorization Port、身份来源和外部授权路由。
@@ -109,14 +113,49 @@ D4 总计划见 `governance/DECOUPLING-D4-EE-PROVIDER-BUNDLE-PLAN.md`；D4-2 至
 
 ### 3.6 ADR-0025：薄 Session、薄授权与旧 Provider 权限兼容
 
-状态：`ADR ACCEPTED / T0 COMPLETE / T1 NOT STARTED / T2-T3 NOT STARTED`。
+状态：`ADR ACCEPTED / T0 COMPLETE / T1A READY / T1B-T3 NOT STARTED`。
 
 ADR-0025 已明确 PC Session 的固定绝对到期、PC-owned Action 独立授权、Provider-owned Action 的 PC 与当前 Provider 交集授权，以及 EE V1 零迁移兼容。当前只允许先执行 T0 合同与兼容 fixture 冻结，不修复 RCI-02、不改变 Session 运行行为，也不处理 RCI-03。
 
-唯一 T0 任务书：`governance/ADR-0025-T0-CONTRACT-AND-COMPATIBILITY-FIXTURE-TASK.md`。T0 完成后必须停止；T1 Session 验证拆分需要新的明确授权。
+T0 任务书：`governance/ADR-0025-T0-CONTRACT-AND-COMPATIBILITY-FIXTURE-TASK.md`。
+T1A 任务书：`governance/ADR-0025-T1A-PC-SESSION-SOURCE-VALIDATION-SPLIT-TASK.md`。
+T1A 只解除 PC 请求认证对数据源实时在线状态的依赖，不改数据库 schema；完整 C67 Session Assurance 持久化、revision 绑定和旧 Session 迁移属于 T1B，须单独授权。
 
 T0 已冻结 C67-C69、Session/Decision/Mapping golden matrix 和兼容门禁；本地开发者验证见
 `product/docs/adr-0025-t0-verification.md`。运行行为未变，RCI-02/RCI-03 均未修复。
+
+### 3.7 PC 自有授权与外部数据源授权绑定
+
+PC 的权限系统与数据源权限系统是两个独立权威，不互相复制：
+
+```text
+PC Principal + PC Session
+  -> PC Policy 对 Harness action/scope 判权
+  -> resolve one data-source authority route when external data is required
+  -> resolve verified External Authority Binding
+  -> data source performs current authorization
+  -> PC Allow ∩ valid binding ∩ source Allow ∩ execution guards
+  -> execute and audit
+```
+
+这里的“数据源授权给 PC”指数据源允许 PC 代表一个已绑定主体发起特定请求，不表示把数据源的 Role、成员关系或 Allow 复制成 PC Grant。
+
+- PC 自有授权管理 `conversation.run`、个人 Task/Memory、Profile、Plugin、Tool/MCP 使用资格、Approval 和 Harness 管理能力；
+- `ExternalIdentityLink` 表达 PC Principal 与外部身份的已验证关系；
+- `ExternalAccountBinding` 表达某 Connector 执行时使用的外部账号/凭据绑定；
+- 规划中的 `External Authority Binding` 是上述关系在授权路由中的统一视图，不要求立即新增数据库表；
+- 外部项目、文档、Tool 或写操作仍由当前数据源最终判权；
+- PC Deny、绑定失效、源系统 Deny/Unknown/Unavailable 任一出现，最终结果都是 Deny；
+- Binding 只能缩小可执行范围，不能产生独立于数据源的离线 Allow。
+
+实施分层：
+
+1. T1A：PC Session 本地验证与数据源实时验证拆分，关闭 RCI-02；
+2. T1B：完整持久化 C67 assurance、revision 和固定时限，需单独批准 PC schema 演进；
+3. T2A：把 PC Policy 的 action/scope 决策统一接入 C68；
+4. T2B：把 Identity Link、Account Binding、Provider route 组合成 External Authority Binding 解析；
+5. T2C：使用 C69 Mapping 调用数据源当前授权，并形成 PC/Source 交集证据；
+6. T3：在真实 EE 断连、恢复、撤权、到期、重登和多账号下验收。
 
 ## 4. DECOUPLING-CORE-01：PC 独立控制面
 
@@ -128,6 +167,8 @@ T0 已冻结 C67-C69、Session/Decision/Mapping golden matrix 和兼容门禁；
 - PC 的角色、能力和 Tool/MCP 使用权由 PC Policy 决定；
 - 外部系统的业务数据访问仍与源系统最终授权取交集；
 - 撤权递增 Authorization Revision，并失效 Session、Snapshot、Runtime Assignment 和 MCP Binding。
+
+当前下一项不是建设完整 IAM，而是执行 T1A。T1A 完成只能说明 PC Session 不再以 EE 在线为每请求前提，不能宣称完整 PC 权限系统、T2 交集授权或生产级撤权已经完成。
 
 ## 5. EE-PROVIDER-ADAPTER-01：EE 成为首个外部 Provider
 
@@ -156,4 +197,5 @@ T0 已冻结 C67-C69、Session/Decision/Mapping golden matrix 和兼容门禁；
 - EE 业务权限整体迁移到 PC；
 - DSH Core 修改；
 - EE schema 或共享数据库变更；
+- 未单独授权的 PC Session schema 变更（T1B）；
 - 生产部署、远端环境修改或现有仓库历史改写。
