@@ -688,8 +688,7 @@ export class ControlledExecutionGatewayService {
         );
       }
       if (existing.result !== undefined) {
-        await this.verifyReadProjection(existing);
-        return clone(existing.result);
+        return this.deliverPersistedResult(existing, envelope);
       }
       throw new GatewayError(
         "PC_GATEWAY_OPERATION_IN_PROGRESS",
@@ -853,8 +852,7 @@ export class ControlledExecutionGatewayService {
         );
       }
       if (begun.operation.result !== undefined) {
-        await this.verifyReadProjection(begun.operation);
-        return clone(begun.operation.result);
+        return this.deliverPersistedResult(begun.operation, envelope);
       }
       throw new GatewayError(
         "PC_GATEWAY_OPERATION_IN_PROGRESS",
@@ -981,8 +979,7 @@ export class ControlledExecutionGatewayService {
           evidence_refs: completed.evidence_refs
         });
       }
-      await this.verifyReadProjection(completed);
-      return result;
+      return await this.deliverPersistedResult(completed, envelope);
     } catch (error) {
       if (!(error instanceof GatewayProviderError)) throw error;
       const completedAt = this.now().toISOString();
@@ -1165,24 +1162,99 @@ export class ControlledExecutionGatewayService {
     }
   }
 
+  private async deliverPersistedResult(operation: ExternalOperationRecord, envelope: ToolExecutionEnvelope): Promise<ToolExecutionResult> {
+    await this.currentResultDeliveryGuard(operation, { tenant_id: envelope.principal_envelope.tenant_id,
+      principal_id: envelope.principal_envelope.subject_principal_id, execution: envelope });
+    await this.verifyReadProjection(operation);
+    // Verification can await durable event IO. Recheck before delivering the body;
+    // neither the persisted success nor the earlier Allow is delivery authority.
+    await this.currentResultDeliveryGuard(operation, { tenant_id: envelope.principal_envelope.tenant_id,
+      principal_id: envelope.principal_envelope.subject_principal_id, execution: envelope });
+    if (!operation.result) throw new GatewayError("PC_GATEWAY_RESULT_DELIVERY_DENIED", "Persisted result is missing");
+    return clone(operation.result);
+  }
+
+  private async currentResultDeliveryGuard(operation: ExternalOperationRecord, request: {
+    tenant_id: string;
+    principal_id: string;
+    execution?: ToolExecutionEnvelope;
+  }): Promise<void> {
+    function deny(reason: string): never {
+      throw new GatewayError("PC_GATEWAY_RESULT_DELIVERY_DENIED", "Current authority denies persisted result verification or delivery",
+        false, { reason_codes: [reason] });
+    }
+    try {
+      if (operation.tenant_id !== request.tenant_id || operation.principal_id !== request.principal_id
+        || !operation.resource_scope_refs?.length) deny("result_scope_mismatch");
+      const tool = await this.requirePublishedTool(operation.tool_release_id);
+      const connector = await this.requireConnector(operation.connector_id);
+      if (connector.tenant_id !== request.tenant_id || connector.state !== "ACTIVE"
+        || !connector.tool_release_ids.includes(tool.tool_release_id) || tool.schema_digest !== operation.schema_digest
+        || tool.required_permissions.some(permission => !connector.allowed_scopes.includes(permission))) deny("result_connector_or_tool_denied");
+      const execution = request.execution;
+      const envelope = execution?.principal_envelope;
+      if (execution && envelope) {
+        if (operation.operation_id !== execution.operation_id || operation.tool_release_id !== execution.tool_release_id
+          || operation.schema_digest !== execution.schema_digest || operation.pc_session_id !== envelope.pc_session_id
+          || operation.business_task_id !== envelope.business_task_id || envelope.audience !== `gateway:${connector.connector_id}`
+          || digest(unique(operation.resource_scope_refs!)) !== digest(unique(envelope.resource_scope_refs))
+          || tool.required_permissions.some(permission => !envelope.allowed_actions.includes(permission))) deny("result_request_context_mismatch");
+        const principal = await this.identity.verifyPrincipalEnvelope(envelope, `gateway:${connector.connector_id}`);
+        if (principal.tenant_id !== request.tenant_id || principal.principal_id !== request.principal_id
+          || principal.lifecycle_status !== "active" || principal.authorization_revision !== envelope.authorization_revision) deny("result_principal_or_revision_stale");
+      }
+      const account = await this.repository.findExternalAccountBinding(request.tenant_id, connector.connector_id, request.principal_id);
+      if (!account || account.status !== "ACTIVE" || account.tenant_id !== request.tenant_id
+        || account.connector_id !== connector.connector_id || account.principal_id !== request.principal_id
+        || !account.external_account_id || !account.credential_subject
+        || !Number.isInteger(account.credential_generation) || account.credential_generation < 1) deny("result_binding_unavailable");
+      if (envelope && (!Number.isInteger(envelope.credential_generation) || envelope.credential_generation! < 1
+        || envelope.credential_generation !== account.credential_generation)) deny("result_credential_generation_stale");
+      if (connector.provider_key === "ee_mcp") {
+        const subject = await this.identity.resolveExternalSubject?.(request.principal_id, "eeclaw");
+        if (!subject || subject !== account.external_account_id) deny("result_external_identity_mismatch");
+      }
+      const original = operation.credential_lease_id ? await this.repository.getCredentialLease(operation.credential_lease_id) : undefined;
+      if (!original || original.tenant_id !== request.tenant_id || original.principal_id !== request.principal_id
+        || original.pc_session_id !== operation.pc_session_id || original.lease.connector_id !== connector.connector_id
+        || original.lease.external_account_id !== account.external_account_id
+        || original.lease.credential_subject !== account.credential_subject) deny("result_original_subject_mismatch");
+      const authorization = await this.identity.evaluatePrincipalAuthorization({ principal_id: request.principal_id,
+        actions: tool.required_permissions, resource_scope_refs: operation.resource_scope_refs!,
+        tool_release_ids: [tool.tool_release_id], policy_model_revision: 1 });
+      if (authorization.decision !== "ALLOW" || authorization.principal_id !== request.principal_id
+        || !Number.isInteger(authorization.authorization_revision)
+        || (envelope && authorization.authorization_revision !== envelope.authorization_revision)
+        || !authorization.allowed_actions || tool.required_permissions.some(permission => !authorization.allowed_actions.includes(permission))
+        || authorization.resource_scope_digest !== digest(unique(operation.resource_scope_refs!))
+        || authorization.tool_set_digest !== digest([tool.tool_release_id])
+        || !Number.isFinite(Date.parse(authorization.expires_at)) || Date.parse(authorization.expires_at) <= this.now().getTime()) deny("result_current_authorization_denied");
+    } catch (error) {
+      const reasons = error instanceof GatewayError && error.code === "PC_GATEWAY_RESULT_DELIVERY_DENIED"
+        ? error.details?.reason_codes as string[] : ["result_current_authority_unavailable"];
+      let recorded = true;
+      try {
+        await this.audit({ event_type: "RESULT_DELIVERY_DENIED", tenant_id: request.tenant_id, principal_id: request.principal_id,
+          operation_id: operation.operation_id, connector_id: operation.connector_id, tool_release_id: operation.tool_release_id,
+          outcome: "DENY", reason_codes: reasons, evidence_refs: [] });
+      } catch { recorded = false; }
+      // Normalize even Provider errors so execute() cannot replace KNOWN_SUCCESS
+      // with a synthetic failure/unknown result after a delivery authorization Deny.
+      throw new GatewayError("PC_GATEWAY_RESULT_DELIVERY_DENIED", "Current authority denies persisted result verification or delivery",
+        false, { reason_codes: reasons, audit_recorded: recorded });
+    }
+  }
+
   async authorizeReadVerification(operationId: string, tenantId: string, principalId: string): Promise<void> {
     const operation = await this.requireOperation(operationId);
     if (operation.tenant_id !== tenantId || operation.principal_id !== principalId) {
       throw new GatewayError("PC_GATEWAY_READ_VERIFICATION_DENIED", "Operation is not visible to this Principal");
     }
     const tool = await this.requirePublishedTool(operation.tool_release_id);
-    const connector = await this.requireConnector(operation.connector_id);
-    const account = await this.repository.findExternalAccountBinding(tenantId, connector.connector_id, principalId);
-    const authorization = await this.identity.evaluatePrincipalAuthorization({ principal_id: principalId,
-      actions: tool.required_permissions, resource_scope_refs: operation.resource_scope_refs ?? [],
-      tool_release_ids: [tool.tool_release_id], policy_model_revision: 1 });
-    if (operation.operation_kind !== "READ" || risk(tool).operation_kind !== "READ"
-      || connector.tenant_id !== tenantId || connector.state !== "ACTIVE"
-      || !connector.tool_release_ids.includes(tool.tool_release_id) || !account || account.status !== "ACTIVE"
-      || authorization.decision !== "ALLOW"
-      || (connector.provider_key === "ee_mcp" && await this.identity.resolveExternalSubject?.(principalId, "eeclaw") !== account.external_account_id)) {
+    if (operation.operation_kind !== "READ" || risk(tool).operation_kind !== "READ") {
       throw new GatewayError("PC_GATEWAY_READ_VERIFICATION_DENIED", "Current authority denies READ verification");
     }
+    await this.currentResultDeliveryGuard(operation, { tenant_id: tenantId, principal_id: principalId });
   }
 
   getApproval(approvalId: string): Promise<BusinessApprovalSnapshot | undefined> {

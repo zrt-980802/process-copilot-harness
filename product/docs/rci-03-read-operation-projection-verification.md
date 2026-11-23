@@ -2,6 +2,20 @@
 
 Date: 2026-11-23 (Asia/Shanghai).
 
+Current closeout: **RCI-03 AUTHORIZATION REMEDIATION COMPLETE / READY FOR
+INDEPENDENT RETEST / REAL EE READ RETEST PENDING**. The original implementation
+record below is historical. The authorization bypass discovered in independent
+review, preserved PostgreSQL supplement, final scope and current test counts are
+recorded in `rci-03-authorization-remediation-verification.md`.
+Remediation began at `317de013166f3ded3a684a4e9584de39d15df138` with five
+uncommitted PostgreSQL test/fixture/document deliverables; it did not begin with
+a clean worktree. They are preserved and included in the remediation commit.
+
+PostgreSQL supplement: the originally unavailable persistence/restart validation
+was completed after Docker recovery. See
+`rci-03-postgres-restart-verification.md`. The original execution record and its
+skip counts below remain historical evidence. Real EE retest is still pending.
+
 ```text
 RCI-03 READ PROJECTION FIXED_PENDING_REAL_RETEST
 WRITE VERIFICATION NOT EXPANDED
@@ -192,7 +206,7 @@ Evidence directory (ignored, never committed):
 Contains targeted, contract, loopback and full-check logs plus scope/process
 audits. Earlier evidence is preserved; no historical 75-row data was changed.
 
-## RCI03-5: handoff
+## RCI03-5: original implementation handoff (historical)
 
 - Local developer verification only. RCI-02 and RCI-03 await real EE READ retest
   under a separately authorized task; REAL-EE-INTEGRATION-CLOSURE-01 is not closed.
