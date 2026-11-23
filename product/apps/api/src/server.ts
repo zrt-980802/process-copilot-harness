@@ -650,15 +650,14 @@ export function buildApiServer(
       bearerToken(request.headers.authorization)
     );
     reply.header("Cache-Control", "no-store");
-    const provider = authenticated.session.authentication_context_id.startsWith("ee:")
-      ? dependencies.eeIdentityProvider
-      : dependencies.localIdentityProvider;
+    const external = authenticated.session.authentication_context_id.startsWith("ee:");
+    const provider = external ? undefined : dependencies.localIdentityProvider;
     const account = await provider?.validate(
       authenticated.session,
       authenticated.principal
     );
     return {
-      ...(provider === undefined
+      ...(external ? { login_provider: "eeclaw" } : provider === undefined
         ? {}
         : { login_provider: provider.identity_provider_ref }),
       ...(account === undefined ? {} : { account }),
@@ -1499,7 +1498,7 @@ export function buildApiServer(
   );
 
   server.post("/v1/approvals", async (request, reply) => {
-    const authenticated = await identityFrom(dependencies).authenticate(
+    const authenticated = await identityFrom(dependencies).authenticateForProvider(
       bearerToken(request.headers.authorization)
     );
     const body = request.body as Omit<
@@ -1527,7 +1526,7 @@ export function buildApiServer(
   server.post<{ Params: { approvalId: string } }>(
     "/v1/approvals/:approvalId/decision",
     async (request) => {
-      const authenticated = await identityFrom(dependencies).authenticate(
+      const authenticated = await identityFrom(dependencies).authenticateForProvider(
         bearerToken(request.headers.authorization)
       );
       const body = request.body as Omit<
@@ -1578,7 +1577,7 @@ export function buildApiServer(
   );
 
   server.post("/v1/gateway/execute", async (request, reply) => {
-    const authenticated = await identityFrom(dependencies).authenticate(
+    const authenticated = await identityFrom(dependencies).authenticateForProvider(
       bearerToken(request.headers.authorization)
     );
     const execution = request.body as ToolExecutionEnvelope;
@@ -1635,7 +1634,7 @@ export function buildApiServer(
   server.post<{ Params: { operationId: string } }>(
     "/v1/operations/:operationId/reconcile",
     async (request) => {
-      const authenticated = await identityFrom(dependencies).authenticate(
+      const authenticated = await identityFrom(dependencies).authenticateForProvider(
         bearerToken(request.headers.authorization)
       );
       const operation = await gatewayFrom(dependencies).getOperation(

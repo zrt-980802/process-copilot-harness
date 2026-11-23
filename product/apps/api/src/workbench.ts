@@ -123,6 +123,7 @@ export class RuntimeWorkbench {
   async projects(accessToken: string) {
     const { principal } = await this.options.identity.authenticate(accessToken);
     if (this.options.projectDirectory === undefined) return [];
+    await this.options.identity.authenticateForProvider(accessToken);
     const providerId = this.options.projectDirectory.provider_registration_id;
     const availability = this.options.providerAvailability;
     const attempt = availability?.beginAttempt?.(providerId);
@@ -211,7 +212,7 @@ export class RuntimeWorkbench {
 
   async catalog(accessToken: string, project: string) {
     const external = this.projectProvider();
-    const { principal } = await this.options.identity.authenticate(accessToken);
+    const { principal } = await this.options.identity.authenticateForProvider(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
     const tools = [];
     for (const tool of this.options.tools) {
@@ -227,7 +228,7 @@ export class RuntimeWorkbench {
 
   async capabilityChain(accessToken: string, project: string, workspace?: SstsTaskWorkspace) {
     const external = this.projectProvider();
-    const { principal } = await this.options.identity.authenticate(accessToken);
+    const { principal } = await this.options.identity.authenticateForProvider(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
     const accessible = await external.projectDirectory.listProjects({ principal });
     const projectRecord = accessible.find((item) => item.project_code === project);
@@ -708,7 +709,7 @@ export class RuntimeWorkbench {
 
   async approvals(token: string) {
     const external = this.projectProvider();
-    const { principal } = await this.options.identity.authenticate(token);
+    const { principal } = await this.options.identity.authenticateForProvider(token);
     const candidates = await external.gatewayRepository.listApprovals(principal.tenant_id);
     const visible = [];
     for (const approval of candidates) {
@@ -740,7 +741,7 @@ export class RuntimeWorkbench {
 
   async decide(token: string, id: string, version: number, decision: "APPROVE" | "REJECT") {
     const external = this.projectProvider();
-    const { principal } = await this.options.identity.authenticate(token);
+    const { principal } = await this.options.identity.authenticateForProvider(token);
     const approval = await external.gateway.getApproval(id);
     if (!approval || approval.tenant_id !== principal.tenant_id) denied("PC_WORKBENCH_APPROVAL_SCOPE_DENIED");
     const auth = await this.options.identity.evaluatePrincipalAuthorization({ principal_id: principal.principal_id,
@@ -821,8 +822,10 @@ export class RuntimeWorkbench {
   }
 
   private async reauthorize(token: string, context: RuntimeToolContext) {
-    const { principal } = await this.options.identity.authenticate(token);
     const envelope = context.principal_envelope;
+    const { principal } = envelope.resource_scope_refs.some(ref => ref.startsWith("project:"))
+      ? await this.options.identity.authenticateForProvider(token)
+      : await this.options.identity.authenticate(token);
     if (principal.principal_id !== envelope.subject_principal_id || principal.tenant_id !== envelope.tenant_id
       || principal.authorization_revision !== envelope.authorization_revision) denied("PC_WORKBENCH_SESSION_REAUTH_REQUIRED");
     const decision = await this.options.identity.evaluatePrincipalAuthorization({ principal_id: principal.principal_id,

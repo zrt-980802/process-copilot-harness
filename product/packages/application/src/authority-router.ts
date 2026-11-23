@@ -130,12 +130,21 @@ export class AuthorityRouter {
     this.health.register(metadata.providerRegistrationId, ["enterprise_authorization"]);
   }
 
-  async evaluate(input: AuthorityRouteInput): Promise<AuthorityRouteDecision> {
-    const active = this.routes.filter((route) => (route.route_state ?? "ACTIVE") === "ACTIVE"
+  private matchingRoutes(input: AuthorityRouteInput) {
+    return this.routes.filter((route) => (route.route_state ?? "ACTIVE") === "ACTIVE"
       && patternMatches(route.action_pattern, input.action)
       && scopesMatch(route.resource_scope_pattern, input)
       && (input.trusted_resource_authority === undefined
         || route.resource_authority === input.trusted_resource_authority));
+  }
+
+  authorizationMode(input: AuthorityRouteInput): "PC_ONLY" | "PC_AND_PROVIDER" | "DENY_UNKNOWN" {
+    const active = this.matchingRoutes(input);
+    return active.length === 1 ? active[0]!.authorization_mode : "DENY_UNKNOWN";
+  }
+
+  async evaluate(input: AuthorityRouteInput): Promise<AuthorityRouteDecision> {
+    const active = this.matchingRoutes(input);
     if (active.length === 0) {
       return {
         decision: "DENY",

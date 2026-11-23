@@ -406,11 +406,11 @@ implements IdentityAuthorizationRepository {
          AND identity_provider_ref = $2
          AND status = 'verified'
        ORDER BY updated_at DESC
-       LIMIT 1`,
+       LIMIT 2`,
       [principalId, identityProviderRef]
     );
     const row = result.rows[0];
-    return row === undefined ? undefined : linkFromRow(row);
+    return result.rows.length !== 1 || row === undefined ? undefined : linkFromRow(row);
   }
 
   async createPilotSession(session: PilotSession): Promise<void> {

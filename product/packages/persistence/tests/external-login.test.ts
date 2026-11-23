@@ -37,7 +37,7 @@ describe("EE external login authority", () => {
     }
   });
 
-  it("bounds lifetime to EE expiry, rejects invalid proof and enforces revocation on every authenticate", async () => {
+  it("bounds lifetime to EE expiry and separates local revocation from current source validation", async () => {
     const repository = new MemoryIdentityAuthorizationRepository();
     const service = new IdentityAuthorizationService(repository, signingKey, [], () => now);
     await expect(service.signInExternal(key, "not-session", expiry)).rejects.toMatchObject({ code: "PC_IDENTITY_LINK_UNVERIFIED" });
@@ -45,9 +45,12 @@ describe("EE external login authority", () => {
     const login = await service.signInExternal(key, randomUUID(), expiry);
     expect(login.expires_at).toBe(expiry);
     let checks = 0;
-    service.registerSessionValidator(async () => { checks++; if (checks > 1) throw new Error("EE revoked"); });
+    service.registerProviderSessionValidator(async () => { checks++; if (checks > 1) throw new Error("EE revoked"); });
     await service.authenticate(login.access_token);
-    await expect(service.authenticate(login.access_token)).rejects.toThrow("EE revoked");
+    expect(checks).toBe(0);
+    await service.authenticateForProvider(login.access_token);
+    await expect(service.authenticateForProvider(login.access_token)).rejects.toThrow("EE revoked");
+    await service.authenticate(login.access_token);
     await service.signOut(login.access_token);
     await expect(service.authenticate(login.access_token)).rejects.toMatchObject({ code: "PC_AUTHENTICATION_REQUIRED" });
     expect(checks).toBe(2);

@@ -45,6 +45,7 @@ describe("D3 Authority Router", () => {
       return { decision: "DENY", reason_codes: ["unexpected"], evidence_refs: [] };
     }));
 
+    expect(router.authorizationMode(request("conversation.run", [`user:${principal.principal_id}`]))).toBe("PC_ONLY");
     await expect(router.evaluate(request(
       "conversation.run",
       [`user:${principal.principal_id}`]
@@ -79,6 +80,8 @@ describe("D3 Authority Router", () => {
 
   it("fails closed for missing, unknown and ambiguous routes", async () => {
     const missing = new AuthorityRouter();
+    expect(missing.authorizationMode(request("draft.generate"))).toBe("PC_AND_PROVIDER");
+    expect(missing.authorizationMode(request("unknown.execute"))).toBe("DENY_UNKNOWN");
     await expect(missing.evaluate(request("draft.generate"))).resolves.toMatchObject({
       decision: "DENY",
       reason_codes: ["authority_provider_missing:provider:eeclaw"]
@@ -95,6 +98,7 @@ describe("D3 Authority Router", () => {
         resource_authority: "pc", authorization_mode: "PC_ONLY" }
     ];
     const ambiguous = new AuthorityRouter(routes);
+    expect(ambiguous.authorizationMode(request("resource.read", ["resource:1"]))).toBe("DENY_UNKNOWN");
     await expect(ambiguous.evaluate(request("resource.read", ["resource:1"]))).resolves.toMatchObject({
       decision: "DENY",
       reason_codes: ["authority_route_ambiguous:resource.read"]

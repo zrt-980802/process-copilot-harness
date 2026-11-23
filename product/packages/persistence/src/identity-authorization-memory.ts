@@ -151,12 +151,12 @@ implements IdentityAuthorizationRepository {
     principalId: string,
     identityProviderRef: string
   ): Promise<ExternalIdentityLink | undefined> {
-    const link = [...this.links.values()].find((candidate) =>
+    const links = [...this.links.values()].filter((candidate) =>
       candidate.principal_id === principalId
       && candidate.identity_provider_ref === identityProviderRef
       && candidate.status === "verified"
     );
-    return Promise.resolve(link === undefined ? undefined : clone(link));
+    return Promise.resolve(links.length === 1 ? clone(links[0]!) : undefined);
   }
 
   createPilotSession(session: PilotSession): Promise<void> {

@@ -177,7 +177,7 @@ const eeBundle = new EeProviderBundle({
   }
 });
 identityAuthorization?.registerExternalAuthorizationPort(eeBundle.authorization);
-identityAuthorization?.registerSessionValidator(async (session, principal) => {
+identityAuthorization?.registerProviderSessionValidator(async (session, principal) => {
   if (session.authentication_context_id.startsWith("ee:")) await eeBundle.identity.validate(session, principal);
 });
 

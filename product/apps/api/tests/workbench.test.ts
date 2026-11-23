@@ -46,7 +46,7 @@ async function fixture() {
       listProjects: async () => [{ project_code: "EP37" }]
     },
     workbenchProjection: new EeClawWorkbenchProjectionAdapter(),
-    identity: { authenticate, evaluatePrincipalAuthorization: async () => ({ decision: "ALLOW" }), issuePrincipalEnvelope: async () => ({}) },
+    identity: { authenticate, authenticateForProvider: authenticate, evaluatePrincipalAuthorization: async () => ({ decision: "ALLOW" }), issuePrincipalEnvelope: async () => ({}) },
     resources: { getResourceProjection: async () => ({ resource: { current_version_id: "version" } }),
       createBinding: async () => ({ binding_id: "binding" }), getWorkspaceView: async () => view,
       createWorkspaceView: async () => view, materialize: async () => ({}) },

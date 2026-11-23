@@ -257,7 +257,7 @@ function isPersonalConversation(
 }
 
 export class IdentityAuthorizationService {
-  private sessionValidator?: (session: PilotSession, principal: PCPrincipal) => Promise<void>;
+  private providerSessionValidator?: (session: PilotSession, principal: PCPrincipal) => Promise<void>;
   private readonly authorityRouter: AuthorityRouter;
 
   constructor(
@@ -361,19 +361,40 @@ export class IdentityAuthorizationService {
       tokenDigest(requiredText(accessToken, "access_token")),
       this.now().toISOString()
     );
-    if (session === undefined) {
+    if (session === undefined || session.revoked_at !== undefined
+      || !Number.isFinite(Date.parse(session.expires_at))
+      || Date.parse(session.expires_at) <= this.now().getTime()) {
       throw new IdentityAuthorizationError(
         "PC_AUTHENTICATION_REQUIRED",
         "Pilot session is missing, expired or revoked"
       );
     }
     const principal = await this.requireActivePrincipal(session.principal_id);
-    await this.sessionValidator?.(session, principal);
+    if (session.authentication_context_id.startsWith("ee:")) {
+      const link = await this.repository.findVerifiedIdentityLink(principal.principal_id, "eeclaw");
+      if (!/^ee:[0-9a-f-]{36}:[0-9a-f-]{36}$/u.test(session.authentication_context_id)
+        || !link || link.status !== "verified" || link.principal_id !== principal.principal_id
+        || link.identity_provider_ref !== "eeclaw" || link.tenant_or_org_ref !== principal.tenant_id
+        || !link.issuer || !link.external_subject) {
+        throw new IdentityAuthorizationError("PC_IDENTITY_LINK_UNVERIFIED", "PC Session requires an unambiguous verified local identity link");
+      }
+    }
     return { session, principal };
   }
 
-  registerSessionValidator(validator: (session: PilotSession, principal: PCPrincipal) => Promise<void>): void {
-    this.sessionValidator = validator;
+  async authenticateForProvider(accessToken: string) {
+    const authenticated = await this.authenticate(accessToken);
+    if (authenticated.session.authentication_context_id.startsWith("ee:")) {
+      if (!this.providerSessionValidator) {
+        throw new IdentityAuthorizationError("PC_AUTHENTICATION_REQUIRED", "Current source Session validation is unavailable");
+      }
+      await this.providerSessionValidator(authenticated.session, authenticated.principal);
+    }
+    return authenticated;
+  }
+
+  registerProviderSessionValidator(validator: (session: PilotSession, principal: PCPrincipal) => Promise<void>): void {
+    this.providerSessionValidator = validator;
   }
 
   async signInExternal(input: ExternalIdentityKey, sessionId: string, sessionExpiresAt: string): Promise<PilotSignInResult> {
@@ -545,6 +566,11 @@ export class IdentityAuthorizationService {
     input: IssueAuthorizationSnapshotInput
   ): Promise<AuthorizationSnapshot> {
     const { principal } = await this.authenticate(accessToken);
+    if (input.actions.some(action => this.authorityRouter.authorizationMode({ principal, action: requiredText(action, "action"),
+      resource_scope_refs: input.resource_scope_refs, tool_release_ids: input.tool_release_ids,
+      observed_at: this.now().toISOString() }) === "PC_AND_PROVIDER")) {
+      await this.authenticateForProvider(accessToken);
+    }
     return this.evaluateAuthorization(principal, input);
   }
 

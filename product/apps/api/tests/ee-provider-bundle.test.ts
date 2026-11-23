@@ -116,7 +116,10 @@ describe("D4A aggregate EE bundle contract", () => {
   });
 
   it("excludes secrets and URL credentials/query from the configuration digest", () => {
-    const unsafe = { ...environment, EECLAW_ADAPTER_URL: "http://username:password@127.0.0.1:1?token=private", EE_MCP_ADAPTER_SECRET: "different" };
+    const endpoint = new URL("http://127.0.0.1:1?token=private");
+    endpoint.username = "username";
+    endpoint.password = "password";
+    const unsafe = { ...environment, EECLAW_ADAPTER_URL: endpoint.href, EE_MCP_ADAPTER_SECRET: "different" };
     expect(configurationDigest(unsafe)).toBe(configurationDigest(environment));
   });
 
@@ -233,7 +236,9 @@ describe("D4A aggregate EE bundle contract", () => {
     await bundle.reload();
     build.mockRejectedValueOnce(Object.assign(new Error("bad contract"), { code: "PC_PROVIDER_INCOMPATIBLE" }));
     await expect(bundle.reload({ manual: true })).rejects.toThrow();
-    const core = new RuntimeWorkbench({ tools: [], identity: { authenticate: async () => ({ principal: { principal_id: "owner", tenant_id: "tenant" } }) },
+    const core = new RuntimeWorkbench({ tools: [], identity: {
+      authenticate: async () => ({ principal: { principal_id: "owner", tenant_id: "tenant" } }),
+      authenticateForProvider: async () => ({ principal: { principal_id: "owner", tenant_id: "tenant" } }) },
       projectDirectory: bundle.directory, providerAvailability: { isUsable: () => !!bundle.active(), observation: () => bundle.observation() },
       providerCatalogRevision: () => bundle.descriptor().catalog_revision } as unknown as WorkbenchOptions);
     const server = buildApiServer({ providerMode: "ee-connected", eeBundle: bundle, workbench: bundleWorkbench(bundle, core) });
@@ -258,6 +263,7 @@ describe("D4A aggregate EE bundle contract", () => {
       const value = candidate(generation);
       value.workbench = new RuntimeWorkbench({ gateway: {}, gatewayRepository: {}, identity: {
         authenticate: async () => ({ principal: { principal_id: "owner" } }),
+        authenticateForProvider: async () => ({ principal: { principal_id: "owner" } }),
         evaluatePrincipalAuthorization: () => new Promise(resolve => { complete = () => resolve({ decision: "ALLOW" }); })
       }, tools: value.catalog.tools } as unknown as WorkbenchOptions);
       return value;
@@ -363,7 +369,8 @@ describe("D4A acceptance remediation contracts", () => {
     ["partial", { EECLAW_ADAPTER_URL: environment.EECLAW_ADAPTER_URL }],
     ["invalid authorization URL", { ...environment, EECLAW_ADAPTER_URL: "invalid" }],
     ["invalid MCP URL", { ...environment, EE_MCP_ADAPTER_URL: "file:///invalid" }],
-    ["URL credentials", { ...environment, EE_MCP_ADAPTER_URL: "https://user:synthetic@invalid.test/mcp" }],
+    ["URL credentials", { ...environment, EE_MCP_ADAPTER_URL: Object.assign(new URL("https://invalid.test/mcp"),
+      { username: "user", password: "synthetic" }).href }],
     ["missing tenant", { ...environment, PC_PILOT_TENANT_ID: undefined }],
     ["blank tenant", { ...environment, PC_PILOT_TENANT_ID: " " }]
   ])("returns a stable nonretryable HTTP400 for %s configuration", async (_label, config) => {
