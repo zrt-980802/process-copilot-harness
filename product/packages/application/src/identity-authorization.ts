@@ -501,7 +501,8 @@ export class IdentityAuthorizationService {
     }
     const personal = scopes.length === 1 && scopes[0] === `user:${current.principal_id}` && !input.tool_release_ids.length
       && ["conversation.run", "identity.read", "capability.read", "personal_task.read", "personal_task.write"].includes(input.action);
-    const allowed = personal || scopes.every(scope => matching.some(grant => grant.effect === "allow" && scopeMatches(grant, [scope])));
+    const allowed = personal || scopes.every(scope => matching.some(grant => grant.effect === "allow" && scopeMatches(grant, [scope])
+      && (input.action !== "provider.manage" || (grant.action === "provider.manage" && grant.scope_type === "global" && grant.scope_id === "*"))));
     return { decision: allowed ? "ALLOW" : "DENY", reason_codes: [allowed ? "pc_policy_allow" : "pc_no_scope_allow"],
       evidence_refs: allowed ? [`pc:policy:${current.authorization_revision}`] : [] };
   }

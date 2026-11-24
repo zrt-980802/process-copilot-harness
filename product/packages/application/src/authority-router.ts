@@ -38,6 +38,8 @@ export interface AuthorityRouteDecision extends ExternalAuthorizationDecision {
 }
 
 const DEFAULT_ROUTES: readonly AuthorityRouteDefinition[] = [
+  { route_id: "authority-route:provider-manage", action_pattern: "provider.manage",
+    resource_scope_pattern: "global:*", resource_authority: "pc", authorization_mode: "PC_ONLY" },
   { route_id: "authority-route:conversation-personal", action_pattern: "conversation.run",
     resource_scope_pattern: "user:self", resource_authority: "pc", authorization_mode: "PC_ONLY" },
   ...["personal_task.read", "personal_task.write", "identity.read", "capability.read"].map(action => ({

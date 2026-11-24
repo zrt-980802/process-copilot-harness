@@ -90,6 +90,9 @@ const http = createServer((request, response) => {
       else if (route.endsWith("/tools")) payload = { structuredContent: { document: { ssts_code: "S1", status: "draft" }, sections: [{ section_number: 1, section_title: "Current detail", content: "Versioned specification content" }] } };
       else if (route === "/api/ee-auth/me") payload = { data: { account: principal.ee_account, roles: [] } };
       else if (route === "/api/v1/providers/eeclaw/retry") {
+        if (request.headers.authorization !== "Bearer synthetic-ui-token") {
+          response.writeHead(401, { "content-type": "application/json" }).end(JSON.stringify({ error: { code: "PC_AUTHENTICATION_REQUIRED" } })); return;
+        }
         if (retryFailure) {
           response.writeHead(retryFailure.status, { "content-type": "application/json" }).end(JSON.stringify({ error: { ...retryFailure, message: "当前能力不可用" } })); return;
         }

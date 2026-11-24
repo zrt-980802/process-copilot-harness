@@ -450,7 +450,7 @@ async function initialize(): Promise<void> {
 
 async function retryProvider(): Promise<void> {
   await run("retry-provider", async () => {
-    await request("/v1/providers/eeclaw/retry", undefined, { method: "POST" });
+    await request("/v1/providers/eeclaw/retry", token.value, { method: "POST" });
     await loadTasks();
     notice.value = "企业项目能力已重新检查";
   });

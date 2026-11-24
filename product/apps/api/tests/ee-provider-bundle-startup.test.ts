@@ -93,14 +93,8 @@ async function apiStartup(mode: "unreachable" | "partial" | "standalone") {
     if (mode !== "standalone") {
       const retry = await fetch(`${url}/v1/providers/eeclaw/retry`, { method: "POST" });
       const body = await retry.json();
-      if (mode === "partial") {
-        expect(retry.status).toBe(400);
-        expect(body).toMatchObject({ error: { code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false } });
-      } else {
-        expect(retry.status).toBe(503);
-        expect(body.error.code).toMatch(/^PC_PROVIDER_(BUNDLE_TRANSPORT|RETRY_BLOCKED)$/u);
-        expect(body.error.retryable).toBe(true);
-      }
+      expect(retry.status).toBe(401);
+      expect(body).toMatchObject({ error: { code: "PC_AUTHENTICATION_REQUIRED", retryable: false } });
       const after = await (await fetch(`${url}/health`)).json();
       expect(after.provider_bundle.bundle_state).toBe("UNAVAILABLE");
       expect(after.capabilities.project_workbench).toBe("unavailable");

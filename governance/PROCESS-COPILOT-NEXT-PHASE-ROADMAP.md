@@ -1,7 +1,7 @@
 # Process Copilot 下一阶段主线
 
-> 状态：`SOURCE-BASELINE-01 COMPLETE / D0-D4A COMPLETE / ADR-0025 T0 COMPLETE / T1A COMPLETE / RCI-03 READ PROJECTION FIXED_PENDING_REAL_RETEST / T1B-T3 NOT STARTED / D4B NOT STARTED`
-> 日期：2026-11-23（Asia/Shanghai）
+> 状态：`SOURCE-BASELINE-01 COMPLETE / D0-D4A COMPLETE / ADR-0025 T0-T1A COMPLETE / T1B AND T2A-T2C LOCAL COMPLETE / RCI-02 AND RCI-03 REAL EE RETEST PENDING / T3 AND D4B NOT STARTED`
+> 日期：2026-11-24（Asia/Shanghai）
 > 前置状态：MEMORY-01A 已通过独立复核；MEMORY-01B 保持暂停。  
 > 主线：建立新的可追溯源码基线，然后实施 PC 与 EE-Claw 的身份、权限及业务能力解耦。
 
@@ -14,9 +14,8 @@ MEMORY-01A closure
   -> ADR-0025 T0 contracts
   -> T1A PC Session / source validation split
   -> RCI-03 READ Operation Projection closure (developer verified)
-  -> real EE READ retest (separate authorization)
-  -> T1B complete Session Assurance persistence (separate schema authorization)
-  -> T2 PC authorization + external authority binding + decision intersection
+  -> T1B Session Assurance and T2A-T2C authorization intersection (local complete)
+  -> real EE READ retest (pending; separate authorization)
   -> T3 real outage/revocation/multi-account acceptance
   -> evaluate D4B and MEMORY-01B
 ```
@@ -114,13 +113,13 @@ D4 总计划见 `governance/DECOUPLING-D4-EE-PROVIDER-BUNDLE-PLAN.md`；D4-2 至
 
 ### 3.6 ADR-0025：薄 Session、薄授权与旧 Provider 权限兼容
 
-状态：`ADR ACCEPTED / T0 COMPLETE / T1A COMPLETE / RCI-02 FIXED_PENDING_REAL_RETEST / RCI-03 READ PROJECTION FIXED_PENDING_REAL_RETEST / T1B-T3 NOT STARTED`。
+状态：`ADR ACCEPTED / T0-T1A COMPLETE / T1B AND T2A-T2C LOCAL COMPLETE / RCI-02 AND RCI-03 REAL EE RETEST PENDING / T3 NOT STARTED`。
 
-ADR-0025 已明确 PC Session 的固定绝对到期、PC-owned Action 独立授权、Provider-owned Action 的 PC 与当前 Provider 交集授权，以及 EE V1 零迁移兼容。T0、T1A 和 RCI-03 READ 投影闭环已完成开发者验证；RCI-02/03 仍待真实 EE 复验，不自动进入 T1B 或 T2。
+ADR-0025 已明确 PC Session 的固定绝对到期、PC-owned Action 独立授权、Provider-owned Action 的 PC 与当前 Provider 交集授权，以及 EE V1 零迁移兼容。T1B、T2A-T2C 已完成本地实现和开发者验证；RCI-02/03 仍待真实 EE 复验，T3 未启动，不代表生产就绪。
 
 T0 任务书：`governance/ADR-0025-T0-CONTRACT-AND-COMPATIBILITY-FIXTURE-TASK.md`。
 T1A 任务书：`governance/ADR-0025-T1A-PC-SESSION-SOURCE-VALIDATION-SPLIT-TASK.md`。
-T1A 已解除 PC-owned 请求认证对数据源实时在线状态的依赖，不改数据库 schema；完整 C67 Session Assurance 持久化、revision 绑定和旧 Session 迁移属于 T1B，须单独授权。开发者验证见 `product/docs/adr-0025-t1a-verification.md`，真实 EE 复验仍未完成。
+T1A 已解除 PC-owned 请求认证对数据源实时在线状态的依赖，不改数据库 schema；T1B 的 PC 自有 schema 经单独批准后实现 C67 持久化、revision 绑定及旧 Session 重新认证。开发者验证见 `product/docs/adr-0025-t1a-verification.md` 和 `product/docs/pc-authorization-mvp-01-verification.md`，真实 EE 复验仍未完成。
 
 T0 已冻结 C67-C69、Session/Decision/Mapping golden matrix 和兼容门禁；本地开发者验证见
 `product/docs/adr-0025-t0-verification.md`。T1A 已完成运行边界拆分，RCI-02 待真实复验；
@@ -171,7 +170,7 @@ PC Principal + PC Session
 - 外部系统的业务数据访问仍与源系统最终授权取交集；
 - 撤权递增 Authorization Revision，并失效 Session、Snapshot、Runtime Assignment 和 MCP Binding。
 
-RCI-03 当前仅关闭 READ 投影缺口，仍待单独授权的真实 EE 复验。T1A 完成只能说明 PC Session 不再以 EE 在线为每请求前提，不能宣称完整 PC 权限系统、T2 交集授权或生产级撤权已经完成。
+RCI-03 的 READ 投影整改仍待单独授权的真实 EE 复验。T1B 和 T2A-T2C 已有本地实现与开发者验证，不能据此宣称真实 EE 授权交集或生产级撤权已经验收。
 
 ## 5. EE-PROVIDER-ADAPTER-01：EE 成为首个外部 Provider
 

@@ -477,7 +477,13 @@ export function buildApiServer(
   });
 
   if (dependencies.retryEeProvider !== undefined) {
-    server.post("/v1/providers/eeclaw/retry", async () => {
+    server.post("/v1/providers/eeclaw/retry", async request => {
+      const token = bearerToken(request.headers.authorization);
+      const decision = await identityFrom(dependencies).decideAuthority(token, {
+        action: "provider.manage", resource_scope_refs: ["global:*"], tool_release_ids: []
+      });
+      if (decision.decision !== "ALLOW") throw new IdentityAuthorizationError("PC_POLICY_DENIED", "Current account cannot manage providers", false,
+        { decision_ref: decision.decision_id, reason_codes: decision.reason_codes });
       await dependencies.retryEeProvider!();
       const descriptor = dependencies.eeBundle?.descriptor();
       if (descriptor && descriptor.bundle_state !== "READY") {

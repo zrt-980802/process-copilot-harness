@@ -5,6 +5,7 @@ import { MemoryIdentityAuthorizationRepository } from "@pc/persistence";
 import { bundleWorkbench } from "../src/ee-provider-bundle.js";
 import { RuntimeWorkbench, type WorkbenchOptions } from "../src/workbench.js";
 import { buildApiServer } from "../src/server.js";
+import { providerRetryAdmin } from "./support/provider-retry-admin.js";
 
 const environment = {
   PC_LOGIN_MODE: "ee", PC_GATEWAY_STORE: "memory", PC_PILOT_TENANT_ID: "test-bundle",
@@ -376,9 +377,10 @@ describe("D4A acceptance remediation contracts", () => {
   ])("returns a stable nonretryable HTTP400 for %s configuration", async (_label, config) => {
     const build = vi.fn();
     const bundle = new EeProviderBundle({ environment: () => config, build });
-    const server = buildApiServer({ eeBundle: bundle, retryEeProvider: () => bundle.reload({ manual: true }) });
+    const admin = await providerRetryAdmin();
+    const server = buildApiServer({ eeBundle: bundle, identityAuthorization: admin.identity, retryEeProvider: () => bundle.reload({ manual: true }) });
     try {
-      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry", headers: admin.headers });
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({ error: { code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false } });
       expect(bundle.descriptor()).toMatchObject({ bundle_state: "UNAVAILABLE", reason_codes: ["bundle_failure:configuration"] });
@@ -414,9 +416,10 @@ describe("D4A acceptance remediation contracts", () => {
     await bundle.reload();
     expect(bundle.descriptor().bundle_state).toBe(state);
     expect(bundle.automaticRecoveryAllowed()).toBe(false);
-    const server = buildApiServer({ eeBundle: bundle, retryEeProvider: () => bundle.reload({ manual: true }) });
+    const admin = await providerRetryAdmin();
+    const server = buildApiServer({ eeBundle: bundle, identityAuthorization: admin.identity, retryEeProvider: () => bundle.reload({ manual: true }) });
     try {
-      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry", headers: admin.headers });
       expect(response.statusCode).toBe(409);
       expect(response.json()).toMatchObject({ error: { code, retryable: false } });
       expectRevision(bundle, 3);
@@ -434,15 +437,16 @@ describe("D4A acceptance remediation contracts", () => {
   ])("keeps %s distinct from successful retry and generic HTTP500", async (code, failure, status, retryable) => {
     const build = vi.fn(async () => { throw Object.assign(new Error("synthetic-failure"), { code }); });
     const bundle = new EeProviderBundle({ environment: () => environment, build });
-    const server = buildApiServer({ eeBundle: bundle, retryEeProvider: () => bundle.reload({ manual: true }) });
+    const admin = await providerRetryAdmin();
+    const server = buildApiServer({ eeBundle: bundle, identityAuthorization: admin.identity, retryEeProvider: () => bundle.reload({ manual: true }) });
     try {
-      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+      const response = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry", headers: admin.headers });
       expect(response.statusCode).toBe(status);
       expect(response.json()).toMatchObject({ error: { code: `PC_PROVIDER_BUNDLE_${failure}`, retryable } });
       expect(bundle.active()).toBeUndefined();
       expectRevision(bundle, 2);
       if (retryable) {
-        const blocked = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry" });
+        const blocked = await server.inject({ method: "POST", url: "/v1/providers/eeclaw/retry", headers: admin.headers });
         expect(blocked.statusCode).toBe(503);
         expect(blocked.json()).toMatchObject({ error: { code: "PC_PROVIDER_RETRY_BLOCKED", retryable: true } });
         expect(build).toHaveBeenCalledTimes(1);
