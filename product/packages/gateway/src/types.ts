@@ -249,6 +249,7 @@ export interface GatewayAuditEntry {
   evidence_refs: string[];
   payload_digest: string;
   occurred_at: string;
+  authority_decision?: Readonly<Record<string, unknown>>;
 }
 
 export interface GatewayRepository {
@@ -273,6 +274,7 @@ export interface GatewayRepository {
   getExternalAccountBinding(
     bindingId: string
   ): Promise<ExternalAccountBinding | undefined>;
+  listActiveExternalAccountBindings(tenantId: string, connectorId: string, principalId: string): Promise<ExternalAccountBinding[]>;
   findExternalAccountBinding(
     tenantId: string,
     connectorId: string,
@@ -363,6 +365,10 @@ export interface GatewayIdentityPort {
     tool_release_ids: readonly string[];
     policy_model_revision: number;
     profile_release_id?: string;
+    execution_session_id?: string;
+    tool_call_id?: string;
+    credential_generation?: number;
+    connector_id?: string;
   }): Promise<AuthorizationSnapshot>;
 }
 

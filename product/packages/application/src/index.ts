@@ -1,5 +1,11 @@
 export const ApplicationPackage = "@pc/application" as const;
 export * from "./authority-router.js";
+export * from "./authority-decision.js";
+export * from "./authority-binding.js";
+export * from "./compatibility-mapping.js";
+export * from "./provider-intersection.js";
+export * from "./ee-v1-mappings.generated.js";
+export * from "./authorization-context.js";
 export * from "./eeclaw-adapter.js";
 export * from "./external-provider.js";
 export * from "./identity-authorization.js";

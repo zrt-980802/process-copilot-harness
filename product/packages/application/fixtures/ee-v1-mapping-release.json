@@ -1,0 +1,815 @@
+[
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:page:projects",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "page:projects",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:projects"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_projects",
+        "ee.get_project_context"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:db2c2eeda1a22f1f123239076b0cefe11ed3f5fe7e45fd406112d93a7044edd4"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:page:requirements",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "page:requirements",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:requirements"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_requirements"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:81e741760a1cad072d17854d6d6a9b399a132351159f65376ecf236d80da2106"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:page:functions",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "page:functions",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:functions"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_functions",
+        "ee.get_function_ssts_matrix",
+        "ee.get_traceability_stats"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:14413908b573e9311a51de4cdcc43894797c4ff904ed37fd7c7a5a1aebca25cc"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:page:architecture",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "page:architecture",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_ssts",
+        "ee.get_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:28426d2ddd5356a034c21d569b5b52ea7a12c46cc8c4ac54caad31803f752460"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:draft.read",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "draft.read",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_projects",
+        "ee.get_project_context",
+        "ee.list_requirements",
+        "ee.list_functions",
+        "ee.get_function_ssts_matrix",
+        "ee.get_traceability_stats",
+        "ee.list_ssts",
+        "ee.get_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:7fbf3d22e3aad3ee9ff423ff06fa7462373fdbe76e1fcb9e609f4f7fb1fe2c62"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:draft.generate",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "draft.generate",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_projects",
+        "ee.get_project_context",
+        "ee.list_requirements",
+        "ee.list_functions",
+        "ee.get_function_ssts_matrix",
+        "ee.get_traceability_stats",
+        "ee.list_ssts",
+        "ee.get_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:a76d00f5d24723bc8f6c9694657d779747dc2a15bf1e008a996b2c77ace580ff"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:ee.ssts.review.request",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "ee.ssts.review.request",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "edit"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.submit_ssts_review",
+        "ee.create_ssts_candidate",
+        "ee.decide_ssts_review"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:61d3c28d51d02ff52760fd9084979df3fd9107e4ca97c3624eef9245528a7f13"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:approval.decide",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "approval.decide",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "review"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.submit_ssts_review",
+        "ee.create_ssts_candidate",
+        "ee.decide_ssts_review"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:2defb4dc93e2f17ee1d1efbfcc3ab7e2008cce5f3236bb3a938ed8501582daca"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:project.read",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "project.read",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:projects"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.get_project_context",
+        "ee.list_projects"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:ff58ce9b009e74c02220f6ce86a4933cde117081b5b8071df1abca76ec9e4f32"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:requirement.read",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "requirement.read",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:requirements"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_requirements"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:5f6e699b9911386f5910ee2ac30270b7a3595d4434e6e4c7a93055d6c588b2d1"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:function.read",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "function.read",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:functions"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_functions",
+        "ee.get_function_ssts_matrix",
+        "ee.get_traceability_stats"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:4b5496cd8bb33ffbebff9e28b80266ad8807e2c9fd6fbb8951845fcfc006dd43"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:ssts.read",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "ssts.read",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_ssts",
+        "ee.get_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:37da9b2fca108631235b913561bcc92f5dc78508cfca76fb37815d7e6cf40af8"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:ssts.generate",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "ssts.generate",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_projects",
+        "ee.get_project_context",
+        "ee.list_requirements",
+        "ee.list_functions",
+        "ee.get_function_ssts_matrix",
+        "ee.get_traceability_stats",
+        "ee.list_ssts",
+        "ee.get_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:abb25f7ba43c798e7cf7ab2c3a2779a4b47569472f0ed94555f0f047187c3295"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:ssts.review.request",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "ssts.review.request",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "edit"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.submit_ssts_review"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:c5d8e9939b7d5867d56570ec59940fb10844144dd3cbe9bdce3b2316f585a949"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:ssts.review.decide",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "ssts.review.decide",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "review"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.decide_ssts_review"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:f9634a2cfc9e5c268c4935573f4182916e17a61c62f8bc15f1fc2be67e9c94d1"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.list_projects",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:projects"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_projects"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:cf86e742b1df585729fa704f4f16f3caf16d78c079b15d8b209b36ccb674fe8f"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.get_project_context",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:projects"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.get_project_context"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:f0af0fdbdbfe4c59cc71b56b25a9df3453a75994dece88ab45c09d72a585dd9f"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.list_requirements",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:requirements"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_requirements"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:2fc5d15393761f010a9853d89aec98e983e1541d8448bd638d0f4e253ba4cb0c"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.list_functions",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:functions"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_functions"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:00177568b150063dd9bb49b1e558199ac9fcea0c102e5412845c479d72fe7d42"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.get_function_ssts_matrix",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:functions"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.get_function_ssts_matrix"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:5db73f6754af39f52ca6612ee77897677a1d88b6cba243fbd47a96c252d372a6"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.get_traceability_stats",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:functions"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.get_traceability_stats"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:e1b0ccf9b0698020494e81dd6aeaf008bc7fc65427aa3ef2032f3b693584a677"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.list_ssts",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.list_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:414cfece370edf1d9dead8ec87d1484a95a8436a474052d01badf7d40018e9d2"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.get_ssts",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "read"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.get_ssts"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:d44ac01708ab8ea55d388a354a4914a142fd39a6a13ab5ecf1f699544ba44ee0"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.submit_ssts_review",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "edit"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.submit_ssts_review"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:7fb3ed6c46f1a4a2b61fe29dc6ac02c1cf65605eb978df26ca5919cb0e0efabe"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.create_ssts_candidate",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "edit"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.create_ssts_candidate"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:f37915bb739d4cae3dbe6c6cced8806e3e12dd08956b938c1bb9c84218fe0e68"
+  },
+  {
+    "contract_name": "pc.provider-compatibility-mapping/1",
+    "contract_version": 1,
+    "mapping_release_id": "mapping:ee-v1:mvp-1:tool.execute:ee.decide_ssts_review",
+    "provider_registration_id": "provider:eeclaw",
+    "provider_type": "eeclaw",
+    "compatibility_version": "ee-v1",
+    "pc_action_pattern": "tool.execute",
+    "resource_authority": "eeclaw",
+    "provider_permission_mapping": {
+      "permission_keys": [
+        "page:architecture"
+      ],
+      "baseline_page_keys_version": "BASELINE_PAGE_KEYS_V1"
+    },
+    "provider_action_mapping": {
+      "action_keys": [
+        "review"
+      ]
+    },
+    "provider_tool_mapping": {
+      "tool_keys": [
+        "ee.decide_ssts_review"
+      ]
+    },
+    "decision_mode": "PC_AND_PROVIDER",
+    "status": "ACTIVE",
+    "effective_from": "2026-11-23T00:00:00.000Z",
+    "artifact_digest": "sha256:98a5c98f496993e7e9da3d26c50812c137d2b9ca1851be8967880ddf04c59981"
+  }
+]

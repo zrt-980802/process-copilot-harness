@@ -143,6 +143,17 @@ export class RuntimeWorkbench {
     try {
       const projects = await this.options.projectDirectory.listProjects({ principal });
       attempt?.success("provider_project_directory_responded");
+      if (this.options.identity.authorityDecisionsEnabled) {
+        await this.options.ensureExternalAccount?.(principal);
+        const authorized = [];
+        for (const project of projects) {
+          const decision = await this.options.identity.decideAuthority(accessToken, {
+            action: "page:projects", resource_scope_refs: [`project:${project.project_code}`], tool_release_ids: []
+          });
+          if (decision.decision === "ALLOW") authorized.push(project);
+        }
+        return authorized;
+      }
       return projects;
     } catch (error) {
       const code = error instanceof Error && "code" in error
@@ -214,6 +225,7 @@ export class RuntimeWorkbench {
     const external = this.projectProvider();
     const { principal } = await this.options.identity.authenticateForProvider(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
+    await this.options.ensureExternalAccount?.(principal);
     const tools = [];
     for (const tool of this.options.tools) {
       const decision = await this.options.identity.evaluatePrincipalAuthorization({
@@ -230,7 +242,7 @@ export class RuntimeWorkbench {
     const external = this.projectProvider();
     const { principal } = await this.options.identity.authenticateForProvider(accessToken);
     if (!/^[A-Za-z0-9_-]+$/u.test(project)) denied("PC_WORKBENCH_PROJECT_INVALID");
-    const accessible = await external.projectDirectory.listProjects({ principal });
+    const accessible = await this.projects(accessToken);
     const projectRecord = accessible.find((item) => item.project_code === project);
     if (!projectRecord) denied("PC_WORKBENCH_PROJECT_DENIED");
     if (workspace && (workspace.tenant_id !== principal.tenant_id
@@ -449,7 +461,7 @@ export class RuntimeWorkbench {
 
   private async prepareSession(workspace: SstsTaskWorkspace, token: string, refs: Array<{ resource_id: string; resource_version_id: string }>) {
     const o = this.options;
-    const { principal } = await o.identity.authenticate(token);
+    const { principal, assurance } = await o.identity.authenticate(token);
     if (principal.principal_id !== workspace.owner_principal_id || principal.tenant_id !== workspace.tenant_id) denied("PC_WORKBENCH_SCOPE_DENIED");
     const scope = [workspace.project_code ? `project:${workspace.project_code}` : `user:${principal.principal_id}`];
     const profile = await o.profiles.getProfileRelease(workspace.profile_release_id);
@@ -503,10 +515,11 @@ export class RuntimeWorkbench {
       || snapshot.runtime_requirements.bundle_lock_digest !== manifest.bundle_lock_digest
       || snapshot.runtime_requirements.dsh_version !== manifest.dsh_version
       || !manifest.bridge_protocol_versions.includes(snapshot.runtime_requirements.bridge_protocol_version))) snapshot = undefined;
+    if (snapshot && snapshot.model_selection.pc_login_session_id !== assurance.pc_session_id) snapshot = undefined;
     if (!snapshot) {
       const resolved = await o.profiles.resolveEffectiveProfile({ principal_id: principal.principal_id,
         pc_session_id: pcSessionId, requested_profile_release_id: profile.profile_release_id,
-        authorization_revision: principal.authorization_revision, model_selection: { source: "configured-runtime-model" },
+        authorization_revision: principal.authorization_revision, model_selection: { source: "configured-runtime-model", pc_login_session_id: assurance.pc_session_id },
         knowledge_view_refs: scope, dsh_preset_ref: `pc:${profile.release_digest}`, runtime_manifest: manifest });
       if (!resolved.snapshot) denied("PC_WORKBENCH_PROFILE_RESOLUTION_DENIED");
       snapshot = resolved.snapshot;
@@ -843,7 +856,7 @@ export class RuntimeWorkbench {
     const ledger = await Promise.all(operations.map(async (operation) => ({ operation,
       external: gateway === undefined
         ? undefined
-        : await gateway.getOperation(operation.operation_id),
+        : await gateway.getAuthorizedOperation(operation.operation_id, workspace.tenant_id, workspace.owner_principal_id),
       audit: gateway === undefined
         ? []
         : await gateway.listOperationAudit(operation.operation_id) })));

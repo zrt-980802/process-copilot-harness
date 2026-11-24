@@ -10,6 +10,7 @@ import type {
   Workspace
 } from "./types";
 import type { EEAccountPresentation } from "./account-presentation";
+import { authorizationPresentationGeneration, publishAuthorizationObservation, safeAuthorizationReason } from "./authorization-presentation";
 
 const API_BASE = "/api";
 
@@ -33,10 +34,12 @@ async function parseError(response: Response): Promise<ApiClientError> {
   } catch {
     // Non-JSON proxy failures are normalized below.
   }
+  const code = body.error?.code ?? `HTTP_${response.status}`;
+  const neutral = /(?:PROVIDER|PC_EE_|AUTHORITY|SESSION_ASSURANCE|RESULT_DELIVERY|AUTHORIZATION_DENIED|POLICY_DENIED)/u.test(code);
   return new ApiClientError(
     response.status,
-    body.error?.code ?? `HTTP_${response.status}`,
-    body.error?.message ?? "请求失败",
+    code,
+    neutral ? safeAuthorizationReason([code]) : body.error?.message ?? "请求失败",
     body.error?.retryable ?? response.status >= 500,
     body.error?.details
   );
@@ -47,13 +50,19 @@ export async function request<T>(
   token?: string,
   init: RequestInit = {}
 ): Promise<T> {
+  const requestGeneration = authorizationPresentationGeneration();
   const headers = new Headers(init.headers);
   if (token !== undefined) headers.set("authorization", `Bearer ${token}`);
   if (init.body !== undefined && !headers.has("content-type")) {
     headers.set("content-type", "application/json");
   }
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
-  if (!response.ok) throw await parseError(response);
+  if (!response.ok) {
+    const error = await parseError(response);
+    publishAuthorizationObservation(response.headers.get("x-pc-authorization"), requestGeneration, error.code);
+    throw error;
+  }
+  publishAuthorizationObservation(response.headers.get("x-pc-authorization"), requestGeneration);
   return response.json() as Promise<T>;
 }
 

@@ -26,7 +26,8 @@ import {
   ControlledExecutionGatewayService,
   EeMcpGatewayProvider,
   EeMcpCredentialIssuer,
-  synchronizeEeMcpCatalog
+  synchronizeEeMcpCatalog,
+  type GatewayRepository
 } from "@pc/gateway";
 import { IdentityAuthorizationError } from "@pc/domain";
 import {
@@ -50,7 +51,11 @@ import {
 } from "./ee-provider.js";
 import { UserRuntimeResolver } from "./user-runtime.js";
 import { LocalIdentityProvider } from "./local-identity-provider.js";
+import { installAuthorizationMvp } from "./authorization-mvp.js";
 import { EeProviderBundle, bundleWorkbench, inspectEeConfiguration, type EeBundleCandidate, type EeBundleConfiguration } from "./ee-provider-bundle.js";
+
+let authorityAuditRepository: GatewayRepository | undefined;
+let closeAuthorityAudit: (() => Promise<void>) | undefined;
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "127.0.0.1";
@@ -393,6 +398,7 @@ if (gatewayStoreKind !== "disabled") {
       : gatewayEventPublisher(eventProjection, repository)
   );
   await controlledGateway.initialize();
+  authorityAuditRepository = repository;
   const identity = identityAuthorization;
   const profiles = profileCapability;
   const runtimeRegistry = registry;
@@ -670,6 +676,18 @@ if (providerConfiguration.mode === "standalone" && identityAuthorization) {
   localIdentityProvider = new LocalIdentityProvider(identityAuthorization, tenant);
 }
 
+if (identityAuthorization) {
+  if (!authorityAuditRepository) {
+    authorityAuditRepository = identityStoreKind === "postgres" ? new PostgresGatewayRepository(databaseUrl!) : new MemoryGatewayRepository();
+    await authorityAuditRepository.initialize();
+    const auditRepository = authorityAuditRepository;
+    closeAuthorityAudit = () => auditRepository.close();
+  }
+  installAuthorizationMvp({ identity: identityAuthorization, audit: authorityAuditRepository, bundle: eeBundle,
+    ...(profileCapability ? { profiles: profileCapability } : {}), ...(registry ? { registry } : {}),
+    ...(eeClawAdapterUrl ? { issuer: eeClawAdapterUrl } : {}) });
+}
+
 const server = buildApiServer({
   eeBundle,
   providerMode: providerConfiguration.mode,
@@ -710,7 +728,8 @@ server.addHook("onClose", async () => {
     resourceWorkspace?.close(),
     controlledGateway?.close(),
     eventProjection?.close(),
-    sstsDraft?.close()
+    sstsDraft?.close(),
+    closeAuthorityAudit?.()
   ]);
 });
 

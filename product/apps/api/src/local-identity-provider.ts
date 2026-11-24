@@ -37,7 +37,7 @@ export class LocalIdentityProvider implements IdentityProviderPort {
         "Local account authentication failed"
       );
     }
-    return this.identity.signInPilot(tenant, input.account_key, input.secret);
+    return this.identity.signInPilot(tenant, input.account_key, input.secret, undefined, "STANDALONE");
   }
 
   validate(

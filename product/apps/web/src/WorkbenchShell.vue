@@ -184,7 +184,7 @@ watch(() => props.tasks.map(task => `${task.workspace_id}:${task.version}`).join
         <ChevronRight :size="15" class="muted" /><span class="breadcrumb">{{ title }}</span>
         <div class="topbar-end"><button class="icon-button refresh-experience" title="刷新能力状态" @click="emit('refresh')"><RefreshCw :size="17" /></button><span class="demo-indicator">个人工作台</span><button v-if="projectView && experience.showProjectSurface" class="icon-button" title="重新检查能力状态" :disabled="busy" @click="emit('refresh')"><RefreshCw :size="17" :class="{ spin: busy }" /></button><button class="account-summary" title="账号与设置" aria-label="账号与设置" @click="accountDialog?.showModal()"><UserRound :size="17" /><span><strong>{{ accountName }}</strong><small data-test="account-role">{{ accountRole }}</small></span></button></div>
       </header>
-      <slot name="provider-status" />
+      <slot name="provider-status" :project="view === 'home' ? '' : view === 'conversation' ? conversationScope : project" />
       <div v-if="failure && projectView" class="workbench-alert" role="alert"><CircleAlert :size="18" /><span>{{ failure }}</span><button class="icon-button" title="重试" @click="refresh"><RefreshCw :size="16" /></button></div>
       <div v-if="busy && projectView" class="project-loading" role="status"><RefreshCw :size="14" class="spin" />读取项目资料</div>
 

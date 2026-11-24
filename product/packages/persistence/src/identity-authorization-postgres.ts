@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import {
   Pool,
   type PoolClient,
@@ -18,9 +19,11 @@ import type {
   ExternalIdentityLink,
   PCPrincipal,
   PilotAccount,
-  PilotSession
+  PilotSession,
+  SessionAssurance,
+  SessionAssuranceRecord
 } from "@pc/domain";
-import { IdentityAuthorizationError } from "@pc/domain";
+import { IdentityAuthorizationError, evidenceDigest, sealSessionAssurance, validateSessionAssurance } from "@pc/domain";
 
 const MIGRATION = `
 CREATE TABLE IF NOT EXISTS pc_principal (
@@ -205,6 +208,32 @@ function sessionFromRow(row: SessionRow): PilotSession {
   };
 }
 
+function assuranceFromRow(row: QueryResultRow): SessionAssuranceRecord {
+  const assurance: SessionAssurance = { contract_name: "pc.session-assurance/1", contract_version: 1,
+    session_assurance_id: row.session_assurance_id, pc_session_id: row.pc_session_id, principal_id: row.principal_id,
+    tenant_id: row.tenant_id, authentication_method: row.authentication_method, identity_provider_ref: row.identity_provider_ref,
+    identity_revision: Number(row.identity_revision), authorization_revision: Number(row.authorization_revision), assurance_level: row.assurance_level,
+    issued_at: iso(row.issued_at), pc_absolute_limit_at: iso(row.pc_absolute_limit_at), absolute_expires_at: iso(row.absolute_expires_at),
+    session_state: row.session_state, evidence_refs: row.evidence_refs, assurance_digest: row.assurance_digest,
+    ...(row.identity_link_id === null ? {} : { identity_link_id: row.identity_link_id }),
+    ...(row.authentication_evidence_expires_at === null ? {} : { authentication_evidence_expires_at: iso(row.authentication_evidence_expires_at) }),
+    ...(row.idle_expires_at === null ? {} : { idle_expires_at: iso(row.idle_expires_at) }),
+    ...(row.revoked_at === null ? {} : { revoked_at: iso(row.revoked_at) }) };
+  return { assurance, authentication_context_id: row.authentication_context_id, record_version: Number(row.record_version),
+    ...(row.identity_link_revision === null ? {} : { identity_link_revision: Number(row.identity_link_revision) }),
+    ...(row.pilot_account_id === null ? {} : { pilot_account_id: row.pilot_account_id }) };
+}
+
+async function assuranceSchemaDigest(client: PoolClient): Promise<string> {
+  const columns = await client.query(`SELECT column_name,data_type,is_nullable,column_default FROM information_schema.columns
+    WHERE table_schema=current_schema() AND table_name='pc_session_assurance' ORDER BY ordinal_position`);
+  const constraints = await client.query(`SELECT conname,pg_get_constraintdef(oid) AS definition FROM pg_constraint
+    WHERE conrelid='pc_session_assurance'::regclass ORDER BY conname`);
+  const indexes = await client.query(`SELECT indexname,indexdef FROM pg_indexes
+    WHERE schemaname=current_schema() AND tablename='pc_session_assurance' ORDER BY indexname`);
+  return evidenceDigest({ columns: columns.rows, constraints: constraints.rows, indexes: indexes.rows }, "digest");
+}
+
 function grantFromRow(row: GrantRow): AuthorizationGrant {
   return {
     grant_id: row.grant_id,
@@ -254,6 +283,29 @@ implements IdentityAuthorizationRepository {
 
   async initialize(): Promise<void> {
     await this.pool.query(MIGRATION);
+    const sql = await readFile(new URL("../migrations/identity/0001_session_assurance.sql", import.meta.url), "utf8");
+    const digest = evidenceDigest({ sql: sql.replaceAll("\r\n", "\n") }, "digest");
+    await transaction(this.pool, async client => {
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('pc-session-assurance-v1'))");
+      await client.query(`CREATE TABLE IF NOT EXISTS pc_schema_migration (
+        component TEXT NOT NULL, version BIGINT NOT NULL, migration_name TEXT NOT NULL,
+        migration_digest TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL,
+        PRIMARY KEY (component, version), UNIQUE (component, migration_name))`);
+      const existing = await client.query("SELECT version,migration_digest FROM pc_schema_migration WHERE component='session-assurance' ORDER BY version");
+      const table = await client.query("SELECT to_regclass('pc_session_assurance') IS NOT NULL AS present");
+      if (existing.rows.length) {
+        if (!table.rows[0]?.present || existing.rows.length !== 2 || Number(existing.rows[0]?.version) !== 1 || existing.rows[0]?.migration_digest !== digest
+          || Number(existing.rows[1]?.version) !== 2 || existing.rows[1]?.migration_digest !== await assuranceSchemaDigest(client)) {
+          throw new IdentityAuthorizationError("PC_SESSION_SCHEMA_DENIED", "Session Assurance schema is incompatible");
+        }
+        return;
+      }
+      if (table.rows[0]?.present) throw new IdentityAuthorizationError("PC_SESSION_SCHEMA_DENIED", "Unrecognized Session Assurance schema");
+      await client.query(sql);
+      const fingerprint = await assuranceSchemaDigest(client);
+      await client.query(`INSERT INTO pc_schema_migration(component,version,migration_name,migration_digest,applied_at)
+        VALUES('session-assurance',1,'0001_session_assurance.sql',$1,NOW()),('session-assurance',2,'0001_session_assurance.catalog',$2,NOW())`, [digest, fingerprint]);
+    });
   }
 
   async close(): Promise<void> {
@@ -301,7 +353,16 @@ implements IdentityAuthorizationRepository {
   }
 
   async revokeSession(contextId: string, now: string): Promise<void> {
-    await this.pool.query("UPDATE pc_pilot_session SET revoked_at=$2 WHERE authentication_context_id=$1 AND revoked_at IS NULL", [contextId, now]);
+    await transaction(this.pool, async client => {
+      const row = await client.query("SELECT * FROM pc_session_assurance WHERE authentication_context_id=$1 FOR UPDATE", [contextId]);
+      await client.query("UPDATE pc_pilot_session SET revoked_at=$2 WHERE authentication_context_id=$1 AND revoked_at IS NULL", [contextId, now]);
+      if (row.rows[0] && row.rows[0].session_state !== "REVOKED") {
+        const record = assuranceFromRow(row.rows[0]);
+        const updated = sealSessionAssurance({ ...record.assurance, session_state: "REVOKED", revoked_at: now });
+        await client.query(`UPDATE pc_session_assurance SET session_state='REVOKED',revoked_at=$2,assurance_digest=$3,record_version=record_version+1
+          WHERE authentication_context_id=$1 AND record_version=$4`, [contextId, now, updated.assurance_digest, record.record_version]);
+      }
+    });
   }
 
   provisionPilotAccount(
@@ -413,8 +474,38 @@ implements IdentityAuthorizationRepository {
     return result.rows.length !== 1 || row === undefined ? undefined : linkFromRow(row);
   }
 
-  async createPilotSession(session: PilotSession): Promise<void> {
-    await this.pool.query(
+  async getSessionAssurance(contextId: string): Promise<SessionAssuranceRecord | undefined> {
+    const result = await this.pool.query("SELECT * FROM pc_session_assurance WHERE authentication_context_id=$1", [contextId]);
+    return result.rows[0] ? assuranceFromRow(result.rows[0]) : undefined;
+  }
+
+  async getSessionAssuranceByPcSessionId(pcSessionId: string): Promise<SessionAssuranceRecord | undefined> {
+    const result = await this.pool.query("SELECT * FROM pc_session_assurance WHERE pc_session_id=$1", [pcSessionId]);
+    return result.rows[0] ? assuranceFromRow(result.rows[0]) : undefined;
+  }
+
+  async getPilotSessionByContext(contextId: string): Promise<PilotSession | undefined> {
+    const result = await this.pool.query<SessionRow>("SELECT * FROM pc_pilot_session WHERE authentication_context_id=$1", [contextId]);
+    return result.rows[0] ? sessionFromRow(result.rows[0]) : undefined;
+  }
+
+  async getPilotAccountById(accountId: string): Promise<PilotAccount | undefined> {
+    const result = await this.pool.query<AccountRow>("SELECT * FROM pc_pilot_account WHERE pilot_account_id=$1", [accountId]);
+    return result.rows[0] ? accountFromRow(result.rows[0]) : undefined;
+  }
+
+  async createPilotSession(session: PilotSession, record?: SessionAssuranceRecord): Promise<void> {
+    await transaction(this.pool, async client => {
+      if (record) {
+        const principals = await client.query<PrincipalRow>("SELECT * FROM pc_principal WHERE principal_id=$1 FOR SHARE", [session.principal_id]);
+        if (!principals.rows[0]) throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_DENIED", "Session owner is unavailable");
+        const links = await client.query<LinkRow>(`SELECT * FROM pc_external_identity_link WHERE principal_id=$1
+          AND identity_provider_ref=$2 AND status='verified' ORDER BY identity_link_id LIMIT 2 FOR SHARE`, [session.principal_id, record.assurance.identity_provider_ref]);
+        const accounts = record.pilot_account_id ? await client.query<AccountRow>("SELECT * FROM pc_pilot_account WHERE pilot_account_id=$1 FOR SHARE", [record.pilot_account_id]) : undefined;
+        validateSessionAssurance(record, session, principalFromRow(principals.rows[0]), session.issued_at,
+          links.rows.length === 1 ? linkFromRow(links.rows[0]!) : undefined, accounts?.rows[0] ? accountFromRow(accounts.rows[0]) : undefined);
+      }
+      await client.query(
       `INSERT INTO pc_pilot_session (
          authentication_context_id, principal_id, token_digest,
          issued_at, expires_at, revoked_at
@@ -427,7 +518,21 @@ implements IdentityAuthorizationRepository {
         session.expires_at,
         session.revoked_at ?? null
       ]
-    );
+      );
+      if (record) {
+        const a = record.assurance;
+        await client.query(`INSERT INTO pc_session_assurance(session_assurance_id,pc_session_id,authentication_context_id,principal_id,tenant_id,
+          authentication_method,identity_provider_ref,identity_link_id,identity_link_revision,pilot_account_id,identity_revision,authorization_revision,
+          assurance_level,issued_at,idle_expires_at,pc_absolute_limit_at,authentication_evidence_expires_at,absolute_expires_at,revoked_at,
+          session_state,evidence_refs,assurance_digest,record_version)
+          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22,$23)`,
+        [a.session_assurance_id, a.pc_session_id, session.authentication_context_id, a.principal_id, a.tenant_id, a.authentication_method,
+          a.identity_provider_ref, a.identity_link_id ?? null, record.identity_link_revision ?? null, record.pilot_account_id ?? null,
+          a.identity_revision, a.authorization_revision, a.assurance_level, a.issued_at, a.idle_expires_at ?? null, a.pc_absolute_limit_at,
+          a.authentication_evidence_expires_at ?? null, a.absolute_expires_at, a.revoked_at ?? null, a.session_state, JSON.stringify(a.evidence_refs),
+          a.assurance_digest, record.record_version]);
+      }
+    });
   }
 
   async findPilotSession(

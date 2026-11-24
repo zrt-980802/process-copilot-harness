@@ -6,6 +6,7 @@ export default tseslint.config(
   {
     ignores: [
       ".docker/**",
+      "reports/**",
       "**/dist/**",
       "**/coverage/**",
       "**/*.vue",

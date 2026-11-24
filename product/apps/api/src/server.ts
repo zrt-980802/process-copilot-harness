@@ -15,6 +15,7 @@ import type {
   RuntimeRegistryState
 } from "@pc/domain";
 import { RuntimeRegistryError } from "@pc/domain";
+import { authorizationRequestContext, runAuthorizationRequest } from "@pc/application";
 import {
   IdentityAuthorizationError,
   ProfileCapabilityError
@@ -168,6 +169,7 @@ function identityStatus(error: IdentityAuthorizationError): number {
   if (["PC_PROVIDER_BUNDLE_UNCONFIGURED", "PC_PROVIDER_BUNDLE_DISABLED"].includes(error.code)) return 409;
   if (
     error.code === "PC_AUTHENTICATION_REQUIRED"
+    || error.code.startsWith("PC_SESSION_ASSURANCE_")
     || error.code === "PC_PILOT_AUTHENTICATION_FAILED"
   ) return 401;
   if (
@@ -318,6 +320,26 @@ export function buildApiServer(
   const server = Fastify({
     logger: true,
     requestIdHeader: "x-request-id"
+  });
+  server.addHook("onRequest", (_request, _reply, done) => runAuthorizationRequest(done));
+  server.addHook("onSend", async (_request, reply, payload) => {
+    const decision = authorizationRequestContext()?.last_decision;
+    if (decision) reply.header("x-pc-authorization", encodeURIComponent(JSON.stringify(decision)));
+    return payload;
+  });
+  server.addHook("preHandler", async request => {
+    const identity = dependencies.identityAuthorization;
+    if (!identity?.authorityDecisionsEnabled) return;
+    const path = request.url.split("?")[0]!;
+    const taskPath = /^\/v1\/(?:ssts-tasks|business-tasks|business-operations|workbench\/tasks)(?:\/|$)/u.test(path);
+    const action = path === "/v1/identity/me" ? "identity.read"
+      : taskPath ? (request.method === "GET" ? "personal_task.read" : "personal_task.write") : undefined;
+    if (!action) return;
+    const token = bearerToken(request.headers.authorization);
+    const { principal } = await identity.authenticate(token);
+    const decision = await identity.decideAuthority(token, { action, resource_scope_refs: [`user:${principal.principal_id}`], tool_release_ids: [] });
+    if (decision.decision !== "ALLOW") throw new IdentityAuthorizationError("PC_POLICY_DENIED", "Current account cannot perform this action", false,
+      { decision_ref: decision.decision_id, reason_codes: decision.reason_codes });
   });
 
   if (dependencies.workbench) server.addHook("preHandler", async request => {
@@ -665,8 +687,42 @@ export function buildApiServer(
       principal: authenticated.principal,
       authentication_context_id:
         authenticated.session.authentication_context_id,
-      expires_at: authenticated.session.expires_at
+      expires_at: authenticated.session.expires_at,
+      session_assurance: authenticated.assurance
     };
+  });
+
+  server.get("/v1/identity/capabilities", async (request, reply) => {
+    const token = bearerToken(request.headers.authorization);
+    const identity = identityFrom(dependencies);
+    const view = await identity.currentSessionView(token);
+    const history = await identity.recentAuthorityDecisions(token);
+    const capabilities = [];
+    for (const action of ["conversation.run", "personal_task.read", "personal_task.write"]) {
+      const decision = await identity.decideAuthority(token, { action, resource_scope_refs: [`user:${view.principal_id}`], tool_release_ids: [] });
+      capabilities.push({ action, available: decision.decision === "ALLOW" });
+    }
+    reply.header("Cache-Control", "no-store");
+    return { ...view, capability_groups: [{ key: "personal", capabilities }],
+      last_decision: history.filter(decision => !["identity.read", "capability.read"].includes(decision.action)).at(-1) };
+  });
+
+  server.get("/v1/authorization/decisions", async request => ({
+    items: await identityFrom(dependencies).recentAuthorityDecisions(bearerToken(request.headers.authorization))
+  }));
+
+  server.post("/v1/authorization/decisions", async (request, reply) => {
+    const body = request.body as { action: string; resource_scope_refs: string[]; tool_release_ids: string[]; resource_authority?: string };
+    if (!body || typeof body.action !== "string" || !Array.isArray(body.resource_scope_refs) || !Array.isArray(body.tool_release_ids)
+      || body.resource_scope_refs.some(scope => typeof scope !== "string") || body.tool_release_ids.some(tool => typeof tool !== "string")) {
+      throw new IdentityAuthorizationError("PC_AUTHORITY_INPUT_DENIED", "Invalid authority request");
+    }
+    const result = await identityFrom(dependencies).decideAuthority(bearerToken(request.headers.authorization), {
+      action: body.action, resource_scope_refs: body.resource_scope_refs, tool_release_ids: body.tool_release_ids,
+      ...(body.resource_authority === undefined ? {} : { resource_authority: body.resource_authority }) });
+    if (result.decision === "ALLOW") return result;
+    return reply.status(403).send({ error: { code: result.decision_mode === "DENY_UNKNOWN" ? "PC_AUTHORITY_MAPPING_DENIED" : "PC_AUTHORITY_DECISION_DENIED",
+      message: "Current authority denies this action", retryable: false, details: { decision_ref: result.decision_id, reason_codes: result.reason_codes } }, decision: result });
   });
 
   server.post("/v1/authorization/snapshots", async (request) =>
@@ -1634,6 +1690,10 @@ export function buildApiServer(
           "PC_GATEWAY_OPERATION_SCOPE_DENIED",
           "Operation belongs to another Principal"
         );
+      }
+      if (operation.result) {
+        await identityFrom(dependencies).authenticateForProvider(bearerToken(request.headers.authorization));
+        return gatewayFrom(dependencies).getAuthorizedOperation(operation.operation_id, authenticated.principal.tenant_id, authenticated.principal.principal_id);
       }
       return operation;
     }

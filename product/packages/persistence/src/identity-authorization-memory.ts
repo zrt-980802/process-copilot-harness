@@ -12,9 +12,10 @@ import type {
   ExternalIdentityLink,
   PCPrincipal,
   PilotAccount,
-  PilotSession
+  PilotSession,
+  SessionAssuranceRecord
 } from "@pc/domain";
-import { IdentityAuthorizationError } from "@pc/domain";
+import { IdentityAuthorizationError, sealSessionAssurance, validateSessionAssurance } from "@pc/domain";
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -26,6 +27,7 @@ implements IdentityAuthorizationRepository {
   private readonly links = new Map<string, ExternalIdentityLink>();
   private readonly accounts = new Map<string, PilotAccount>();
   private readonly sessions = new Map<string, PilotSession>();
+  private readonly assurances = new Map<string, SessionAssuranceRecord>();
   private readonly grants = new Map<string, AuthorizationGrant[]>();
 
   initialize(): Promise<void> {
@@ -66,6 +68,9 @@ implements IdentityAuthorizationRepository {
     for (const [key, session] of this.sessions) if (session.authentication_context_id === contextId) {
       this.sessions.set(key, { ...session, revoked_at: now });
     }
+    const record = this.assurances.get(contextId);
+    if (record && record.assurance.session_state !== "REVOKED") this.assurances.set(contextId, { ...record,
+      assurance: sealSessionAssurance({ ...record.assurance, session_state: "REVOKED", revoked_at: now }), record_version: record.record_version + 1 });
   }
 
   provisionPilotAccount(
@@ -159,7 +164,37 @@ implements IdentityAuthorizationRepository {
     return Promise.resolve(links.length === 1 ? clone(links[0]!) : undefined);
   }
 
-  createPilotSession(session: PilotSession): Promise<void> {
+  getSessionAssurance(contextId: string): Promise<SessionAssuranceRecord | undefined> {
+    return Promise.resolve(clone(this.assurances.get(contextId)));
+  }
+
+  getSessionAssuranceByPcSessionId(pcSessionId: string): Promise<SessionAssuranceRecord | undefined> {
+    return Promise.resolve(clone([...this.assurances.values()].find(record => record.assurance.pc_session_id === pcSessionId)));
+  }
+
+  getPilotSessionByContext(contextId: string): Promise<PilotSession | undefined> {
+    return Promise.resolve(clone([...this.sessions.values()].find(session => session.authentication_context_id === contextId)));
+  }
+
+  getPilotAccountById(accountId: string): Promise<PilotAccount | undefined> {
+    return Promise.resolve(clone([...this.accounts.values()].find(account => account.pilot_account_id === accountId)));
+  }
+
+  createPilotSession(session: PilotSession, record?: SessionAssuranceRecord): Promise<void> {
+    if (this.sessions.has(session.token_digest) || [...this.sessions.values()].some(item => item.authentication_context_id === session.authentication_context_id)) {
+      throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_DENIED", "Session already exists");
+    }
+    if (record) {
+      const links = [...this.links.values()].filter(link => link.principal_id === session.principal_id
+        && link.identity_provider_ref === record.assurance.identity_provider_ref && link.status === "verified");
+      const account = [...this.accounts.values()].find(item => item.pilot_account_id === record.pilot_account_id);
+      validateSessionAssurance(record, session, this.requirePrincipal(session.principal_id), session.issued_at, links.length === 1 ? links[0] : undefined, account);
+      if ([...this.assurances.values()].some(existing => existing.authentication_context_id === record.authentication_context_id
+        || existing.assurance.pc_session_id === record.assurance.pc_session_id || existing.assurance.session_assurance_id === record.assurance.session_assurance_id)) {
+        throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_DENIED", "Session already exists");
+      }
+      this.assurances.set(record.authentication_context_id, clone(record));
+    }
     this.sessions.set(session.token_digest, clone(session));
     return Promise.resolve();
   }

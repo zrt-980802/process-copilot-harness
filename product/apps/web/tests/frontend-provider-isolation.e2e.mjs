@@ -67,6 +67,9 @@ const http = createServer((request, response) => {
       }
       if (route === "/api/health") payload = health();
       else if (route === "/api/v1/identity/me") payload = { principal };
+      else if (route === "/api/v1/identity/capabilities") payload = { principal_id: principal.principal_id, account_name: "Synthetic PC account",
+        session: { state: "ACTIVE", pc_session_id: "pc-session:synthetic-browser", expires_at: new Date(Date.now() + 3600_000).toISOString() },
+        capability_groups: [{ key: "personal", capabilities: [{ action: "conversation.run", available: true }] }] };
       else if (route === "/api/v1/workbench/capability-availability") payload = { principal_id: principal.principal_id, tenant_id: principal.tenant_id,
         provider_registration_id: "provider:eeclaw", catalog_revision: `c${epoch}`, evidence_refs: [`provider-bundle:epoch.${epoch}`],
         expires_at: expiry(), capabilities: tools().map(tool => ({ tool_release_id: tool.tool_release_id, availability_state: "AVAILABLE" })) };
@@ -147,9 +150,16 @@ async function retryMatrix(page, width) {
   assert.match(await page.$eval(".provider-unavailable", node => node.textContent), /企业项目能力暂不可用/u);
   for (const failure of [{ status: 400, code: "PC_PROVIDER_BUNDLE_CONFIGURATION", retryable: false }, { status: 503, code: "PC_PROVIDER_BUNDLE_TRANSPORT", retryable: true }]) {
     retryFailure = failure; const start = calls.length;
-    await page.click(".provider-unavailable button"); await settle(page);
+    const pending = page.waitForResponse(response => response.url().endsWith("/api/v1/providers/eeclaw/retry"));
+    await page.click(".provider-unavailable button");
+    const rejected = await pending;
+    assert.equal(rejected.status(), failure.status);
+    assert.equal((await rejected.json()).error.code, failure.code);
+    await settle(page);
     assert(await page.$(".provider-unavailable")); assert.equal(await page.$(".global-notice"), null);
-    assert.match(await page.$eval('.global-error[role="alert"]', node => node.textContent), new RegExp(failure.code));
+    const message = await page.$eval('.global-error[role="alert"]', node => node.textContent);
+    assert.match(message, /当前能力.*不可用/u);
+    assert(!/Connector|Bundle|PC_PROVIDER_|secret|Token/u.test(message));
     assert.deepEqual(calls.slice(start).map(call => call.path), ["/api/v1/providers/eeclaw/retry"]);
   }
   retryFailure = undefined; await page.click(".provider-unavailable button"); await settle(page);
@@ -172,7 +182,8 @@ try {
     if (!d4aOnly) {
       for (const state of ["standalone", "unconfigured", "unavailable", "zero", "no-capabilities", "generic", "engineering", "full"]) {
         const start = await open(page, state, width);
-        const initial = calls.slice(start).map(call => call.path);
+        const initial = calls.slice(start).map(call => call.path).filter(route => route !== "/api/v1/identity/capabilities");
+        assert.equal(calls.slice(start).filter(call => call.path === "/api/v1/identity/capabilities").length, 1);
         const discovery = ["/api/health", "/api/v1/identity/me", "/api/health"];
         if (ready()) discovery.push("/api/v1/workbench/capability-availability");
         if (ready() && state !== "no-capabilities") discovery.push("/api/v1/workbench/projects");

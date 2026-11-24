@@ -24,6 +24,8 @@ import { experienceKey } from "./experience-context";
 import { providerState, taskScene } from "./provider-view-adapter";
 import ExecutionWorkbench from "./ExecutionWorkbench.vue";
 import WorkbenchShell from "./WorkbenchShell.vue";
+import AuthorityStatus from "./AuthorityStatus.vue";
+import { setAuthorizationPresentationGeneration } from "./authorization-presentation";
 import type {
   DraftRevision,
   InputSlot,
@@ -50,6 +52,7 @@ const token = ref(sessionStorage.getItem(TOKEN_KEY) ?? "");
 const principal = ref<Principal>();
 const rawTasks = ref<Workspace[]>([]);
 const snapshot = shallowRef(emptyExperience());
+watch(() => snapshot.value.generation, setAuthorizationPresentationGeneration, { immediate: true, flush: "sync" });
 const experience = computed(() => experiencePolicy(snapshot.value));
 const tasks = computed(() => visibleTasks(rawTasks.value, snapshot.value));
 const projects = computed(() => experience.value.showProjectSurface ? snapshot.value.projects : []);
@@ -159,7 +162,7 @@ function showError(caught: unknown, fallback: string): void {
     }
     if (experience.value.showProjectSurface && (caught.status === 403 || caught.code.includes("PROVIDER") || caught.code.includes("AUTHORIZATION"))) invalidateExternal(caught);
     error.value = {
-      title: caught.code,
+      title: /PROVIDER|AUTHORITY|AUTHORIZATION|POLICY|GATEWAY/u.test(caught.code) ? "权限或能力暂不可用" : caught.code,
       message: caught.code.includes("PROVIDER") || caught.code.includes("WORKBENCH") ? "当前能力或项目范围不可用，请刷新能力状态。" : caught.message,
       retryable: caught.retryable
     };
@@ -526,7 +529,9 @@ onBeforeUnmount(() => {
   <WorkbenchShell v-else-if="principal" :token="token" :principal="principal" :tasks="tasks" :projects="projects"
     :snapshot="snapshot" :experience="experience"
     :account-name="accountName" :projection="projection" @open-task="selectTask" @select-project="selectProject" @refresh="refreshExperience" @logout="logout">
-    <template #provider-status>
+    <template #provider-status="{ project: scopeProject }">
+    <AuthorityStatus :token="token" :account-name="accountName" :project="scopeProject" :generation="snapshot.generation"
+      :experience="experience" :source-state="system ? providerState(system) : 'UNCONFIGURED'" @session-invalid="clearSession" />
     <div v-if="experience.showProviderStatus"
       class="global-error provider-unavailable" role="status">
       <CircleAlert :size="18" />

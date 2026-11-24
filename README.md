@@ -58,7 +58,13 @@ Evidence and retest limits:
 
 ADR-0025 T0 freezes C67-C69 Session Assurance, Authority Decision and immutable
 Provider Compatibility Mapping, with 69 total contracts and pure golden tests.
-**T0 COMPLETE / T1A COMPLETE / T1B-T3 NOT STARTED**. RCI-02 is fixed at the
+**T0 COMPLETE / T1A COMPLETE**. The PC authorization MVP implements local C67
+Session Assurance, C68 decisions, composed bindings, C69 mappings and a read-only
+capability view. Its developer result is **AUTHORIZATION MVP LOCAL COMPLETE /
+REAL EE EXTERNAL BLOCKED**; real EE retest and T3 acceptance remain incomplete.
+The approved additive PC schema, isolated recovery tests and synthetic browser
+boundaries are recorded in `product/docs/pc-authorization-mvp-01-verification.md`.
+RCI-02 is fixed at the
 deterministic PC/source boundary and remains pending real EE retest. RCI-03 READ
 projection is also fixed pending real retest. Contract and T1A evidence:
 `architecture/adr-0025-t0-contract-and-compatibility-v1.md` and

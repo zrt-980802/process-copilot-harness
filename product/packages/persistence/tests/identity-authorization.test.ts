@@ -125,7 +125,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
       }]
     });
     const allowed = await service.issueAuthorizationSnapshot(
-      signedIn.access_token,
+      (await service.signInPilot("tenant-1", "pilot.fo", "PilotSecret123")).access_token,
       {
         actions: ["draft.generate"],
         resource_scope_refs: ["project:project-1"],
@@ -149,7 +149,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
         evidence_refs: ["eeclaw:C41:deny"]
       })
     };
-    const { service, provisioned, signedIn } = await fixture([externalDeny]);
+    const { service, provisioned } = await fixture([externalDeny]);
     await service.replaceAuthorizationGrants({
       principal_id: provisioned.principal.principal_id,
       expected_authorization_revision:
@@ -163,7 +163,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
       }]
     });
     const denied = await service.issueAuthorizationSnapshot(
-      signedIn.access_token,
+      (await service.signInPilot("tenant-1", "pilot.fo", "PilotSecret123")).access_token,
       {
         actions: ["draft.generate"],
         resource_scope_refs: ["project:project-1"],
@@ -176,7 +176,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
   });
 
   it("signs Principal Envelopes and binds them to the current revision", async () => {
-    const { service, provisioned, signedIn } = await fixture();
+    const { service, provisioned } = await fixture();
     await service.replaceAuthorizationGrants({
       principal_id: provisioned.principal.principal_id,
       expected_authorization_revision:
@@ -189,6 +189,7 @@ describe("DEV-05 PCPrincipal and authorization", () => {
         evidence_ref: "pilot-grant:project-1"
       }]
     });
+    const signedIn = await service.signInPilot("tenant-1", "pilot.fo", "PilotSecret123");
     const snapshot = await service.issueAuthorizationSnapshot(
       signedIn.access_token,
       {
@@ -264,6 +265,6 @@ describe("DEV-05 PCPrincipal and authorization", () => {
         assignment_generation: 1,
         resource_scope_refs: ["project:project-1"]
       }
-    )).rejects.toMatchObject({ code: "PC_AUTHORIZATION_SNAPSHOT_STALE" });
+    )).rejects.toMatchObject({ code: "PC_SESSION_ASSURANCE_DENIED" });
   });
 });

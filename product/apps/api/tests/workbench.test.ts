@@ -35,7 +35,8 @@ async function fixture() {
   const view = { workspace_view_snapshot_id: "view", bindings: [{ resource_ref: ref }], expires_at: new Date(Date.now() + 3600_000).toISOString() };
   const workspace = { workspace_id: "workspace", business_task_id: "business", tenant_id: "tenant",
     owner_principal_id: "owner", project_code: "EP37", profile_release_id: seeded.profile.profile_release_id } as SstsTaskWorkspace;
-  const authenticate = vi.fn(async () => ({ principal: { tenant_id: "tenant", principal_id: "owner", authorization_revision: 1 } }));
+  const authenticate = vi.fn(async () => ({ principal: { tenant_id: "tenant", principal_id: "owner", authorization_revision: 1 },
+    assurance: { pc_session_id: "pc-login:workbench-fixture" } }));
   const options = { registry, profiles, runtimeUrl: "http://runtime", tools: [seeded.tool],
     profileReleaseId: seeded.profile.profile_release_id,
     reviewProfileReleaseId: seeded.profile.profile_release_id,
@@ -52,7 +53,7 @@ async function fixture() {
     resources: { getResourceProjection: async () => ({ resource: { current_version_id: "version" } }),
       createBinding: async () => ({ binding_id: "binding" }), getWorkspaceView: async () => view,
       createWorkspaceView: async () => view, materialize: async () => ({}) },
-    gateway: { getOperation: async () => undefined, listOperationAudit: async () => [] },
+    gateway: { getOperation: async () => undefined, getAuthorizedOperation: async () => undefined, listOperationAudit: async () => [] },
     gatewayRepository: { findExternalAccountBinding: async () => ({ status: "ACTIVE", credential_generation: 1 }),
       getOperation: async () => undefined }, events: { listTaskOperations: async () => [] }
   } as unknown as WorkbenchOptions;

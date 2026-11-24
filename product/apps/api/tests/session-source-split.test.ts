@@ -242,8 +242,8 @@ describe("T1A EE-backed PC Session/source boundary", () => {
     await f.identity.replaceAuthorizationGrants({ principal_id: f.login.principal.principal_id, expected_authorization_revision: 1,
       grants: [{ action: "task.read", scope_type: "global", scope_id: "*", effect: "allow", evidence_ref: "pc:revision-change" }] });
     await expect(f.identity.verifyPrincipalEnvelope(envelope)).rejects.toMatchObject({ code: "PC_PRINCIPAL_ENVELOPE_STALE" });
-    await expect(f.identity.issuePrincipalEnvelope(f.login.access_token, envelopeInput)).rejects.toMatchObject({ code: "PC_AUTHORIZATION_SNAPSHOT_STALE" });
-    expect((await f.identity.issueAuthorizationSnapshot(f.login.access_token, input)).authorization_revision).toBe(2);
+    await expect(f.identity.issuePrincipalEnvelope(f.login.access_token, envelopeInput)).rejects.toMatchObject({ code: "PC_SESSION_ASSURANCE_DENIED" });
+    await expect(f.identity.issueAuthorizationSnapshot(f.login.access_token, input)).rejects.toMatchObject({ code: "PC_SESSION_ASSURANCE_DENIED" });
     expect(f.sourceValidation).not.toHaveBeenCalled();
     f.providerCalls.forEach(call => expect(call).not.toHaveBeenCalled());
   });
@@ -266,21 +266,25 @@ describe("T1A EE-backed PC Session/source boundary", () => {
     const principal = await f.identity.replaceAuthorizationGrants({ principal_id: f.login.principal.principal_id,
       expected_authorization_revision: 1, grants: [{ action: "ee.read", effect: "allow", scope_type: "project",
         scope_id: "T1A", evidence_ref: "pc:test-grant" }] });
-    await expect(f.identity.issueAuthorizationSnapshot(f.login.access_token, request)).rejects.toMatchObject({ code: "PC_PROVIDER_UNAVAILABLE" });
+    const freshLogin = await f.identity.signInExternal({ identity_provider_ref: "eeclaw", issuer: "http://ee-t1a.invalid",
+      external_subject: "42", tenant_or_org_ref: "t1a" }, randomUUID(), f.login.expires_at);
+    await expect(f.identity.issueAuthorizationSnapshot(freshLogin.access_token, request)).rejects.toMatchObject({ code: "PC_PROVIDER_UNAVAILABLE" });
     f.sourceValidation.mockResolvedValue(undefined);
     const evaluate = vi.fn(async () => ({ decision: "ALLOW" as "ALLOW" | "DENY", reason_codes: ["source-current"], evidence_refs: ["source:request"] }));
     f.identity.registerExternalAuthorizationPort({ evaluate });
-    for (let i = 0; i < 2; i++) expect((await f.identity.issueAuthorizationSnapshot(f.login.access_token, request)).decision).toBe("ALLOW");
+    for (let i = 0; i < 2; i++) expect((await f.identity.issueAuthorizationSnapshot(freshLogin.access_token, request)).decision).toBe("ALLOW");
     expect(evaluate).toHaveBeenCalledTimes(2);
     evaluate.mockResolvedValue({ decision: "DENY", reason_codes: ["source-revoked"], evidence_refs: [] });
-    expect((await f.identity.issueAuthorizationSnapshot(f.login.access_token, request)).decision).toBe("DENY");
+    expect((await f.identity.issueAuthorizationSnapshot(freshLogin.access_token, request)).decision).toBe("DENY");
     expect(evaluate).toHaveBeenCalledTimes(3);
     expect(f.sourceValidation).toHaveBeenCalledTimes(4);
     await f.identity.replaceAuthorizationGrants({ principal_id: principal.principal_id, expected_authorization_revision: principal.authorization_revision,
       grants: [{ action: "ee.read", effect: "deny", scope_type: "project", scope_id: "T1A", evidence_ref: "pc:deny" }] });
     evaluate.mockClear();
-    expect((await f.identity.issueAuthorizationSnapshot(f.login.access_token, request)).decision).toBe("DENY");
+    const deniedLogin = await f.identity.signInExternal({ identity_provider_ref: "eeclaw", issuer: "http://ee-t1a.invalid",
+      external_subject: "42", tenant_or_org_ref: "t1a" }, randomUUID(), f.login.expires_at);
+    expect((await f.identity.issueAuthorizationSnapshot(deniedLogin.access_token, request)).decision).toBe("DENY");
     expect(evaluate).not.toHaveBeenCalled();
-    expect((await f.identity.issueAuthorizationSnapshot(f.login.access_token, { ...request, actions: ["unknown.action"] })).decision).toBe("DENY");
+    expect((await f.identity.issueAuthorizationSnapshot(deniedLogin.access_token, { ...request, actions: ["unknown.action"] })).decision).toBe("DENY");
   });
 });

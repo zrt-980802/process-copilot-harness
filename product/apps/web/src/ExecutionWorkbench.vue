@@ -6,6 +6,7 @@ import type { ExperienceProjection } from "./experience-policy";
 import { sourceLinks, sourceCommand, type Row } from "./provider-view-adapter";
 import SchemaField from "./SchemaField.vue";
 import MarkdownMessage from "./MarkdownMessage.vue";
+import { authorizationSources } from "./authorization-presentation";
 interface Tool { tool_release_id: string; tool_definition_id: string; schema_digest: string;
   compatibility?: { display_name?: string; domain?: string };
   input_schema: { type: string; properties: Record<string, { type?: string }>; required?: string[] };
@@ -18,9 +19,12 @@ interface Execution { session?: { assignment: { runtime_id: string; runtime_epoc
   runtime_available: boolean;
   events: Array<{ event_id: string; event_type: string; durability: string; occurred_at: string }>;
   ledger: Array<{ operation: { operation_id: string; state: string; approval_id?: string };
+    audit?: Array<{ authority_decision?: { decision_id: string; pc_session_id: string; decision_mode: string;
+      provider_mapping_release_id?: string; provider_decision_ref?: string } }>;
     external?: { tool_release_id: string; outcome_state: string; result?: { result: Record<string, unknown>; external_evidence_refs: string[] } } }> }
 interface ChatMessage { message_id: string; role: "user" | "assistant"; content: string; sequence: number; occurred_at: string }
 const props = defineProps<{ token: string; project: string; workspaceId?: string; conversationMode?: boolean; experience: ExperienceProjection }>();
+function authority(item: Execution["ledger"][number]) { return item.audit?.filter(row => row.authority_decision).at(-1)?.authority_decision; }
 const { request } = useExperience(() => props.project);
 const emit = defineEmits<{ changed: [] }>();
 const tab = ref("run");
@@ -221,6 +225,12 @@ onBeforeUnmount(() => { refreshGeneration++; chatGeneration++; });
       <article v-for="item in execution?.ledger" :key="item.operation.operation_id" class="evidence-row">
         <strong>{{ tools.find(t => t.tool_release_id === item.external?.tool_release_id)?.tool_definition_id || item.operation.operation_id }}</strong>
         <span>{{ item.operation.state }}</span>
+        <small v-if="authority(item)">执行授权：{{ authorizationSources(authority(item)!.decision_mode) }}</small>
+        <details v-if="authority(item)"><summary>授权记录</summary><dl class="operation-authority-record">
+          <dt>PC 会话</dt><dd>{{ authority(item)!.pc_session_id }}</dd><dt>PC 决策</dt><dd>{{ authority(item)!.decision_id }}</dd>
+          <template v-if="authority(item)!.provider_mapping_release_id"><dt>兼容映射</dt><dd>{{ authority(item)!.provider_mapping_release_id }}</dd></template>
+          <template v-if="authority(item)!.provider_decision_ref"><dt>数据源决策</dt><dd>{{ authority(item)!.provider_decision_ref }}</dd></template>
+        </dl></details>
         <button v-if="item.external?.outcome_state === 'OUTCOME_UNKNOWN'" type="button" :disabled="busy" @click="reconcile(item.operation.operation_id)"><RefreshCw :size="16" />回读对账</button>
         <code v-for="uri in item.external?.result?.external_evidence_refs" :key="uri">{{ uri }}</code>
         <a v-for="link in ownerLinks(item.external?.result?.result)" :key="link.uri" :href="`#owner=${encodeURIComponent(link.uri)}`" @click.prevent="openOwner(link.uri)"><ExternalLink :size="14" />{{ link.name }}</a>
@@ -244,3 +254,9 @@ onBeforeUnmount(() => { refreshGeneration++; chatGeneration++; });
     <details v-if="result" class="tool-result" :open="!answer"><summary>执行结果</summary><pre>{{ JSON.stringify(result, null, 2) }}</pre></details>
   </section>
 </template>
+
+<style scoped>
+.operation-authority-record { min-width: 0; font-size: 12px; }
+.operation-authority-record dt { color: #65727b; margin-top: 8px; }
+.operation-authority-record dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+</style>

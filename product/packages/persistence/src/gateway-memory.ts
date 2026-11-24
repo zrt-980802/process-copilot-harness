@@ -137,6 +137,11 @@ export class MemoryGatewayRepository implements GatewayRepository {
     return Promise.resolve(binding === undefined ? undefined : clone(binding));
   }
 
+  listActiveExternalAccountBindings(tenantId: string, connectorId: string, principalId: string): Promise<ExternalAccountBinding[]> {
+    return Promise.resolve([...this.accounts.values()].filter(account => account.tenant_id === tenantId
+      && account.connector_id === connectorId && account.principal_id === principalId && account.status === "ACTIVE").map(clone));
+  }
+
   findExternalAccountBinding(
     tenantId: string,
     connectorId: string,

@@ -6,6 +6,7 @@ import type {
   ExternalAuthorizationDecision,
   ExternalAuthorizationPort
 } from "./identity-authorization.js";
+import type { ProviderCompatibilityMapping } from "./compatibility-mapping.js";
 import {
   ProviderHealthRegistry,
   type ProviderFailureKind
@@ -28,6 +29,7 @@ export interface AuthorityRouteInput {
   readonly tool_release_ids: readonly string[];
   readonly observed_at: string;
   readonly trusted_resource_authority?: string;
+  readonly compatibility_mapping?: ProviderCompatibilityMapping;
 }
 
 export interface AuthorityRouteDecision extends ExternalAuthorizationDecision {
@@ -38,6 +40,9 @@ export interface AuthorityRouteDecision extends ExternalAuthorizationDecision {
 const DEFAULT_ROUTES: readonly AuthorityRouteDefinition[] = [
   { route_id: "authority-route:conversation-personal", action_pattern: "conversation.run",
     resource_scope_pattern: "user:self", resource_authority: "pc", authorization_mode: "PC_ONLY" },
+  ...["personal_task.read", "personal_task.write", "identity.read", "capability.read"].map(action => ({
+    route_id: `authority-route:${action}`, action_pattern: action, resource_scope_pattern: "user:self",
+    resource_authority: "pc", authorization_mode: "PC_ONLY" as const })),
   ...["memory", "task", "runtime", "resource", "profile", "plugin", "tool"].map((namespace) => ({
     route_id: `authority-route:pc-${namespace}`,
     action_pattern: `${namespace}.*`,
@@ -52,7 +57,10 @@ const DEFAULT_ROUTES: readonly AuthorityRouteDefinition[] = [
   { route_id: "authority-route:ee-draft-read", action_pattern: "draft.read", resource_scope_pattern: "project:*",
     resource_authority: "eeclaw", authorization_mode: "PC_AND_PROVIDER", provider_registration_id: "provider:eeclaw" },
   { route_id: "authority-route:ee-actions", action_pattern: "ee.*", resource_scope_pattern: "project:*",
-    resource_authority: "eeclaw", authorization_mode: "PC_AND_PROVIDER", provider_registration_id: "provider:eeclaw" }
+    resource_authority: "eeclaw", authorization_mode: "PC_AND_PROVIDER", provider_registration_id: "provider:eeclaw" },
+  ...["project.read", "requirement.read", "function.read", "ssts.read", "ssts.generate", "ssts.review.request", "ssts.review.decide", "tool.execute", "approval.decide"].map(action => ({
+    route_id: `authority-route:source-${action}`, action_pattern: action, resource_scope_pattern: "project:*",
+    resource_authority: "eeclaw", authorization_mode: "PC_AND_PROVIDER" as const, provider_registration_id: "provider:eeclaw" }))
 ];
 
 function patternMatches(pattern: string, value: string): boolean {
@@ -143,6 +151,11 @@ export class AuthorityRouter {
     return active.length === 1 ? active[0]!.authorization_mode : "DENY_UNKNOWN";
   }
 
+  resolveRoute(input: AuthorityRouteInput): AuthorityRouteDefinition | undefined {
+    const routes = this.matchingRoutes(input);
+    return routes.length === 1 ? structuredClone(routes[0]!) : undefined;
+  }
+
   async evaluate(input: AuthorityRouteInput): Promise<AuthorityRouteDecision> {
     const active = this.matchingRoutes(input);
     if (active.length === 0) {
@@ -204,7 +217,8 @@ export class AuthorityRouter {
         principal: input.principal,
         action: input.action,
         resource_scope_refs: input.resource_scope_refs,
-        observed_at: input.observed_at
+        observed_at: input.observed_at,
+        ...(input.compatibility_mapping ? { compatibility_mapping: input.compatibility_mapping } : {})
       });
       attempt.success("provider_authorization_responded", decision.evidence_refs[0]);
       return {

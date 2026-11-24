@@ -302,6 +302,13 @@ export class PostgresGatewayRepository implements GatewayRepository {
     return result.rows[0]?.payload;
   }
 
+  async listActiveExternalAccountBindings(tenantId: string, connectorId: string, principalId: string): Promise<ExternalAccountBinding[]> {
+    const result = await this.pool.query<{ payload: ExternalAccountBinding }>(`SELECT payload FROM pc_gateway_external_account
+      WHERE tenant_id=$1 AND connector_id=$2 AND principal_id=$3 AND status='ACTIVE' ORDER BY external_account_binding_id LIMIT 2`,
+    [tenantId, connectorId, principalId]);
+    return result.rows.map(row => row.payload);
+  }
+
   async findExternalAccountBinding(
     tenantId: string,
     connectorId: string,

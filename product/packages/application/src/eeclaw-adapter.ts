@@ -4,6 +4,7 @@ import type {
   ExternalAuthorizationDecision,
 } from "./identity-authorization.js";
 import type { EnterpriseAuthorizationPort } from "./external-provider.js";
+import type { ProviderCompatibilityMapping } from "./compatibility-mapping.js";
 
 export interface EeClawAuthorizationDecision {
   readonly contract_name: "eeclaw.authorization-decision/1";
@@ -102,19 +103,21 @@ implements EnterpriseAuthorizationPort {
     readonly action: string;
     readonly resource_scope_refs: readonly string[];
     readonly observed_at: string;
+    readonly compatibility_mapping?: ProviderCompatibilityMapping;
   }): Promise<ExternalAuthorizationDecision> {
     const accountId = await this.options.resolveAccountId(input.principal);
     if (accountId === undefined) {
       return adapterDeny("eeclaw_identity_link_missing");
     }
-    const permissionKey = this.options.resolvePermissionKey(input.action);
+    const mapping = input.compatibility_mapping;
+    const permissionKey = mapping ? mapping.provider_permission_mapping.permission_keys[0] : this.options.resolvePermissionKey(input.action);
     if (permissionKey === undefined) {
       return adapterDeny("eeclaw_permission_mapping_missing");
     }
     const scope = projectScope(input.resource_scope_refs);
     if (scope === undefined) return adapterDeny("eeclaw_project_scope_invalid");
     const operation = scope.type === "project"
-      ? this.options.resolveProjectOperation?.(input.action) : undefined;
+      ? mapping ? mapping.provider_action_mapping.action_keys[0] : this.options.resolveProjectOperation?.(input.action) : undefined;
     if (scope.type === "project" && this.options.resolveProjectOperation !== undefined && operation === undefined) {
       return adapterDeny("eeclaw_operation_mapping_missing");
     }
@@ -210,7 +213,9 @@ implements EnterpriseAuthorizationPort {
       evidence_refs: [
         `eeclaw:C41:${decision.authorization_version_digest}`,
         ...decision.policy_artifact_release_refs
-      ]
+      ],
+      source: { decision_ref: `eeclaw:C41:${decision.authorization_version_digest}`, observed_at: decision.observed_at,
+        ...(decision.expires_at ? { expires_at: decision.expires_at } : {}) }
     };
   }
 

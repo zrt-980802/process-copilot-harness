@@ -86,6 +86,12 @@ function digest(value: unknown): string {
   return `sha256:${createHash("sha256").update(canonical(value)).digest("hex")}`;
 }
 
+function authorizationDigestMatches(actual: string, value: unknown): boolean {
+  const expected = digest(value);
+  // C03 identity snapshots historically use bare hex; Gateway artifacts use sha256:.
+  return actual === expected || actual === expected.slice("sha256:".length);
+}
+
 function clone<T>(value: T): T {
   return structuredClone(value);
 }
@@ -641,6 +647,10 @@ export class ControlledExecutionGatewayService {
     await this.assertWorkspace(envelope, assignment);
     const authorization = await this.identity.evaluatePrincipalAuthorization({
       principal_id: principal.principal_id,
+      execution_session_id: assignment.pc_session_id,
+      connector_id: connector.connector_id,
+      tool_call_id: envelope.operation_id,
+      ...(envelope.principal_envelope.credential_generation === undefined ? {} : { credential_generation: envelope.principal_envelope.credential_generation }),
       actions: tool.required_permissions,
       resource_scope_refs:
         envelope.principal_envelope.resource_scope_refs,
@@ -1071,7 +1081,9 @@ export class ControlledExecutionGatewayService {
     }
     const tool = await this.requirePublishedTool(operation.tool_release_id);
     const authorization = await this.identity.evaluatePrincipalAuthorization({
-      principal_id: operation.principal_id, actions: tool.required_permissions,
+      principal_id: operation.principal_id, actions: tool.required_permissions, execution_session_id: operation.pc_session_id,
+      connector_id: connector.connector_id,
+      tool_call_id: operation.operation_id,
       resource_scope_refs: operation.resource_scope_refs ?? [], tool_release_ids: [tool.tool_release_id], policy_model_revision: 1 });
     const account = await this.repository.findExternalAccountBinding(operation.tenant_id, connector.connector_id, operation.principal_id);
     if (authorization.decision !== "ALLOW" || !account || account.status !== "ACTIVE"
@@ -1174,6 +1186,16 @@ export class ControlledExecutionGatewayService {
     return clone(operation.result);
   }
 
+  async getAuthorizedOperation(operationId: string, tenantId: string, principalId: string): Promise<ExternalOperationRecord | undefined> {
+    const operation = await this.repository.getOperation(operationId);
+    if (!operation) return undefined;
+    if (operation.tenant_id !== tenantId || operation.principal_id !== principalId) {
+      throw new GatewayError("PC_GATEWAY_OPERATION_SCOPE_DENIED", "Operation is unavailable to this Principal");
+    }
+    if (operation.result) await this.currentResultDeliveryGuard(operation, { tenant_id: tenantId, principal_id: principalId });
+    return clone(operation);
+  }
+
   private async currentResultDeliveryGuard(operation: ExternalOperationRecord, request: {
     tenant_id: string;
     principal_id: string;
@@ -1220,14 +1242,17 @@ export class ControlledExecutionGatewayService {
         || original.lease.external_account_id !== account.external_account_id
         || original.lease.credential_subject !== account.credential_subject) deny("result_original_subject_mismatch");
       const authorization = await this.identity.evaluatePrincipalAuthorization({ principal_id: request.principal_id,
+        execution_session_id: operation.pc_session_id, tool_call_id: operation.operation_id,
+        connector_id: connector.connector_id,
+        ...(envelope?.credential_generation === undefined ? {} : { credential_generation: envelope.credential_generation }),
         actions: tool.required_permissions, resource_scope_refs: operation.resource_scope_refs!,
         tool_release_ids: [tool.tool_release_id], policy_model_revision: 1 });
       if (authorization.decision !== "ALLOW" || authorization.principal_id !== request.principal_id
         || !Number.isInteger(authorization.authorization_revision)
         || (envelope && authorization.authorization_revision !== envelope.authorization_revision)
         || !authorization.allowed_actions || tool.required_permissions.some(permission => !authorization.allowed_actions.includes(permission))
-        || authorization.resource_scope_digest !== digest(unique(operation.resource_scope_refs!))
-        || authorization.tool_set_digest !== digest([tool.tool_release_id])
+        || !authorizationDigestMatches(authorization.resource_scope_digest, unique(operation.resource_scope_refs!))
+        || !authorizationDigestMatches(authorization.tool_set_digest, [tool.tool_release_id])
         || !Number.isFinite(Date.parse(authorization.expires_at)) || Date.parse(authorization.expires_at) <= this.now().getTime()) deny("result_current_authorization_denied");
     } catch (error) {
       const reasons = error instanceof GatewayError && error.code === "PC_GATEWAY_RESULT_DELIVERY_DENIED"

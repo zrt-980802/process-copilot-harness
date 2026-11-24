@@ -14,10 +14,15 @@ import type {
   PCPrincipal,
   PilotAccount,
   PilotSession,
+  SessionAssurance,
+  SessionAssuranceRecord,
   PrincipalEnvelope
 } from "@pc/domain";
-import { IdentityAuthorizationError } from "@pc/domain";
+import { IdentityAuthorizationError, sealSessionAssurance, validateSessionAssurance } from "@pc/domain";
 import { AuthorityRouter } from "./authority-router.js";
+import { authorizationRequestContext } from "./authorization-context.js";
+import type { AuthorityDecision, AuthorityDecisionInput, PcAuthorityDecisionService } from "./authority-decision.js";
+import type { ProviderCompatibilityMapping } from "./compatibility-mapping.js";
 import type {
   ProviderAttempt,
   ProviderFailureKind,
@@ -61,6 +66,13 @@ export interface ReplaceAuthorizationGrantsInput {
 }
 
 export interface IssueAuthorizationSnapshotInput {
+  readonly pc_session_id?: string;
+  readonly execution_session_id?: string;
+  readonly tool_call_id?: string;
+  readonly turn_id?: string;
+  readonly credential_generation?: number;
+  readonly connector_id?: string;
+  readonly resource_authority?: string;
   readonly actions: readonly string[];
   readonly resource_scope_refs: readonly string[];
   readonly tool_release_ids: readonly string[];
@@ -87,6 +99,7 @@ export interface ExternalAuthorizationDecision {
   readonly decision: "ALLOW" | "DENY";
   readonly reason_codes: readonly string[];
   readonly evidence_refs: readonly string[];
+  readonly source?: { readonly decision_ref: string; readonly observed_at: string; readonly expires_at?: string };
 }
 
 export interface ExternalAuthorizationPort {
@@ -95,6 +108,7 @@ export interface ExternalAuthorizationPort {
     readonly action: string;
     readonly resource_scope_refs: readonly string[];
     readonly observed_at: string;
+    readonly compatibility_mapping?: ProviderCompatibilityMapping;
   }): Promise<ExternalAuthorizationDecision>;
 }
 
@@ -121,7 +135,11 @@ export interface IdentityAuthorizationRepository {
     principalId: string,
     identityProviderRef: string
   ): Promise<ExternalIdentityLink | undefined>;
-  createPilotSession(session: PilotSession): Promise<void>;
+  createPilotSession(session: PilotSession, assurance?: SessionAssuranceRecord): Promise<void>;
+  getSessionAssurance(authenticationContextId: string): Promise<SessionAssuranceRecord | undefined>;
+  getSessionAssuranceByPcSessionId(pcSessionId: string): Promise<SessionAssuranceRecord | undefined>;
+  getPilotSessionByContext(contextId: string): Promise<PilotSession | undefined>;
+  getPilotAccountById(accountId: string): Promise<PilotAccount | undefined>;
   findPilotSession(
     tokenDigest: string,
     now: string
@@ -143,6 +161,7 @@ export interface PilotSignInResult {
   readonly expires_at: string;
   readonly authentication_context_id: string;
   readonly principal: PCPrincipal;
+  readonly session_assurance?: SessionAssurance;
 }
 
 const DEFAULT_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -257,6 +276,9 @@ function isPersonalConversation(
 }
 
 export class IdentityAuthorizationService {
+  private decisions?: PcAuthorityDecisionService;
+  private executionSessionResolver?: (sessionId: string) => Promise<string | undefined>;
+  private decisionHistory?: (sessionId: string) => Promise<AuthorityDecision[]>;
   private providerSessionValidator?: (session: PilotSession, principal: PCPrincipal) => Promise<void>;
   private readonly authorityRouter: AuthorityRouter;
 
@@ -316,7 +338,8 @@ export class IdentityAuthorizationService {
     tenantId: string,
     accountKey: string,
     secret: string,
-    ttlMs = DEFAULT_SESSION_TTL_MS
+    ttlMs = DEFAULT_SESSION_TTL_MS,
+    method: "LOCAL" | "STANDALONE" = "LOCAL"
   ): Promise<PilotSignInResult> {
     positiveDuration(ttlMs, "ttl_ms");
     const account = await this.repository.getPilotAccount(
@@ -341,21 +364,31 @@ export class IdentityAuthorizationService {
       principal_id: principal.principal_id,
       token_digest: tokenDigest(token),
       issued_at: now.toISOString(),
-      expires_at: new Date(now.getTime() + ttlMs).toISOString()
+      expires_at: new Date(now.getTime() + Math.min(ttlMs, DEFAULT_SESSION_TTL_MS)).toISOString()
     };
-    await this.repository.createPilotSession(session);
+    const assurance = sealSessionAssurance({ contract_name: "pc.session-assurance/1", contract_version: 1,
+      session_assurance_id: `assurance:${randomUUID()}`, pc_session_id: `pc-session:${randomUUID()}`,
+      principal_id: principal.principal_id, tenant_id: principal.tenant_id, authentication_method: method,
+      identity_provider_ref: method === "LOCAL" ? "local" : "standalone", identity_revision: principal.identity_revision,
+      authorization_revision: principal.authorization_revision, assurance_level: "LOCAL_VERIFIED", issued_at: session.issued_at,
+      pc_absolute_limit_at: new Date(now.getTime() + DEFAULT_SESSION_TTL_MS).toISOString(), absolute_expires_at: session.expires_at,
+      session_state: "ACTIVE", evidence_refs: ["pc:authentication:native"] });
+    await this.repository.createPilotSession(session, { assurance, authentication_context_id: session.authentication_context_id,
+      pilot_account_id: account.pilot_account_id, record_version: 1 });
     return {
       access_token: token,
       token_type: "Bearer",
       expires_at: session.expires_at,
       authentication_context_id: session.authentication_context_id,
-      principal
+      principal,
+      session_assurance: assurance
     };
   }
 
   async authenticate(accessToken: string): Promise<{
     session: PilotSession;
     principal: PCPrincipal;
+    assurance: SessionAssurance;
   }> {
     const session = await this.repository.findPilotSession(
       tokenDigest(requiredText(accessToken, "access_token")),
@@ -379,7 +412,98 @@ export class IdentityAuthorizationService {
         throw new IdentityAuthorizationError("PC_IDENTITY_LINK_UNVERIFIED", "PC Session requires an unambiguous verified local identity link");
       }
     }
-    return { session, principal };
+    const record = await this.repository.getSessionAssurance(session.authentication_context_id);
+    if (!record) throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_REQUIRED", "Sign in again to establish a current Session");
+    const assurance = validateSessionAssurance(record, session, principal, this.now().toISOString(),
+      record.assurance.authentication_method === "PROVIDER"
+        ? await this.repository.findVerifiedIdentityLink(principal.principal_id, record.assurance.identity_provider_ref) : undefined,
+      record.pilot_account_id ? await this.repository.getPilotAccountById(record.pilot_account_id) : undefined);
+    const context = authorizationRequestContext();
+    if (context) {
+      if (context.principal_id && context.principal_id !== principal.principal_id) {
+        throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_DENIED", "Request identity changed");
+      }
+      context.principal_id = principal.principal_id; context.pc_session_id = assurance.pc_session_id;
+    }
+    return { session, principal, assurance };
+  }
+
+  registerAuthorityDecisions(service: PcAuthorityDecisionService): void { this.decisions = service; }
+  get authorityDecisionsEnabled(): boolean { return this.decisions !== undefined; }
+
+  registerDecisionHistory(history: (sessionId: string) => Promise<AuthorityDecision[]>): void {
+    this.decisionHistory = history;
+  }
+
+  async currentSessionView(accessToken: string) {
+    const { assurance, principal } = await this.authenticate(accessToken);
+    const record = await this.repository.getSessionAssuranceByPcSessionId(assurance.pc_session_id);
+    const account = record?.pilot_account_id ? await this.repository.getPilotAccountById(record.pilot_account_id) : undefined;
+    return { principal_id: principal.principal_id, account_name: account?.account_key ?? "PC account",
+      session: { state: assurance.session_state, pc_session_id: assurance.pc_session_id, expires_at: assurance.absolute_expires_at,
+        identity_revision: assurance.identity_revision, authorization_revision: assurance.authorization_revision },
+      assurance_ref: assurance.session_assurance_id };
+  }
+
+  async recentAuthorityDecisions(accessToken: string) {
+    const { assurance, principal } = await this.authenticate(accessToken);
+    const history = await this.decisionHistory?.(assurance.pc_session_id) ?? [];
+    return history.filter(decision => decision.pc_session_id === assurance.pc_session_id && decision.principal_id === principal.principal_id
+      && decision.tenant_id === principal.tenant_id).slice(-20);
+  }
+
+  currentVerifiedIdentityLink(principalId: string, provider: string) {
+    return this.repository.findVerifiedIdentityLink(principalId, provider);
+  }
+
+  get authorityRouterForDecisions(): AuthorityRouter { return this.authorityRouter; }
+
+  async decideAuthority(accessToken: string, input: Omit<AuthorityDecisionInput, "principal_id" | "pc_session_id" | "execution_session_id">) {
+    const { principal, assurance } = await this.authenticate(accessToken);
+    if (!this.decisions) throw new IdentityAuthorizationError("PC_AUTHORITY_DECISION_UNAVAILABLE", "Authority decisions are unavailable");
+    return this.decisions.decide({ ...input, principal_id: principal.principal_id, pc_session_id: assurance.pc_session_id });
+  }
+
+  registerExecutionSessionResolver(resolve: (sessionId: string) => Promise<string | undefined>): void {
+    this.executionSessionResolver = resolve;
+  }
+
+  async currentAuthoritySession(input: AuthorityDecisionInput) {
+    const context = authorizationRequestContext();
+    const contextualSession = context?.pc_session_id ?? input.pc_session_id;
+    const executionSession = !contextualSession && input.execution_session_id ? await this.executionSessionResolver?.(input.execution_session_id) : undefined;
+    const pcSession = contextualSession ?? executionSession;
+    if (!pcSession || (input.execution_session_id && !contextualSession && !executionSession)
+      || (context?.principal_id && context.principal_id !== input.principal_id)
+      || (context?.pc_session_id && input.pc_session_id && context.pc_session_id !== input.pc_session_id)) {
+      throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_DENIED", "A current PC Session is required");
+    }
+    const record = await this.repository.getSessionAssuranceByPcSessionId(pcSession);
+    const session = record ? await this.repository.getPilotSessionByContext(record.authentication_context_id) : undefined;
+    if (!record || !session || record.assurance.principal_id !== input.principal_id) {
+      throw new IdentityAuthorizationError("PC_SESSION_ASSURANCE_DENIED", "Session owner is unavailable");
+    }
+    const principal = await this.requireActivePrincipal(input.principal_id);
+    const assurance = validateSessionAssurance(record, session, principal, this.now().toISOString(),
+      record.assurance.authentication_method === "PROVIDER"
+        ? await this.repository.findVerifiedIdentityLink(principal.principal_id, record.assurance.identity_provider_ref) : undefined,
+      record.pilot_account_id ? await this.repository.getPilotAccountById(record.pilot_account_id) : undefined);
+    return { principal, assurance };
+  }
+
+  async evaluatePcPolicy(principal: PCPrincipal, input: AuthorityDecisionInput): Promise<ExternalAuthorizationDecision> {
+    const current = await this.requireActivePrincipal(principal.principal_id);
+    const grants = await this.repository.listAuthorizationGrants(current.principal_id);
+    const scopes = [...new Set(input.resource_scope_refs)];
+    const matching = grants.filter(grant => (grant.action === input.action || grant.action === "*") && scopeMatches(grant, scopes));
+    if (!scopes.length || matching.some(grant => grant.effect === "deny")) {
+      return { decision: "DENY", reason_codes: ["pc_scope_or_explicit_deny"], evidence_refs: [] };
+    }
+    const personal = scopes.length === 1 && scopes[0] === `user:${current.principal_id}` && !input.tool_release_ids.length
+      && ["conversation.run", "identity.read", "capability.read", "personal_task.read", "personal_task.write"].includes(input.action);
+    const allowed = personal || scopes.every(scope => matching.some(grant => grant.effect === "allow" && scopeMatches(grant, [scope])));
+    return { decision: allowed ? "ALLOW" : "DENY", reason_codes: [allowed ? "pc_policy_allow" : "pc_no_scope_allow"],
+      evidence_refs: allowed ? [`pc:policy:${current.authorization_revision}`] : [] };
   }
 
   async authenticateForProvider(accessToken: string) {
@@ -414,9 +538,18 @@ export class IdentityAuthorizationService {
     const session: PilotSession = { authentication_context_id: `ee:${sessionId}:${randomUUID()}`,
       principal_id: principal.principal_id, token_digest: tokenDigest(accessToken), issued_at: now.toISOString(),
       expires_at: new Date(expires).toISOString() };
-    await this.repository.createPilotSession(session);
+    const assurance = sealSessionAssurance({ contract_name: "pc.session-assurance/1", contract_version: 1,
+      session_assurance_id: `assurance:${randomUUID()}`, pc_session_id: `pc-session:${randomUUID()}`,
+      principal_id: principal.principal_id, tenant_id: principal.tenant_id, authentication_method: "PROVIDER",
+      identity_provider_ref: input.identity_provider_ref, identity_link_id: binding.identity_link.identity_link_id,
+      identity_revision: principal.identity_revision, authorization_revision: principal.authorization_revision,
+      assurance_level: "PROVIDER_VERIFIED", authentication_evidence_expires_at: new Date(sessionExpiresAt).toISOString(),
+      issued_at: session.issued_at, pc_absolute_limit_at: new Date(now.getTime() + DEFAULT_SESSION_TTL_MS).toISOString(),
+      absolute_expires_at: session.expires_at, session_state: "ACTIVE", evidence_refs: ["pc:authentication:provider-verified"] });
+    await this.repository.createPilotSession(session, { assurance, authentication_context_id: session.authentication_context_id,
+      identity_link_revision: binding.identity_link.identity_link_revision, record_version: 1 });
     return { access_token: accessToken, token_type: "Bearer", expires_at: session.expires_at,
-      authentication_context_id: session.authentication_context_id, principal };
+      authentication_context_id: session.authentication_context_id, principal, session_assurance: assurance };
   }
 
   listExternalBindings(provider: string, issuer: string, tenant: string) {
@@ -565,11 +698,11 @@ export class IdentityAuthorizationService {
     accessToken: string,
     input: IssueAuthorizationSnapshotInput
   ): Promise<AuthorizationSnapshot> {
-    const { principal } = await this.authenticate(accessToken);
+    const { principal, assurance } = await this.authenticate(accessToken);
     if (this.classifyAuthorization(principal, input) === "PC_AND_PROVIDER") {
       await this.authenticateForProvider(accessToken);
     }
-    return this.evaluateAuthorization(principal, input);
+    return this.evaluateAuthorization(principal, { ...input, pc_session_id: assurance.pc_session_id });
   }
 
   classifyAuthorization(principal: PCPrincipal, input: IssueAuthorizationSnapshotInput) {
@@ -666,6 +799,23 @@ export class IdentityAuthorizationService {
     principal: PCPrincipal,
     input: IssueAuthorizationSnapshotInput
   ): Promise<AuthorizationSnapshot> {
+    if (this.decisions) {
+      const decisions = [];
+      for (const action of [...new Set(input.actions.map(item => requiredText(item, "action")))].sort()) {
+        decisions.push(await this.decisions.decide({ ...input, principal_id: principal.principal_id, action }));
+      }
+      const allowed = decisions.length > 0 && decisions.every(decision => decision.decision === "ALLOW");
+      const now = this.now();
+      return freeze({ contract_name: "pc.authorization-snapshot/1", contract_version: 1,
+        principal_id: principal.principal_id, authorization_revision: principal.authorization_revision, policy_model_revision: input.policy_model_revision,
+        ...(input.profile_release_id ? { profile_release_id: input.profile_release_id } : {}),
+        allowed_actions: decisions.filter(decision => decision.decision === "ALLOW").map(decision => decision.action),
+        resource_scope_digest: digest([...new Set(input.resource_scope_refs)].sort()), tool_set_digest: digest([...input.tool_release_ids].sort()),
+        decision: allowed ? "ALLOW" : "DENY", reason_codes: decisions.flatMap(decision => decision.reason_codes), issued_at: now.toISOString(),
+        expires_at: new Date(Math.min(now.getTime() + (input.ttl_ms ?? DEFAULT_DECISION_TTL_MS),
+          ...decisions.map(decision => Date.parse(decision.expires_at)))).toISOString(),
+        decision_evidence_refs: decisions.map(decision => `pc:decision:${decision.decision_id}`) } satisfies AuthorizationSnapshot);
+    }
     const actions = [...new Set(input.actions.map((action) =>
       requiredText(action, "action")
     ))].sort();
