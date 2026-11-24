@@ -1,6 +1,7 @@
 import { inject, onBeforeUnmount, watch, type InjectionKey, type Ref } from "vue";
 import { request as rawRequest, ApiClientError } from "./api";
 import { experiencePolicy, type ExperienceSnapshot } from "./experience-policy";
+import { invalidatesExternalExperience } from "./authorization-presentation";
 
 export interface ExperienceContext {
   snapshot: Ref<ExperienceSnapshot>;
@@ -33,7 +34,7 @@ export function useExperience(project: () => string = () => "") {
       return result;
     } catch (error) {
       if (external && !signal.aborted && snapshot.generation === context!.snapshot.value.generation
-        && error instanceof ApiClientError && (error.status === 403 || error.code.includes("PROVIDER") || error.code.includes("AUTHORIZATION"))) {
+        && error instanceof ApiClientError && invalidatesExternalExperience(error)) {
         context!.fail(error);
       }
       throw error;

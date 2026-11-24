@@ -199,5 +199,5 @@ RCI-03 的 READ 投影整改仍待单独授权的真实 EE 复验。T1B 和 T2A-
 - EE 业务权限整体迁移到 PC；
 - DSH Core 修改；
 - EE schema 或共享数据库变更；
-- 未单独授权的 PC Session schema 变更（T1B）；
+- T1B 已完成后的其他未单独授权的 PC Session schema 变更；
 - 生产部署、远端环境修改或现有仓库历史改写。

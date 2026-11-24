@@ -28,6 +28,19 @@ export function authorizationSources(mode: string): string {
   return mode === "PC_AND_PROVIDER" ? "PC · 本地绑定 · 数据源" : mode === "PC_ONLY" ? "PC" : "未确认";
 }
 
+const experienceInvalidationCodes = [
+  /^PC_PROVIDER_/u,
+  /^PC_EE_/u,
+  /^PC_SESSION_ASSURANCE_/u,
+  /^PC_AUTHORIZATION_(?:REVISION_STALE|SNAPSHOT_EXPIRED|SNAPSHOT_STALE)$/u,
+  /^PC_AUTHORITY_(?:BINDING_DENIED|MAPPING_DENIED|DECISION_UNAVAILABLE)$/u,
+  /^PC_WORKBENCH_(?:PROJECT_PROVIDER_UNAVAILABLE|PROVIDER_UNAVAILABLE|PROJECT_DENIED|PROFILE_REVOKED|TOOL_REVOKED|AUTHORIZATION_DENIED|SESSION_REAUTH_REQUIRED|AUTHORITY_ROUTE_DENIED)$/u
+];
+
+export function invalidatesExternalExperience(error: { status: number; code: string }): boolean {
+  return experienceInvalidationCodes.some(pattern => pattern.test(error.code));
+}
+
 export function publishAuthorizationObservation(header: string | null, requestGeneration: number, errorCode?: string): void {
   if (!header || typeof window === "undefined") return;
   try {

@@ -21,6 +21,7 @@ import { api, ApiClientError, request } from "./api";
 import { emptyExperience, experiencePolicy, visibleTasks } from "./experience-policy";
 import { ExperienceSession } from "./experience-session";
 import { experienceKey } from "./experience-context";
+import { invalidatesExternalExperience } from "./authorization-presentation";
 import { providerState, taskScene } from "./provider-view-adapter";
 import ExecutionWorkbench from "./ExecutionWorkbench.vue";
 import WorkbenchShell from "./WorkbenchShell.vue";
@@ -160,7 +161,7 @@ function showError(caught: unknown, fallback: string): void {
       };
       return;
     }
-    if (experience.value.showProjectSurface && (caught.status === 403 || caught.code.includes("PROVIDER") || caught.code.includes("AUTHORIZATION"))) invalidateExternal(caught);
+    if (experience.value.showProjectSurface && invalidatesExternalExperience(caught)) invalidateExternal(caught);
     error.value = {
       title: /PROVIDER|AUTHORITY|AUTHORIZATION|POLICY|GATEWAY/u.test(caught.code) ? "权限或能力暂不可用" : caught.code,
       message: caught.code.includes("PROVIDER") || caught.code.includes("WORKBENCH") ? "当前能力或项目范围不可用，请刷新能力状态。" : caught.message,
