@@ -50,10 +50,17 @@ capabilities retain their vertical views. Design and local developer evidence:
 `architecture/frontend-provider-neutral-experience-v1.md` and
 `product/docs/frontend-provider-isolation-01-verification.md`.
 
-The real EE isolation task remains pending real retest. The Session/source
-boundary (RCI-02), READ projection closure (RCI-03), and bounded Gateway
-Connector-target repair are developer verified; the real task is not complete.
-Evidence and retest limits:
+The isolated real EE candidate has developer-targeted evidence for the
+Session/source outage boundary (RCI-02), READ projection closure (RCI-03),
+authorization/account isolation and bounded Gateway Connector targeting. A
+hardened model-turn rerun now passes at developer level. The first bounded A1
+current-generation cross-Principal check also passes data isolation without
+Provider redispatch. Its short remediation now records the API-level denial in
+Gateway audit; the remaining adversarial matrix is still pending. The real task is not independently
+accepted or production ready.
+Evidence and exact limits:
+`product/docs/real-ee-read-retest-01-verification.md`. The earlier blocked
+closure report remains historical evidence in
 `product/docs/real-ee-integration-closure-01.md`.
 
 ADR-0025 T0 freezes C67-C69 Session Assurance, Authority Decision and immutable
@@ -61,20 +68,25 @@ Provider Compatibility Mapping, with 69 total contracts and pure golden tests.
 **T0 COMPLETE / T1A COMPLETE**. The PC authorization MVP implements local C67
 Session Assurance, C68 decisions, composed bindings, C69 mappings and a read-only
 capability view. Its developer result is **AUTHORIZATION MVP LOCAL COMPLETE /
-REAL EE EXTERNAL BLOCKED**; real EE retest and T3 acceptance remain incomplete.
+REAL EE TARGETED EVIDENCE AVAILABLE / FULL ACCEPTANCE PENDING**; T3 acceptance
+remains incomplete.
 The approved additive PC schema, isolated recovery tests and synthetic browser
 boundaries are recorded in `product/docs/pc-authorization-mvp-01-verification.md`.
-RCI-02 is fixed at the
-deterministic PC/source boundary and remains pending real EE retest. RCI-03 READ
-projection is also fixed pending real retest. Contract and T1A evidence:
+RCI-02 is fixed at the deterministic PC/source boundary and has a developer-pass
+hardened real outage/model rerun. RCI-03 READ
+projection has a targeted real EE success path and A1 data-isolation evidence;
+the A1 denial-audit remediation also passes, while the full adversarial matrix and
+independent acceptance remain pending. Contract and T1A evidence:
 `architecture/adr-0025-t0-contract-and-compatibility-v1.md` and
 `product/docs/adr-0025-t0-verification.md`, plus
 `product/docs/adr-0025-t1a-verification.md`.
 
 RCI-03 verifies durable Gateway results before moving a READ Business Operation
 from VERIFYING to SUCCEEDED. Write and unknown outcomes retain their stronger
-readback/reconciliation rules. Real EE retest requires a separate task; no next
-phase starts automatically. Developer verification:
+readback/reconciliation rules. The hardened model rerun is complete at developer
+level; the remaining adversarial matrix and independent acceptance require
+follow-up work; no next phase starts
+automatically. Developer verification:
 `product/docs/rci-03-read-operation-projection-verification.md`. Task authority:
 `governance/RCI-03-READ-OPERATION-PROJECTION-CLOSURE-TASK.md`.
 

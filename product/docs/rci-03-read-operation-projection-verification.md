@@ -2,11 +2,19 @@
 
 Date: 2026-11-23 (Asia/Shanghai).
 
-Current closeout: **RCI-03 AUTHORIZATION REMEDIATION COMPLETE / READY FOR
-INDEPENDENT RETEST / REAL EE READ RETEST PENDING**. The original implementation
-record below is historical. The authorization bypass discovered in independent
-review, preserved PostgreSQL supplement, final scope and current test counts are
-recorded in `rci-03-authorization-remediation-verification.md`.
+Current closeout: **RCI-03 AUTHORIZATION REMEDIATION COMPLETE / TARGETED REAL EE
+READ PATH AND HARDENED MODEL RERUN DEVELOPER PASS / ADVERSARIAL ACCEPTANCE
+PENDING**. The isolated real EE run produced terminal C22/C24/C28 READ evidence,
+real EE Trace and old-generation delivery denial. It did not exercise the full
+binding/Trace/result tampering or in-flight reload matrix, and it is not an
+independent acceptance. The original implementation record below is historical.
+The later A1 current-generation cross-Principal scenario passed data isolation
+without Provider redispatch. A short remediation added the missing API-level
+denial audit and passed a second real A1 run; see
+`real-ee-read-retest-01-verification.md`.
+The authorization bypass discovered in independent review, preserved PostgreSQL
+supplement, final scope and test counts are recorded in
+`rci-03-authorization-remediation-verification.md`.
 Remediation began at `317de013166f3ded3a684a4e9584de39d15df138` with five
 uncommitted PostgreSQL test/fixture/document deliverables; it did not begin with
 a clean worktree. They are preserved and included in the remediation commit.
@@ -14,12 +22,16 @@ a clean worktree. They are preserved and included in the remediation commit.
 PostgreSQL supplement: the originally unavailable persistence/restart validation
 was completed after Docker recovery. See
 `rci-03-postgres-restart-verification.md`. The original execution record and its
-skip counts below remain historical evidence. Real EE retest is still pending.
+skip counts below remain historical evidence. The bounded real EE result and its
+remaining gaps are recorded in `real-ee-read-retest-01-verification.md`.
 
 ```text
-RCI-03 READ PROJECTION FIXED_PENDING_REAL_RETEST
+RCI-03 READ PROJECTION TARGETED_REAL_EE_PATH_DEVELOPER_PASS
+RCI-02 HARDENED_MODEL_OUTAGE_RERUN_DEVELOPER_PASS
+RCI-03 A1 CROSS_PRINCIPAL_DATA_ISOLATION_AND_DENIAL_AUDIT_PASS
+FULL ADVERSARIAL MATRIX / INDEPENDENT ACCEPTANCE PENDING
 WRITE VERIFICATION NOT EXPANDED
-T1B / RCI-04 / T2 / T3 NOT STARTED
+T3 / D4B NOT STARTED
 ```
 
 ## Baseline and ownership
@@ -36,9 +48,10 @@ T1B / RCI-04 / T2 / T3 NOT STARTED
 
 ## W0: T1A closeout
 
-README, roadmap and architecture index now distinguish T1A COMPLETE and RCI-02
-FIXED_PENDING_REAL_RETEST from T1B/T2/T3 implementation. The real EE closure task
-has not been declared complete.
+At this task's original handoff, README, roadmap and architecture index
+distinguished T1A COMPLETE and RCI-02 FIXED_PENDING_REAL_RETEST from then-future
+T1B/T2/T3 implementation. The current bounded real EE status is recorded at the
+top of this document; full closure has not been declared.
 
 `IdentityAuthorizationService.classifyAuthorization()` uses the existing exact
 AuthorityRouter matcher for all actions and scopes. Post-turn reauthorization
@@ -208,8 +221,9 @@ audits. Earlier evidence is preserved; no historical 75-row data was changed.
 
 ## RCI03-5: original implementation handoff (historical)
 
-- Local developer verification only. RCI-02 and RCI-03 await real EE READ retest
-  under a separately authorized task; REAL-EE-INTEGRATION-CLOSURE-01 is not closed.
+- At the time of this original handoff, RCI-02 and RCI-03 awaited a separately
+  authorized real EE READ retest. The later bounded result is linked at the top;
+  the full adversarial/independent closure remains incomplete.
 - Stable EE Trace evidence is intentionally required by this bounded verifier;
   no second Provider or generic write verification is implemented.
 - WRITE/DESTRUCTIVE/EXTERNAL_SIDE_EFFECT still need their existing independent

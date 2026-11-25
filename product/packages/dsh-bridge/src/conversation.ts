@@ -19,6 +19,8 @@ export function projectConversation(events: DshSessionEvent[]): ConversationMess
   for (const event of [...events].sort((a, b) => a.seq - b.seq)) {
     if (event.type !== "user/message" && event.type !== "assistant/message") continue;
     const data = record(event.data);
+    const source = record(data.source);
+    if (event.type === "user/message" && source.kind === "runtime-context") continue;
     const message = event.type === "assistant/message" ? record(data.message) : data;
     const content = Array.isArray(message.content) ? message.content.flatMap((part) => {
       const entry = record(part);
@@ -29,5 +31,6 @@ export function projectConversation(events: DshSessionEvent[]): ConversationMess
     messages.set(id, { message_id: id, role: event.type === "user/message" ? "user" : "assistant",
       content, sequence: event.seq, occurred_at: new Date(event.time).toISOString() });
   }
-  return [...messages.values()].sort((a, b) => a.sequence - b.sequence);
+  return [...messages.values()].sort((a, b) => a.sequence - b.sequence)
+    .map((message, index) => ({ ...message, sequence: index + 1 }));
 }

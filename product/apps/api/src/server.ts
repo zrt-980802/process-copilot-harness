@@ -1678,8 +1678,10 @@ export function buildApiServer(
       const authenticated = await identityFrom(dependencies).authenticate(
         bearerToken(request.headers.authorization)
       );
-      const operation = await gatewayFrom(dependencies).getOperation(
-        request.params.operationId
+      const operation = await gatewayFrom(dependencies).getOperationForPrincipal(
+        request.params.operationId,
+        authenticated.principal.tenant_id,
+        authenticated.principal.principal_id
       );
       if (operation === undefined) return reply.status(404).send({
         error: {
@@ -1688,15 +1690,6 @@ export function buildApiServer(
           retryable: false
         }
       });
-      if (
-        operation.tenant_id !== authenticated.principal.tenant_id
-        || operation.principal_id !== authenticated.principal.principal_id
-      ) {
-        throw new ControlledGatewayError(
-          "PC_GATEWAY_OPERATION_SCOPE_DENIED",
-          "Operation belongs to another Principal"
-        );
-      }
       if (operation.result) {
         await identityFrom(dependencies).authenticateForProvider(bearerToken(request.headers.authorization));
         return gatewayFrom(dependencies).getAuthorizedOperation(operation.operation_id, authenticated.principal.tenant_id, authenticated.principal.principal_id);

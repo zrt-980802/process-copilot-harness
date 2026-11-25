@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { evidenceDigest } from "@pc/domain";
 import { authorizationMvpFixture } from "./support/authorization-mvp-fixture.js";
 import { RuntimeWorkbench } from "../src/workbench.js";
@@ -36,6 +36,29 @@ describe("PC authorization MVP real PC services with synthetic Provider/Runtime 
     const other = await f.identity.signInExternal({ ...f.key, external_subject: "other" }, randomUUID(), f.login.expires_at);
     const denied = await f.server.inject({ url: `/v1/operations/${f.envelope.operation_id}`, headers: { authorization: `Bearer ${other.access_token}` } });
     expect(denied.statusCode).toBe(403); expect(denied.body).not.toContain("confidential");
+    expect(denied.json()).toMatchObject({ error: { code: "PC_GATEWAY_OPERATION_SCOPE_DENIED" } });
+    const denialAudit = (await f.repository.listAudit(f.envelope.operation_id))
+      .filter(row => row.event_type === "RESULT_DELIVERY_DENIED" && row.principal_id === other.principal.principal_id);
+    expect(denialAudit).toHaveLength(1);
+    expect(denialAudit[0]).toMatchObject({ tenant_id: other.principal.tenant_id, operation_id: f.envelope.operation_id,
+      connector_id: f.connector.connector_id, tool_release_id: f.tool.tool_release_id, outcome: "DENY",
+      reason_codes: ["result_principal_scope_mismatch"], evidence_refs: [] });
+    expect(denialAudit[0]?.payload_digest).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(JSON.stringify(denialAudit)).not.toContain("confidential");
+    expect(f.dispatch).toHaveBeenCalledTimes(1);
+  });
+  it("keeps cross-principal result access denied when denial-audit persistence fails", async () => {
+    const f = await fixture();
+    await f.gateway.execute(f.envelope);
+    const other = await f.identity.signInExternal({ ...f.key, external_subject: "other" }, randomUUID(), f.login.expires_at);
+    const appendAudit = vi.spyOn(f.repository, "appendAudit").mockRejectedValueOnce(new Error("Synthetic audit backend detail"));
+    const denied = await f.server.inject({ url: `/v1/operations/${f.envelope.operation_id}`,
+      headers: { authorization: `Bearer ${other.access_token}` } });
+    expect(denied.statusCode).toBe(403);
+    expect(denied.json()).toMatchObject({ error: { code: "PC_GATEWAY_OPERATION_SCOPE_DENIED" } });
+    expect(appendAudit).toHaveBeenCalledTimes(1);
+    expect(denied.body).not.toContain("confidential");
+    expect(denied.body).not.toContain("audit backend");
     expect(f.dispatch).toHaveBeenCalledTimes(1);
   });
   it("executes a READ with C67/C68/C69/current Provider audit links and reauthorizes legal replay", async () => {

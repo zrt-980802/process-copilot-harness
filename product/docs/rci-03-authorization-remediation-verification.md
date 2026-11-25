@@ -2,6 +2,9 @@
 
 Date: 2026-11-23 (Asia/Shanghai).
 
+Original remediation closeout on 2026-11-23 (historical; see the current
+bounded real EE addendum under `Scope and remaining limits`):
+
 ```text
 RCI-03 AUTHORIZATION REMEDIATION COMPLETE
 READY FOR INDEPENDENT RETEST
@@ -163,20 +166,30 @@ EE, DSH Core, contracts, schema, migration, .env, ports, versions, production
 settings or old worktrees changed. No new dependency, shared/demo database query,
 remote call, push, deployment or historical cleanup.
 
-This is local developer verification with synthetic identity/Provider Ports and
-real Gateway/EventProjection/HTTP implementations. PostgreSQL persistence and
-restart are real. Real EE READ retest, real Runtime/model and browser acceptance
-were not executed. Historical real EE data and its 75 VERIFYING rows were not
-modified. RCI-02 and RCI-03 still require separately authorized real EE retest.
+This remediation itself is local developer verification with synthetic
+identity/Provider Ports and real Gateway/EventProjection/HTTP implementations.
+PostgreSQL persistence and restart are real. A later separately authorized
+isolated real EE task exercised a targeted RCI-02 outage path and RCI-03 READ
+success path with real MCP/Trace data; see
+`real-ee-read-retest-01-verification.md`. Its hardened model oracle rerun passed
+at developer level on 2026-11-25. A later A1 current-generation cross-Principal
+scenario passed data isolation without redispatch and exposed a missing
+API-layer denial audit. A short remediation now appends the minimal Gateway
+`RESULT_DELIVERY_DENIED` entry and passed a second real A1 run. The rest of the
+binding/Trace/result adversarial matrix and independent acceptance remain
+pending. Historical real EE data and
+its VERIFYING rows were not rewritten by the targeted rerun.
 
 Authorization checks are fresh request-time observations, not an atomic
 transaction spanning external authority, binding storage and event persistence.
 They do not implement distributed revocation fan-out, cross-instance authority
 coordination or retroactive deletion of earlier verified facts. No such broader
 guarantee is claimed. WRITE verification and unknown-outcome reconciliation are
-not expanded. T1B, RCI-04, T2, T3, D4B and MEMORY-01B are not started.
+not expanded. This remediation task did not start T1B, RCI-04, T2, T3, D4B or
+MEMORY-01B; later local T1B/T2 work does not change this task's evidence scope.
 
 Independent retest: run the four-file targeted Vitest command and the opt-in
 PostgreSQL command in the supplement, then `pnpm check` from `product/`.
 Inspect the three mandatory security scenarios' C22/C24/C28, dispatch and
-verified-event assertions. Real EE retest remains a separate task.
+verified-event assertions. The isolated real EE task remains separate and must
+be judged within the bounded status in its own verification report.

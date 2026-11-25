@@ -1187,13 +1187,23 @@ export class ControlledExecutionGatewayService {
   }
 
   async getAuthorizedOperation(operationId: string, tenantId: string, principalId: string): Promise<ExternalOperationRecord | undefined> {
-    const operation = await this.repository.getOperation(operationId);
+    const operation = await this.getOperationForPrincipal(operationId, tenantId, principalId);
     if (!operation) return undefined;
-    if (operation.tenant_id !== tenantId || operation.principal_id !== principalId) {
-      throw new GatewayError("PC_GATEWAY_OPERATION_SCOPE_DENIED", "Operation is unavailable to this Principal");
-    }
     if (operation.result) await this.currentResultDeliveryGuard(operation, { tenant_id: tenantId, principal_id: principalId });
     return clone(operation);
+  }
+
+  async getOperationForPrincipal(operationId: string, tenantId: string, principalId: string): Promise<ExternalOperationRecord | undefined> {
+    const operation = await this.repository.getOperation(operationId);
+    if (!operation) return undefined;
+    if (operation.tenant_id === tenantId && operation.principal_id === principalId) return clone(operation);
+    const reasonCodes = ["result_principal_scope_mismatch"];
+    try {
+      await this.audit({ event_type: "RESULT_DELIVERY_DENIED", tenant_id: tenantId, principal_id: principalId,
+        operation_id: operation.operation_id, connector_id: operation.connector_id, tool_release_id: operation.tool_release_id,
+        outcome: "DENY", reason_codes: reasonCodes, evidence_refs: [] });
+    } catch { /* Audit availability must not change or disclose the authorization decision. */ }
+    throw new GatewayError("PC_GATEWAY_OPERATION_SCOPE_DENIED", "Operation is unavailable to this Principal");
   }
 
   private async currentResultDeliveryGuard(operation: ExternalOperationRecord, request: {
